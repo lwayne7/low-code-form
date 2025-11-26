@@ -1,73 +1,117 @@
-# React + TypeScript + Vite
+# Low-Code Form Builder 🚀
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+一个基于 React + TypeScript 的低代码表单构建器，支持拖拽配置、组件联动、无限嵌套和代码导出。
 
-Currently, two official plugins are available:
+## ✨ 功能特性
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+### 🎨 可视化拖拽
+- 左侧组件库拖拽到画布
+- 画布内组件自由排序
+- 支持多选批量操作 (Ctrl/Cmd + 点击)
+- 撤销/重做 (Ctrl+Z / Ctrl+Shift+Z)
 
-## React Compiler
+### 📦 丰富的组件
+| 组件类型 | 支持的组件 |
+|---------|-----------|
+| 输入类 | Input、TextArea、InputNumber |
+| 选择类 | Select、Radio、Checkbox |
+| 日期类 | DatePicker、TimePicker |
+| 容器类 | Container (支持无限嵌套) |
+| 操作类 | Button |
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### 🔗 组件联动
+通过 `visibleOn` 配置实现条件渲染：
+```javascript
+// 当 input_1 的值等于 "show" 时显示该组件
+visibleOn: "{{$formValues.input_1}} === 'show'"
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### 🏗️ 无限嵌套
+- Container 容器支持无限层级嵌套
+- 可视化深度指示器（颜色递进）
+- 智能拖拽检测（优先放入内层容器）
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+### 📤 代码导出
+- **React 代码**: 生成完整可运行的 React 组件代码
+- **JSON Schema**: 生成后端可解析的表单结构
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## 🛠️ 技术栈
+
+| 技术 | 版本 | 用途 |
+|-----|------|-----|
+| React | 19.x | UI 框架 |
+| TypeScript | 5.9 | 类型安全 |
+| Vite | 7.x | 构建工具 |
+| Zustand | 5.x | 状态管理 |
+| @dnd-kit | 6.x | 拖拽功能 |
+| Ant Design | 6.x | UI 组件库 |
+| Tailwind CSS | 4.x | 样式工具 |
+| Vitest | 4.x | 单元测试 |
+
+## 🚀 快速开始
+
+### 安装依赖
+```bash
+npm install
 ```
+
+### 启动开发服务器
+```bash
+npm run dev
+```
+
+### 构建生产版本
+```bash
+npm run build
+```
+
+### 运行测试
+```bash
+# 监听模式
+npm test
+
+# 单次运行
+npm run test:run
+```
+
+## 📁 项目结构
+
+```
+src/
+├── components/
+│   ├── PropertyPanel.tsx    # 属性配置面板
+│   └── SortableList.tsx     # 可排序组件列表
+├── utils/
+│   └── codeGenerator.ts     # 代码生成器
+├── test/
+│   ├── setup.ts             # 测试配置
+│   └── store.test.ts        # Store 单元测试
+├── App.tsx                  # 主应用
+├── CanvasFormItem.tsx       # 画布表单项（可交互）
+├── FormRenderer.tsx         # 表单渲染器（预览）
+├── SortableItem.tsx         # 可拖拽项包装器
+├── store.ts                 # Zustand 状态管理
+└── types.ts                 # TypeScript 类型定义
+```
+
+## 🧪 测试覆盖
+
+21 个单元测试覆盖核心功能：
+- ✅ 组件增删改查
+- ✅ 容器嵌套操作
+- ✅ 多选/单选切换
+- ✅ 撤销/重做
+- ✅ 表单值管理
+- ✅ 跨容器移动
+
+## 📝 开发计划
+
+- [ ] 表单验证规则配置
+- [ ] 更多组件类型（上传、富文本等）
+- [ ] 组件模板库
+- [ ] 历史版本管理
+- [ ] 协同编辑
+
+## 📄 License
+
+MIT
