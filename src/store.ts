@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { nanoid } from 'nanoid';
-import type { ComponentSchema, ComponentType } from './types';
+import type { ComponentSchema, ComponentType, ValidationRule } from './types';
 import { arrayMove } from '@dnd-kit/sortable';
 
 interface HistoryState {
@@ -9,21 +9,43 @@ interface HistoryState {
   future: ComponentSchema[][];
 }
 
+// 🆕 校验错误类型
+interface ValidationError {
+  componentId: string;
+  message: string;
+}
+
 interface State {
   components: ComponentSchema[];
   selectedIds: string[];
   formValues: Record<string, any>; // 表单值状态
+  validationErrors: Record<string, string>; // 校验错误 { [componentId]: errorMessage }
+  clipboard: ComponentSchema[]; // 🆕 剪贴板
   history: HistoryState;
 
-  addComponent: (type: ComponentType, parentId?: string, index?: number) => void; // ⚠️ 支持指定 index 插入
+  addComponent: (type: ComponentType, parentId?: string, index?: number) => void;
+  addComponents: (components: ComponentSchema[]) => void; // 🆕 批量添加组件
   selectComponent: (id: string, multiSelect?: boolean) => void;
+  selectAll: () => void; // 🆕 全选
   clearSelection: () => void;
   updateComponentProps: (id: string, newProps: Partial<ComponentSchema['props']>) => void;
   deleteComponent: (ids: string | string[]) => void;
   reorderComponents: (activeId: string, overId: string) => void;
-  moveComponent: (activeId: string, targetContainerId: string | null, index?: number) => void; // 移动到容器
-  setFormValue: (id: string, value: any) => void; // 设置表单值
-  getFormValues: () => Record<string, any>; // 获取所有表单值
+  moveComponent: (activeId: string, targetContainerId: string | null, index?: number) => void;
+  resetCanvas: () => void; // 🆕 重置画布
+  setFormValue: (id: string, value: any) => void;
+  getFormValues: () => Record<string, any>;
+  
+  // 🆕 复制/粘贴
+  copyComponents: () => void; // 复制选中组件到剪贴板
+  pasteComponents: () => void; // 粘贴剪贴板内容
+  duplicateComponents: () => void; // 复制并粘贴（Cmd+D）
+  
+  // 校验相关
+  validateField: (id: string) => string | null;
+  validateForm: () => ValidationError[];
+  clearValidationError: (id: string) => void;
+  clearAllValidationErrors: () => void;
   
   undo: () => void;
   redo: () => void;
@@ -90,6 +112,103 @@ const reorderInList = (list: ComponentSchema[], activeId: string, overId: string
   });
 };
 
+// 🆕 校验单个值
+const validateValue = (value: any, rules: ValidationRule[] | undefined, label: string): string | null => {
+  if (!rules || rules.length === 0) return null;
+
+  for (const rule of rules) {
+    switch (rule.type) {
+      case 'required':
+        if (value === undefined || value === null || value === '' || 
+            (Array.isArray(value) && value.length === 0)) {
+          return rule.message || `${label}不能为空`;
+        }
+        break;
+      case 'minLength':
+        if (typeof value === 'string' && value.length < (rule.value as number)) {
+          return rule.message || `${label}至少需要${rule.value}个字符`;
+        }
+        break;
+      case 'maxLength':
+        if (typeof value === 'string' && value.length > (rule.value as number)) {
+          return rule.message || `${label}最多${rule.value}个字符`;
+        }
+        break;
+      case 'min':
+        if (typeof value === 'number' && value < (rule.value as number)) {
+          return rule.message || `${label}不能小于${rule.value}`;
+        }
+        break;
+      case 'max':
+        if (typeof value === 'number' && value > (rule.value as number)) {
+          return rule.message || `${label}不能大于${rule.value}`;
+        }
+        break;
+      case 'pattern':
+        if (typeof value === 'string' && rule.value) {
+          const regex = new RegExp(rule.value as string);
+          if (!regex.test(value)) {
+            return rule.message || `${label}格式不正确`;
+          }
+        }
+        break;
+      case 'email':
+        if (typeof value === 'string' && value) {
+          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          if (!emailRegex.test(value)) {
+            return rule.message || '请输入有效的邮箱地址';
+          }
+        }
+        break;
+      case 'phone':
+        if (typeof value === 'string' && value) {
+          const phoneRegex = /^1[3-9]\d{9}$/;
+          if (!phoneRegex.test(value)) {
+            return rule.message || '请输入有效的手机号码';
+          }
+        }
+        break;
+    }
+  }
+  return null;
+};
+
+// 🆕 递归获取所有组件（扁平化）
+const flattenComponents = (components: ComponentSchema[]): ComponentSchema[] => {
+  const result: ComponentSchema[] = [];
+  const traverse = (list: ComponentSchema[]) => {
+    list.forEach((c) => {
+      result.push(c);
+      if (c.children) traverse(c.children);
+    });
+  };
+  traverse(components);
+  return result;
+};
+
+// 🆕 根据 ID 查找组件
+const findComponentById = (components: ComponentSchema[], id: string): ComponentSchema | null => {
+  for (const c of components) {
+    if (c.id === id) return c;
+    if (c.children) {
+      const found = findComponentById(c.children, id);
+      if (found) return found;
+    }
+  }
+  return null;
+};
+
+// 🆕 深拷贝组件并重新生成 ID
+const cloneComponentWithNewId = (component: ComponentSchema): ComponentSchema => {
+  const newComponent = {
+    ...component,
+    id: nanoid(),
+    props: { ...component.props },
+    children: component.children?.map(cloneComponentWithNewId),
+  };
+  return newComponent as ComponentSchema;
+};
+
 
 export const useStore = create<State>()(
   persist(
@@ -97,6 +216,8 @@ export const useStore = create<State>()(
       components: [] as ComponentSchema[],
       selectedIds: [] as string[],
       formValues: {} as Record<string, any>,
+      validationErrors: {} as Record<string, string>,
+      clipboard: [] as ComponentSchema[], // 🆕 剪贴板
       history: {
         past: [] as ComponentSchema[][],
         future: [] as ComponentSchema[][],
@@ -159,6 +280,11 @@ export const useStore = create<State>()(
       }),
 
       clearSelection: () => set({ selectedIds: [] }),
+
+      // 🆕 全选
+      selectAll: () => set((state) => ({
+        selectedIds: flattenComponents(state.components).map(c => c.id)
+      })),
 
       updateComponentProps: (id, newProps) => set((state) => {
         const newPast = [...state.history.past, state.components];
@@ -258,6 +384,116 @@ export const useStore = create<State>()(
         return get().formValues;
       },
 
+      // 🆕 批量添加组件
+      addComponents: (newComponents: ComponentSchema[]) => set((state) => {
+        const newPast = [...state.history.past, state.components];
+        return {
+          components: [...state.components, ...newComponents],
+          selectedIds: newComponents.map(c => c.id),
+          history: { past: newPast, future: [] }
+        };
+      }),
+
+      // 🆕 复制选中组件到剪贴板
+      copyComponents: () => set((state) => {
+        const componentsToCopy = state.selectedIds
+          .map(id => findComponentById(state.components, id))
+          .filter((c): c is ComponentSchema => c !== null);
+        return { clipboard: componentsToCopy };
+      }),
+
+      // 🆕 粘贴剪贴板内容
+      pasteComponents: () => set((state) => {
+        if (state.clipboard.length === 0) return {};
+        
+        const newPast = [...state.history.past, state.components];
+        const clonedComponents = state.clipboard.map(cloneComponentWithNewId);
+        
+        return {
+          components: [...state.components, ...clonedComponents],
+          selectedIds: clonedComponents.map(c => c.id),
+          history: { past: newPast, future: [] }
+        };
+      }),
+
+      // 🆕 复制并粘贴（Cmd+D）
+      duplicateComponents: () => set((state) => {
+        if (state.selectedIds.length === 0) return {};
+        
+        const newPast = [...state.history.past, state.components];
+        const componentsToDuplicate = state.selectedIds
+          .map(id => findComponentById(state.components, id))
+          .filter((c): c is ComponentSchema => c !== null);
+        
+        const clonedComponents = componentsToDuplicate.map(cloneComponentWithNewId);
+        
+        return {
+          components: [...state.components, ...clonedComponents],
+          selectedIds: clonedComponents.map(c => c.id),
+          history: { past: newPast, future: [] }
+        };
+      }),
+
+      // 校验单个字段
+      validateField: (id: string): string | null => {
+        const state = get();
+        const component = findComponentById(state.components, id);
+        if (!component) return null;
+        
+        // 忽略不需要校验的组件类型
+        if (['Container', 'Button'].includes(component.type)) return null;
+        
+        const value = state.formValues[id];
+        const rules = component.props.rules;
+        const label = ('label' in component.props) ? (component.props.label || '此项') : '此项';
+        
+        const error = validateValue(value, rules, label);
+        
+        set((s) => ({
+          validationErrors: error 
+            ? { ...s.validationErrors, [id]: error }
+            : Object.fromEntries(Object.entries(s.validationErrors).filter(([key]) => key !== id))
+        }));
+        
+        return error;
+      },
+
+      // 🆕 校验整个表单
+      validateForm: (): ValidationError[] => {
+        const state = get();
+        const allComponents = flattenComponents(state.components);
+        const errors: ValidationError[] = [];
+        const newValidationErrors: Record<string, string> = {};
+        
+        allComponents.forEach((component) => {
+          // 忽略不需要校验的组件类型
+          if (['Container', 'Button'].includes(component.type)) return;
+          
+          const value = state.formValues[component.id];
+          const rules = component.props.rules;
+          const label = ('label' in component.props) ? (component.props.label || '此项') : '此项';
+          
+          const error = validateValue(value, rules, label);
+          if (error) {
+            errors.push({ componentId: component.id, message: error });
+            newValidationErrors[component.id] = error;
+          }
+        });
+        
+        set({ validationErrors: newValidationErrors });
+        return errors;
+      },
+
+      // 🆕 清除单个字段的校验错误
+      clearValidationError: (id: string) => set((state) => ({
+        validationErrors: Object.fromEntries(
+          Object.entries(state.validationErrors).filter(([key]) => key !== id)
+        )
+      })),
+
+      // 🆕 清除所有校验错误
+      clearAllValidationErrors: () => set({ validationErrors: {} }),
+
       undo: () => set((state) => {
         if (state.history.past.length === 0) return {};
         const previous = state.history.past[state.history.past.length - 1];
@@ -282,6 +518,23 @@ export const useStore = create<State>()(
           history: {
             past: [...state.history.past, state.components],
             future: newFuture
+          }
+        };
+      }),
+
+      // 🆕 重置画布
+      resetCanvas: () => set((state) => {
+        const newPast = state.components.length > 0 
+          ? [...state.history.past, state.components] 
+          : state.history.past;
+        return {
+          components: [],
+          selectedIds: [],
+          formValues: {},
+          validationErrors: {},
+          history: {
+            past: newPast,
+            future: []
           }
         };
       })

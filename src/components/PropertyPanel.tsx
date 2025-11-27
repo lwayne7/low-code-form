@@ -1,7 +1,7 @@
 import React from 'react';
-import { Form, Input, Button, Space, Tag, Divider, Typography } from 'antd';
-import { DeleteOutlined, SettingOutlined } from '@ant-design/icons';
-import type { ComponentSchema } from '../types';
+import { Form, Input, Button, Space, Tag, Divider, Typography, Select, InputNumber } from 'antd';
+import { DeleteOutlined, SettingOutlined, MinusCircleOutlined, PlusOutlined } from '@ant-design/icons';
+import type { ComponentSchema, ValidationRule } from '../types';
 
 const { Title, Text } = Typography;
 
@@ -13,6 +13,70 @@ interface PropertyPanelProps {
   deleteComponent: (ids: string | string[]) => void;
 }
 
+// 🆕 独立的选项编辑器组件，使用内部状态管理输入
+const OptionsEditor: React.FC<{
+  component: ComponentSchema;
+  updateComponentProps: (id: string, newProps: Partial<ComponentSchema['props']>) => void;
+}> = ({ component, updateComponentProps }) => {
+  // @ts-ignore
+  const options = component.props.options || [];
+  
+  // 解析选项到数组形式方便编辑
+  const handleAddOption = () => {
+    const newOptions = [...options, { label: `选项${options.length + 1}`, value: `option${options.length + 1}` }];
+    updateComponentProps(component.id, { options: newOptions });
+  };
+
+  const handleUpdateOption = (index: number, field: 'label' | 'value', val: string) => {
+    const newOptions = [...options];
+    newOptions[index] = { ...newOptions[index], [field]: val };
+    updateComponentProps(component.id, { options: newOptions });
+  };
+
+  const handleRemoveOption = (index: number) => {
+    const newOptions = options.filter((_: unknown, i: number) => i !== index);
+    updateComponentProps(component.id, { options: newOptions });
+  };
+
+  return (
+    <Form.Item label="选项配置">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {options.map((opt: { label: string; value: string }, index: number) => (
+          <div key={index} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <Input
+              size="small"
+              placeholder="显示名称"
+              value={opt.label}
+              onChange={(e) => handleUpdateOption(index, 'label', e.target.value)}
+              style={{ flex: 1 }}
+            />
+            <Input
+              size="small"
+              placeholder="值"
+              value={opt.value}
+              onChange={(e) => handleUpdateOption(index, 'value', e.target.value)}
+              style={{ flex: 1 }}
+            />
+            <MinusCircleOutlined
+              style={{ color: '#ff4d4f', cursor: 'pointer' }}
+              onClick={() => handleRemoveOption(index)}
+            />
+          </div>
+        ))}
+        <Button
+          type="dashed"
+          size="small"
+          icon={<PlusOutlined />}
+          onClick={handleAddOption}
+          style={{ marginTop: 4 }}
+        >
+          添加选项
+        </Button>
+      </div>
+    </Form.Item>
+  );
+};
+
 export const PropertyPanel: React.FC<PropertyPanelProps> = ({
   selectedIds,
   selectedComponent,
@@ -20,37 +84,6 @@ export const PropertyPanel: React.FC<PropertyPanelProps> = ({
   updateComponentProps,
   deleteComponent,
 }) => {
-  // 渲染选项编辑器（Select/Radio/Checkbox）
-  const renderOptionsEditor = () => {
-    if (!selectedComponent) return null;
-    
-    const optionsStr =
-      // @ts-ignore
-      selectedComponent.props.options?.map((o: { label: string; value: string }) => `${o.label}:${o.value}`).join('\n') || '';
-
-    return (
-      <Form.Item label="选项配置" tooltip="每行一个选项，格式：显示名:值">
-        <Input.TextArea
-          rows={5}
-          value={optionsStr}
-          onChange={(e) => {
-            const lines = e.target.value.split('\n');
-            const newOptions = lines
-              .map((line: string) => {
-                const parts = line.split(/[:：]/);
-                const label = parts[0]?.trim();
-                const value = parts[1]?.trim() || label;
-                return { label, value };
-              })
-              .filter((o) => o.label);
-
-            updateComponentProps(selectedComponent.id, { options: newOptions });
-          }}
-          placeholder={`例如：\n男:male\n女:female`}
-        />
-      </Form.Item>
-    );
-  };
 
   // 获取所有组件（扁平化，用于联动配置）
   const getAllComponentIds = (comps: ComponentSchema[]): ComponentSchema[] => {
@@ -107,12 +140,46 @@ export const PropertyPanel: React.FC<PropertyPanelProps> = ({
 
           {/* 容器组件配置 */}
           {selectedComponent.type === 'Container' && (
-            <Form.Item label="容器标题">
-              <Input
-                value={selectedComponent.props.label || ''}
-                onChange={(e) => updateComponentProps(selectedComponent.id, { label: e.target.value })}
-              />
-            </Form.Item>
+            <>
+              <Form.Item label="容器标题">
+                <Input
+                  value={selectedComponent.props.label || ''}
+                  onChange={(e) => updateComponentProps(selectedComponent.id, { label: e.target.value })}
+                />
+              </Form.Item>
+              <Form.Item label="布局方向">
+                <Select
+                  value={selectedComponent.props.direction || 'vertical'}
+                  onChange={(val) => updateComponentProps(selectedComponent.id, { direction: val })}
+                  options={[
+                    { label: '垂直布局', value: 'vertical' },
+                    { label: '水平布局', value: 'horizontal' },
+                  ]}
+                />
+              </Form.Item>
+              <Form.Item label="栅格列数" tooltip="容器内部的栅格列数，子组件可以设置占用列数">
+                <Select
+                  value={selectedComponent.props.columns || 1}
+                  onChange={(val) => updateComponentProps(selectedComponent.id, { columns: val })}
+                  options={[
+                    { label: '1 列', value: 1 },
+                    { label: '2 列', value: 2 },
+                    { label: '3 列', value: 3 },
+                    { label: '4 列', value: 4 },
+                    { label: '6 列', value: 6 },
+                  ]}
+                />
+              </Form.Item>
+              <Form.Item label="列间距">
+                <InputNumber
+                  value={selectedComponent.props.gutter || 16}
+                  onChange={(val) => updateComponentProps(selectedComponent.id, { gutter: val ?? 16 })}
+                  min={0}
+                  max={48}
+                  addonAfter="px"
+                />
+              </Form.Item>
+            </>
           )}
 
           {/* 标题配置 - 除 Container 和 Button 外 */}
@@ -160,16 +227,117 @@ export const PropertyPanel: React.FC<PropertyPanelProps> = ({
 
           {/* 按钮内容配置 */}
           {selectedComponent.type === 'Button' && (
-            <Form.Item label="按钮文字">
-              <Input
-                value={selectedComponent.props.content}
-                onChange={(e) => updateComponentProps(selectedComponent.id, { content: e.target.value })}
-              />
-            </Form.Item>
+            <>
+              <Form.Item label="按钮文字">
+                <Input
+                  value={selectedComponent.props.content}
+                  onChange={(e) => updateComponentProps(selectedComponent.id, { content: e.target.value })}
+                />
+              </Form.Item>
+              <Form.Item label="按钮类型">
+                <Select
+                  value={selectedComponent.props.type || 'default'}
+                  onChange={(val) => updateComponentProps(selectedComponent.id, { type: val })}
+                  options={[
+                    { label: '主要按钮', value: 'primary' },
+                    { label: '默认按钮', value: 'default' },
+                    { label: '虚线按钮', value: 'dashed' },
+                    { label: '文字按钮', value: 'text' },
+                    { label: '链接按钮', value: 'link' },
+                  ]}
+                />
+              </Form.Item>
+              <Form.Item label="HTML 类型">
+                <Select
+                  value={selectedComponent.props.htmlType || 'button'}
+                  onChange={(val) => updateComponentProps(selectedComponent.id, { htmlType: val })}
+                  options={[
+                    { label: '普通按钮', value: 'button' },
+                    { label: '提交按钮', value: 'submit' },
+                    { label: '重置按钮', value: 'reset' },
+                  ]}
+                />
+              </Form.Item>
+              
+              {/* 表单提交配置 */}
+              {selectedComponent.props.htmlType === 'submit' && (
+                <>
+                  <Divider style={{ margin: '12px 0' }} dashed />
+                  <Text strong style={{ display: 'block', marginBottom: 12 }}>提交配置</Text>
+                  <Form.Item label="提交地址">
+                    <Input
+                      value={selectedComponent.props.submitConfig?.action || ''}
+                      onChange={(e) => updateComponentProps(selectedComponent.id, { 
+                        submitConfig: { 
+                          ...selectedComponent.props.submitConfig, 
+                          action: e.target.value 
+                        } 
+                      })}
+                      placeholder="例如：/api/submit"
+                    />
+                  </Form.Item>
+                  <Form.Item label="请求方法">
+                    <Select
+                      value={selectedComponent.props.submitConfig?.method || 'POST'}
+                      onChange={(val) => updateComponentProps(selectedComponent.id, { 
+                        submitConfig: { 
+                          ...selectedComponent.props.submitConfig, 
+                          method: val 
+                        } 
+                      })}
+                      options={[
+                        { label: 'GET', value: 'GET' },
+                        { label: 'POST', value: 'POST' },
+                        { label: 'PUT', value: 'PUT' },
+                        { label: 'DELETE', value: 'DELETE' },
+                      ]}
+                    />
+                  </Form.Item>
+                  <Form.Item label="成功提示">
+                    <Input
+                      value={selectedComponent.props.submitConfig?.successMessage || ''}
+                      onChange={(e) => updateComponentProps(selectedComponent.id, { 
+                        submitConfig: { 
+                          ...selectedComponent.props.submitConfig, 
+                          successMessage: e.target.value 
+                        } 
+                      })}
+                      placeholder="提交成功！"
+                    />
+                  </Form.Item>
+                  <Form.Item label="失败提示">
+                    <Input
+                      value={selectedComponent.props.submitConfig?.errorMessage || ''}
+                      onChange={(e) => updateComponentProps(selectedComponent.id, { 
+                        submitConfig: { 
+                          ...selectedComponent.props.submitConfig, 
+                          errorMessage: e.target.value 
+                        } 
+                      })}
+                      placeholder="提交失败，请重试"
+                    />
+                  </Form.Item>
+                  <Form.Item label="成功跳转">
+                    <Input
+                      value={selectedComponent.props.submitConfig?.redirectUrl || ''}
+                      onChange={(e) => updateComponentProps(selectedComponent.id, { 
+                        submitConfig: { 
+                          ...selectedComponent.props.submitConfig, 
+                          redirectUrl: e.target.value 
+                        } 
+                      })}
+                      placeholder="例如：/success"
+                    />
+                  </Form.Item>
+                </>
+              )}
+            </>
           )}
 
           {/* 选项配置 */}
-          {['Select', 'Radio', 'Checkbox'].includes(selectedComponent.type) && renderOptionsEditor()}
+          {['Select', 'Radio', 'Checkbox'].includes(selectedComponent.type) && (
+            <OptionsEditor component={selectedComponent} updateComponentProps={updateComponentProps} />
+          )}
 
           {/* Switch 开关文字配置 */}
           {selectedComponent.type === 'Switch' && (
@@ -200,6 +368,94 @@ export const PropertyPanel: React.FC<PropertyPanelProps> = ({
                 onChange={(e) => updateComponentProps(selectedComponent.id, { rows: Number(e.target.value) || 4 })}
               />
             </Form.Item>
+          )}
+
+          {/* 🆕 响应式布局配置 */}
+          {!['Container'].includes(selectedComponent.type) && (
+            <>
+              <Divider style={{ margin: '16px 0' }}>响应式布局</Divider>
+              
+              <Form.Item label="占用列数" tooltip="组件在父容器栅格中占用的列数 (1-24)">
+                <Select
+                  // @ts-ignore
+                  value={selectedComponent.props.colSpan || 24}
+                  onChange={(val) => updateComponentProps(selectedComponent.id, { colSpan: val })}
+                  options={[
+                    { label: '满行 (24)', value: 24 },
+                    { label: '3/4 行 (18)', value: 18 },
+                    { label: '2/3 行 (16)', value: 16 },
+                    { label: '半行 (12)', value: 12 },
+                    { label: '1/3 行 (8)', value: 8 },
+                    { label: '1/4 行 (6)', value: 6 },
+                  ]}
+                />
+              </Form.Item>
+
+              <Form.Item label="响应式配置" tooltip="不同屏幕尺寸下的列数">
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                  <div>
+                    <Text type="secondary" style={{ fontSize: 11 }}>手机 (xs)</Text>
+                    <InputNumber
+                      size="small"
+                      min={1}
+                      max={24}
+                      // @ts-ignore
+                      value={selectedComponent.props.responsive?.xs || 24}
+                      onChange={(val) => updateComponentProps(selectedComponent.id, { 
+                        // @ts-ignore
+                        responsive: { ...selectedComponent.props.responsive, xs: val } 
+                      })}
+                      style={{ width: '100%' }}
+                    />
+                  </div>
+                  <div>
+                    <Text type="secondary" style={{ fontSize: 11 }}>平板 (sm)</Text>
+                    <InputNumber
+                      size="small"
+                      min={1}
+                      max={24}
+                      // @ts-ignore
+                      value={selectedComponent.props.responsive?.sm || 24}
+                      onChange={(val) => updateComponentProps(selectedComponent.id, { 
+                        // @ts-ignore
+                        responsive: { ...selectedComponent.props.responsive, sm: val } 
+                      })}
+                      style={{ width: '100%' }}
+                    />
+                  </div>
+                  <div>
+                    <Text type="secondary" style={{ fontSize: 11 }}>桌面 (md)</Text>
+                    <InputNumber
+                      size="small"
+                      min={1}
+                      max={24}
+                      // @ts-ignore
+                      value={selectedComponent.props.responsive?.md}
+                      onChange={(val) => updateComponentProps(selectedComponent.id, { 
+                        // @ts-ignore
+                        responsive: { ...selectedComponent.props.responsive, md: val } 
+                      })}
+                      style={{ width: '100%' }}
+                    />
+                  </div>
+                  <div>
+                    <Text type="secondary" style={{ fontSize: 11 }}>大屏 (lg)</Text>
+                    <InputNumber
+                      size="small"
+                      min={1}
+                      max={24}
+                      // @ts-ignore
+                      value={selectedComponent.props.responsive?.lg}
+                      onChange={(val) => updateComponentProps(selectedComponent.id, { 
+                        // @ts-ignore
+                        responsive: { ...selectedComponent.props.responsive, lg: val } 
+                      })}
+                      style={{ width: '100%' }}
+                    />
+                  </div>
+                </div>
+              </Form.Item>
+            </>
           )}
 
           <Divider style={{ margin: '16px 0' }}>组件联动</Divider>
@@ -241,6 +497,185 @@ export const PropertyPanel: React.FC<PropertyPanelProps> = ({
               </div>
             </div>
           </Form.Item>
+
+          {/* 🆕 校验规则配置 */}
+          {!['Container', 'Button'].includes(selectedComponent.type) && (
+            <>
+              <Divider style={{ margin: '16px 0' }}>校验规则</Divider>
+              
+              {/* 快捷校验开关 */}
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
+                <Button
+                  size="small"
+                  type={selectedComponent.props.rules?.some(r => r.type === 'required') ? 'primary' : 'default'}
+                  onClick={() => {
+                    const rules = selectedComponent.props.rules || [];
+                    const hasRequired = rules.some(r => r.type === 'required');
+                    const newRules = hasRequired 
+                      ? rules.filter(r => r.type !== 'required')
+                      : [...rules, { type: 'required' as const, message: '此项为必填项' }];
+                    updateComponentProps(selectedComponent.id, { rules: newRules });
+                  }}
+                >
+                  必填
+                </Button>
+                
+                {['Input', 'TextArea'].includes(selectedComponent.type) && (
+                  <>
+                    <Button
+                      size="small"
+                      type={selectedComponent.props.rules?.some(r => r.type === 'email') ? 'primary' : 'default'}
+                      onClick={() => {
+                        const rules = selectedComponent.props.rules || [];
+                        const hasEmail = rules.some(r => r.type === 'email');
+                        const newRules = hasEmail 
+                          ? rules.filter(r => r.type !== 'email')
+                          : [...rules, { type: 'email' as const, message: '请输入有效的邮箱地址' }];
+                        updateComponentProps(selectedComponent.id, { rules: newRules });
+                      }}
+                    >
+                      邮箱
+                    </Button>
+                    <Button
+                      size="small"
+                      type={selectedComponent.props.rules?.some(r => r.type === 'phone') ? 'primary' : 'default'}
+                      onClick={() => {
+                        const rules = selectedComponent.props.rules || [];
+                        const hasPhone = rules.some(r => r.type === 'phone');
+                        const newRules = hasPhone 
+                          ? rules.filter(r => r.type !== 'phone')
+                          : [...rules, { type: 'phone' as const, message: '请输入有效的手机号码' }];
+                        updateComponentProps(selectedComponent.id, { rules: newRules });
+                      }}
+                    >
+                      手机号
+                    </Button>
+                  </>
+                )}
+              </div>
+
+              {/* 详细规则列表 */}
+              <div style={{ background: '#fafafa', padding: 12, borderRadius: 6 }}>
+                <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 8 }}>
+                  已添加的规则：
+                </Text>
+                {(selectedComponent.props.rules || []).length === 0 ? (
+                  <Text type="secondary" style={{ fontSize: 12 }}>暂无校验规则</Text>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {selectedComponent.props.rules?.map((rule, index) => (
+                      <div key={index} style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#fff', padding: 8, borderRadius: 4 }}>
+                        <Tag color="blue" style={{ margin: 0 }}>{rule.type}</Tag>
+                        {rule.value !== undefined && (
+                          <Tag color="orange">{String(rule.value)}</Tag>
+                        )}
+                        <Text style={{ flex: 1, fontSize: 12 }} ellipsis>{rule.message}</Text>
+                        <MinusCircleOutlined 
+                          style={{ color: '#ff4d4f', cursor: 'pointer' }}
+                          onClick={() => {
+                            const newRules = selectedComponent.props.rules?.filter((_, i) => i !== index) || [];
+                            updateComponentProps(selectedComponent.id, { rules: newRules });
+                          }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* 添加自定义规则 */}
+                <Divider style={{ margin: '12px 0' }} dashed />
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <Select
+                    size="small"
+                    placeholder="添加规则"
+                    style={{ flex: 1 }}
+                    options={[
+                      { label: '最小长度', value: 'minLength' },
+                      { label: '最大长度', value: 'maxLength' },
+                      { label: '最小值', value: 'min' },
+                      { label: '最大值', value: 'max' },
+                      { label: '正则匹配', value: 'pattern' },
+                    ]}
+                    onChange={(type) => {
+                      if (!type) return;
+                      const defaultMessages: Record<string, string> = {
+                        minLength: '长度不能少于指定值',
+                        maxLength: '长度不能超过指定值',
+                        min: '数值不能小于指定值',
+                        max: '数值不能大于指定值',
+                        pattern: '格式不正确',
+                      };
+                      const defaultValues: Record<string, number | string> = {
+                        minLength: 1,
+                        maxLength: 100,
+                        min: 0,
+                        max: 100,
+                        pattern: '',
+                      };
+                      const rules = selectedComponent.props.rules || [];
+                      const newRule = { 
+                        type: type as ValidationRule['type'], 
+                        value: defaultValues[type],
+                        message: defaultMessages[type] 
+                      };
+                      updateComponentProps(selectedComponent.id, { rules: [...rules, newRule] });
+                    }}
+                  />
+                </div>
+
+                {/* 规则值编辑器 */}
+                {selectedComponent.props.rules?.map((rule, index) => {
+                  if (['minLength', 'maxLength', 'min', 'max'].includes(rule.type)) {
+                    return (
+                      <div key={`edit-${index}`} style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8 }}>
+                        <Text style={{ fontSize: 12, minWidth: 60 }}>{rule.type}:</Text>
+                        <InputNumber
+                          size="small"
+                          value={rule.value as number}
+                          onChange={(val) => {
+                            const newRules = [...(selectedComponent.props.rules || [])];
+                            newRules[index] = { ...rule, value: val ?? 0 };
+                            updateComponentProps(selectedComponent.id, { rules: newRules });
+                          }}
+                          style={{ width: 80 }}
+                        />
+                        <Input
+                          size="small"
+                          value={rule.message}
+                          onChange={(e) => {
+                            const newRules = [...(selectedComponent.props.rules || [])];
+                            newRules[index] = { ...rule, message: e.target.value };
+                            updateComponentProps(selectedComponent.id, { rules: newRules });
+                          }}
+                          placeholder="错误提示"
+                          style={{ flex: 1 }}
+                        />
+                      </div>
+                    );
+                  }
+                  if (rule.type === 'pattern') {
+                    return (
+                      <div key={`edit-${index}`} style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8 }}>
+                        <Text style={{ fontSize: 12, minWidth: 60 }}>正则:</Text>
+                        <Input
+                          size="small"
+                          value={rule.value as string}
+                          onChange={(e) => {
+                            const newRules = [...(selectedComponent.props.rules || [])];
+                            newRules[index] = { ...rule, value: e.target.value };
+                            updateComponentProps(selectedComponent.id, { rules: newRules });
+                          }}
+                          placeholder="正则表达式"
+                          style={{ flex: 1 }}
+                        />
+                      </div>
+                    );
+                  }
+                  return null;
+                })}
+              </div>
+            </>
+          )}
 
           <div style={{ marginTop: 32 }}>
             <Button

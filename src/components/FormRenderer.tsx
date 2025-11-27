@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Form, Input, Button, Select, Radio, Checkbox, Switch, DatePicker, TimePicker, InputNumber, Card } from 'antd';
-import type { ComponentSchema } from './types';
+import type { ComponentSchema } from '../types';
 
 interface FormRendererProps {
   components: ComponentSchema[]; // 接收 JSON 数组

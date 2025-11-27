@@ -1,36 +1,34 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { Input, Button, Modal, Layout, Typography, Space, Divider, Tooltip, message } from 'antd';
+import { useState, useEffect, useRef } from 'react';
+import { Input, Button, Modal, Layout, Typography, Space, Divider, Tooltip, message, Dropdown } from 'antd';
 import {
-  FormOutlined,
-  BuildOutlined,
-  SelectOutlined,
-  CheckCircleOutlined,
-  CheckSquareOutlined,
   UndoOutlined,
   RedoOutlined,
   CodeOutlined,
   EyeOutlined,
   AppstoreAddOutlined,
-  RocketOutlined,
   ExportOutlined,
-  CalendarOutlined,
-  ClockCircleOutlined,
-  NumberOutlined,
-  FileTextOutlined,
-  ContainerOutlined,
+  FileAddOutlined,
+  ClearOutlined,
+  RocketOutlined,
+  QuestionCircleOutlined,
 } from '@ant-design/icons';
 import { useStore } from './store';
 import './App.css';
-import { FormRenderer } from './FormRenderer';
-import { DraggableSidebarItem } from './DraggableSidebarItem';
-import { SortableList } from './components/SortableList';
-import { PropertyPanel } from './components/PropertyPanel';
-import { generateFullCode, generateJsonSchema } from './utils/codeGenerator';
+
+// Components
+import { FormRenderer, PropertyPanel, DraggableSidebarItem, SortableList, KeyboardShortcutsPanel, Toolbar } from './components';
+
+// Utils
+import { generateFullCode, generateJsonSchema, customCollisionDetection } from './utils';
+import { findComponentById, findParentInfo, isDescendant } from './utils/componentHelpers';
+import { formTemplates } from './utils/formTemplates';
+
+// Constants
+import { COMPONENT_MATERIALS } from './constants';
+
+// DnD Kit
 import {
   DndContext,
-  closestCenter,
-  pointerWithin,
-  rectIntersection,
   KeyboardSensor,
   PointerSensor,
   useSensor,
@@ -40,47 +38,14 @@ import {
   type DragStartEvent,
   useDroppable,
   type DragOverEvent,
-  type CollisionDetection,
 } from '@dnd-kit/core';
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
-import type { ComponentType, ComponentSchema } from './types';
+
+// Types
+import type { ComponentType } from './types';
 
 const { Header, Sider, Content } = Layout;
 const { Title } = Typography;
-
-// 组件材料列表
-const COMPONENT_MATERIALS = [
-  { type: 'Container', label: '容器', icon: <ContainerOutlined /> },
-  { type: 'Input', label: '单行输入', icon: <FormOutlined /> },
-  { type: 'TextArea', label: '多行输入', icon: <FileTextOutlined /> },
-  { type: 'InputNumber', label: '数字输入', icon: <NumberOutlined /> },
-  { type: 'Select', label: '下拉选择', icon: <SelectOutlined /> },
-  { type: 'Radio', label: '单选框', icon: <CheckCircleOutlined /> },
-  { type: 'Checkbox', label: '多选框', icon: <CheckSquareOutlined /> },
-  { type: 'Switch', label: '开关', icon: <RocketOutlined /> },
-  { type: 'DatePicker', label: '日期选择', icon: <CalendarOutlined /> },
-  { type: 'TimePicker', label: '时间选择', icon: <ClockCircleOutlined /> },
-  { type: 'Button', label: '按钮', icon: <BuildOutlined /> },
-] as const;
-
-// 自定义碰撞检测：优先检测容器内部
-const customCollisionDetection: CollisionDetection = (args) => {
-  const pointerCollisions = pointerWithin(args);
-  const containerCollisions = pointerCollisions.filter((collision) =>
-    String(collision.id).startsWith('container-')
-  );
-
-  if (containerCollisions.length > 0) {
-    return [containerCollisions[containerCollisions.length - 1]];
-  }
-
-  const rectCollisions = rectIntersection(args);
-  if (rectCollisions.length > 0) {
-    return rectCollisions;
-  }
-
-  return closestCenter(args);
-};
 
 // 侧边栏 Overlay 组件
 const SidebarItemOverlay = ({ type }: { type: ComponentType }) => (
@@ -115,20 +80,34 @@ function App() {
     components,
     selectedIds,
     addComponent,
+    addComponents,
     selectComponent,
+    selectAll,
     clearSelection,
     updateComponentProps,
     deleteComponent,
     reorderComponents,
+    copyComponents,
+    pasteComponents,
+    duplicateComponents,
+    clipboard,
     history,
     undo,
     redo,
+    resetCanvas,
   } = useStore();
 
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [isShortcutsOpen, setIsShortcutsOpen] = useState(false); // 🆕 快捷键面板
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
   const [activeDragType, setActiveDragType] = useState<ComponentType | null>(null);
   const [overIndex, setOverIndex] = useState<number | undefined>(undefined);
+  // 🆕 追踪拖拽目标信息，用于显示精确位置指示器
+  const [dropTarget, setDropTarget] = useState<{
+    targetId: string;  // 目标组件或容器的 ID
+    position: 'before' | 'after' | 'inside';  // 放置位置
+    parentId?: string;  // 父容器 ID
+  } | null>(null);
   const [isSelecting, setIsSelecting] = useState(false);
   const [selectionBox, setSelectionBox] = useState<{
     startX: number;
@@ -138,48 +117,74 @@ function App() {
   } | null>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
 
-  // 查找组件
-  const findComponentById = useCallback(
-    (list: ComponentSchema[], id: string): ComponentSchema | undefined => {
-      for (const item of list) {
-        if (item.id === id) return item;
-        if (item.children) {
-          const found = findComponentById(item.children, id);
-          if (found) return found;
-        }
-      }
-      return undefined;
-    },
-    []
-  );
-
   const primarySelectedId = selectedIds[selectedIds.length - 1];
   const selectedComponent = primarySelectedId ? findComponentById(components, primarySelectedId) : undefined;
 
   // 键盘快捷键
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      const activeTag = document.activeElement?.tagName.toLowerCase();
+      const isInputFocused = activeTag === 'input' || activeTag === 'textarea';
+
+      // Delete/Backspace - 删除选中组件
       if ((e.key === 'Delete' || e.key === 'Backspace') && selectedIds.length > 0) {
-        const activeTag = document.activeElement?.tagName.toLowerCase();
-        if (activeTag !== 'input' && activeTag !== 'textarea') {
+        if (!isInputFocused) {
           deleteComponent(selectedIds);
         }
       }
 
+      // Cmd/Ctrl + Z - 撤销
       if ((e.metaKey || e.ctrlKey) && e.key === 'z' && !e.shiftKey) {
         e.preventDefault();
         undo();
       }
 
+      // Cmd/Ctrl + Shift + Z - 重做
       if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'z') {
         e.preventDefault();
         redo();
+      }
+
+      // Cmd/Ctrl + A - 全选
+      if ((e.metaKey || e.ctrlKey) && e.key === 'a' && !isInputFocused) {
+        e.preventDefault();
+        selectAll();
+      }
+
+      // Cmd/Ctrl + C - 复制
+      if ((e.metaKey || e.ctrlKey) && e.key === 'c' && !isInputFocused) {
+        if (selectedIds.length > 0) {
+          copyComponents();
+          message.success(`已复制 ${selectedIds.length} 个组件`);
+        }
+      }
+
+      // Cmd/Ctrl + V - 粘贴
+      if ((e.metaKey || e.ctrlKey) && e.key === 'v' && !isInputFocused) {
+        if (clipboard.length > 0) {
+          pasteComponents();
+          message.success(`已粘贴 ${clipboard.length} 个组件`);
+        }
+      }
+
+      // Cmd/Ctrl + D - 复制组件
+      if ((e.metaKey || e.ctrlKey) && e.key === 'd') {
+        if (selectedIds.length > 0 && !isInputFocused) {
+          e.preventDefault();
+          duplicateComponents();
+          message.success('已复制组件');
+        }
+      }
+
+      // Escape - 取消选择
+      if (e.key === 'Escape') {
+        clearSelection();
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedIds, deleteComponent, undo, redo]);
+  }, [selectedIds, deleteComponent, undo, redo, selectAll, copyComponents, pasteComponents, duplicateComponents, clipboard, clearSelection]);
 
   // 拖拽传感器
   const sensors = useSensors(
@@ -197,11 +202,72 @@ function App() {
   };
 
   const handleDragOver = (event: DragOverEvent) => {
-    const { over } = event;
+    const { over, active } = event;
+    
     if (!over) {
       setOverIndex(undefined);
+      setDropTarget(null);
       return;
     }
+
+    const overId = String(over.id);
+    const activeId = String(active.id);
+
+    // 🔧 计算鼠标在目标区域的相对位置
+    const getDropPosition = (): 'before' | 'after' | 'inside' => {
+      const overRect = over.rect;
+      // @ts-ignore
+      const pointerY = event.activatorEvent?.clientY ?? 0;
+      // @ts-ignore
+      const currentY = pointerY + (event.delta?.y ?? 0);
+      
+      const topThreshold = overRect.top + overRect.height * 0.25; // 上 25%
+      const bottomThreshold = overRect.top + overRect.height * 0.75; // 下 25%
+      
+      if (currentY < topThreshold) {
+        return 'before';
+      } else if (currentY > bottomThreshold) {
+        return 'after';
+      }
+      return 'inside';
+    };
+
+    // 计算放置位置
+    if (overId.startsWith('container-')) {
+      // 放入容器 droppable 区域（容器内部空白区域）
+      const containerId = overId.replace('container-', '');
+      if (containerId !== activeId) {
+        setDropTarget({ targetId: containerId, position: 'inside' });
+      }
+    } else if (overId !== 'canvas-droppable') {
+      // 放置在某个组件上
+      const targetComponent = findComponentById(components, overId);
+      if (targetComponent) {
+        if (targetComponent.type === 'Container' && activeId !== overId) {
+          // 🔧 容器组件：根据鼠标位置判断是放入内部还是前后
+          const position = getDropPosition();
+          setDropTarget({ targetId: overId, position });
+        } else {
+          // 普通组件：判断上方还是下方
+          const overRect = over.rect;
+          // @ts-ignore
+          const pointerY = event.activatorEvent?.clientY ?? 0;
+          // @ts-ignore
+          const currentY = pointerY + (event.delta?.y ?? 0);
+          const midPoint = overRect.top + overRect.height / 2;
+          
+          if (currentY < midPoint) {
+            setDropTarget({ targetId: overId, position: 'before' });
+          } else {
+            setDropTarget({ targetId: overId, position: 'after' });
+          }
+        }
+      }
+    } else {
+      // 放入顶层画布
+      setDropTarget({ targetId: 'canvas', position: 'inside' });
+    }
+
     const index = components.findIndex((c) => c.id === over.id);
     if (index !== -1) {
       setOverIndex(index);
@@ -210,54 +276,128 @@ function App() {
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
+    const currentDropTarget = dropTarget; // 保存当前的 dropTarget
+    
     setActiveDragId(null);
     setActiveDragType(null);
     setOverIndex(undefined);
+    setDropTarget(null);
 
     if (!over) return;
 
     const overId = String(over.id);
     const activeId = String(active.id);
 
-    // 从 Sidebar 拖拽到 Canvas
+    // 使用辅助函数查找父容器信息
+    const getParentInfo = (targetId: string) => findParentInfo(components, targetId);
+    
+    // 使用辅助函数判断是否是后代
+    const checkIsDescendant = (parentId: string, childId: string) => 
+      isDescendant(components, parentId, childId);
+
+    // 从 Sidebar 拖拽新组件到 Canvas
     if (activeId.startsWith('new-')) {
       const type = activeId.replace('new-', '') as ComponentType;
 
+      // 放入容器内（container-xxx 格式的 droppable）
       if (overId.startsWith('container-')) {
         const containerId = overId.replace('container-', '');
         addComponent(type, containerId);
         return;
       }
 
-      let insertIndex: number | undefined = undefined;
-
       if (overId !== 'canvas-droppable') {
         const targetComponent = findComponentById(components, overId);
+        
+        // 如果目标是容器组件，根据 dropTarget 的位置决定操作
         if (targetComponent?.type === 'Container') {
-          addComponent(type, overId);
+          if (currentDropTarget?.position === 'inside') {
+            // 放入容器内部
+            addComponent(type, overId);
+          } else {
+            // before 或 after：作为容器的兄弟元素
+            const { parentId, index } = getParentInfo(overId);
+            if (index !== -1) {
+              const insertIndex = currentDropTarget?.position === 'before' ? index : index + 1;
+              addComponent(type, parentId ?? undefined, insertIndex);
+            } else {
+              addComponent(type, undefined);
+            }
+          }
           return;
         }
-        if (typeof overIndex === 'number') {
-          insertIndex = overIndex;
+        
+        // 🔧 根据 dropTarget 的位置决定插入位置
+        const { parentId, index } = getParentInfo(overId);
+        
+        if (index !== -1) {
+          const insertIndex = currentDropTarget?.position === 'before' ? index : index + 1;
+          addComponent(type, parentId ?? undefined, insertIndex);
+          return;
         }
       }
 
-      addComponent(type, undefined, insertIndex);
+      // 默认添加到末尾
+      addComponent(type, undefined);
       return;
     }
 
-    // 画布内排序
-    if (overId === 'canvas-droppable') return;
+    // ========== 画布内已有组件拖拽 ==========
+    const { moveComponent } = useStore.getState();
 
+    // 拖入 canvas-droppable（顶层画布区域）
+    if (overId === 'canvas-droppable') {
+      // 将组件移动到顶层
+      moveComponent(activeId, null);
+      return;
+    }
+
+    // 拖入容器的 droppable 区域
     if (overId.startsWith('container-')) {
       const containerId = overId.replace('container-', '');
-      const { moveComponent } = useStore.getState();
+      
+      // 防止容器拖入自身或其后代
+      if (containerId === activeId || checkIsDescendant(activeId, containerId)) {
+        message.warning('不能将容器拖入自身');
+        return;
+      }
+      
       moveComponent(activeId, containerId);
       return;
     }
 
-    if (activeId !== overId) {
-      reorderComponents(activeId, overId);
+    // 拖放到某个组件上
+    const targetComponent = findComponentById(components, overId);
+    if (targetComponent) {
+      // 如果目标是容器，根据 dropTarget 的位置决定操作
+      if (targetComponent.type === 'Container') {
+        // 防止容器拖入自身或其后代
+        if (overId === activeId || checkIsDescendant(activeId, overId)) {
+          message.warning('不能将容器拖入自身');
+          return;
+        }
+        
+        // 根据 dropTarget 判断是放入内部还是前后
+        if (currentDropTarget?.position === 'inside') {
+          moveComponent(activeId, overId);
+        } else {
+          // before 或 after：作为兄弟元素移动到目标容器的父级
+          const { parentId, index } = getParentInfo(overId);
+          if (index !== -1) {
+            const insertIndex = currentDropTarget?.position === 'before' ? index : index + 1;
+            // 使用 moveComponent 移动到目标的父容器，指定位置
+            moveComponent(activeId, parentId, insertIndex);
+          } else {
+            reorderComponents(activeId, overId);
+          }
+        }
+        return;
+      }
+      
+      // 否则进行排序
+      if (activeId !== overId) {
+        reorderComponents(activeId, overId);
+      }
     }
   };
 
@@ -454,9 +594,81 @@ function App() {
                 type="text"
               />
             </Tooltip>
+            <Divider type="vertical" style={{ height: 20, margin: '0 4px' }} />
+            {/* 🆕 编辑工具栏 */}
+            <Toolbar />
+            <Divider type="vertical" style={{ height: 20, margin: '0 4px' }} />
+            <Tooltip title="清空画布">
+              <Button
+                icon={<ClearOutlined />}
+                disabled={components.length === 0}
+                onClick={() => {
+                  Modal.confirm({
+                    title: '确认清空',
+                    content: '确定要清空画布吗？此操作可以通过撤销恢复。',
+                    okText: '清空',
+                    okType: 'danger',
+                    cancelText: '取消',
+                    onOk: () => {
+                      resetCanvas();
+                      message.success('画布已清空');
+                    },
+                  });
+                }}
+                type="text"
+                danger
+              />
+            </Tooltip>
+            <Tooltip title="快捷键">
+              <Button
+                icon={<QuestionCircleOutlined />}
+                onClick={() => setIsShortcutsOpen(true)}
+                type="text"
+              />
+            </Tooltip>
           </Space>
         </div>
         <Space>
+          <Dropdown
+            menu={{
+              items: formTemplates.map(template => ({
+                key: template.id,
+                label: (
+                  <div style={{ padding: '4px 0' }}>
+                    <span style={{ marginRight: 8 }}>{template.icon}</span>
+                    <strong>{template.name}</strong>
+                    <div style={{ fontSize: 12, color: '#666', marginTop: 2 }}>
+                      {template.description}
+                    </div>
+                  </div>
+                ),
+                onClick: () => {
+                  if (components.length > 0) {
+                    Modal.confirm({
+                      title: '使用模板',
+                      content: '使用模板将清空当前画布内容，是否继续？',
+                      onOk: () => {
+                        useStore.setState({
+                          components: template.getComponents(),
+                          selectedIds: [],
+                          history: { past: [], future: [] },
+                        });
+                        message.success(`已应用「${template.name}」模板`);
+                      },
+                    });
+                  } else {
+                    addComponents(template.getComponents());
+                    message.success(`已应用「${template.name}」模板`);
+                  }
+                },
+              })),
+            }}
+            placement="bottomRight"
+          >
+            <Button icon={<FileAddOutlined />}>
+              模板
+            </Button>
+          </Dropdown>
           <Button icon={<CodeOutlined />} onClick={handleShowJson}>
             JSON
           </Button>
@@ -537,6 +749,7 @@ function App() {
                   onSelect={(id, multi) => selectComponent(id, multi)}
                   activeDragId={activeDragId}
                   overIndex={overIndex}
+                  dropTarget={dropTarget}
                 />
 
                 {components.length === 0 && (
@@ -607,6 +820,12 @@ function App() {
           <FormRenderer components={components} />
         </div>
       </Modal>
+
+      {/* 🆕 快捷键面板 */}
+      <KeyboardShortcutsPanel
+        open={isShortcutsOpen}
+        onClose={() => setIsShortcutsOpen(false)}
+      />
     </Layout>
   );
 }

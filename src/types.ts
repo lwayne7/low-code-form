@@ -17,14 +17,47 @@ export interface ComponentOption {
   value: string;
 }
 
+// 🆕 校验规则定义
+export interface ValidationRule {
+  type: 'required' | 'minLength' | 'maxLength' | 'pattern' | 'min' | 'max' | 'email' | 'phone' | 'custom';
+  value?: string | number | boolean; // 规则的参数值
+  message: string; // 错误提示信息
+}
+
+// 🆕 响应式布局配置
+export interface ResponsiveConfig {
+  xs?: number;  // <576px 手机
+  sm?: number;  // ≥576px 平板
+  md?: number;  // ≥768px 小桌面
+  lg?: number;  // ≥992px 桌面
+  xl?: number;  // ≥1200px 大桌面
+  xxl?: number; // ≥1600px 超大屏
+}
+
+// 🆕 表单提交配置
+export interface FormSubmitConfig {
+  action?: string;           // 提交地址
+  method?: 'GET' | 'POST' | 'PUT' | 'DELETE';  // 请求方法
+  headers?: Record<string, string>;  // 请求头
+  successMessage?: string;   // 成功提示
+  errorMessage?: string;     // 失败提示
+  redirectUrl?: string;      // 成功后跳转
+  resetAfterSubmit?: boolean; // 提交后重置表单
+}
+
 // 2. 各组件的具体 Props 定义
 export interface BaseComponentProps {
   visibleOn?: string; // 显隐表达式
+  rules?: ValidationRule[]; // 🆕 校验规则数组
+  responsive?: ResponsiveConfig; // 🆕 响应式布局
+  colSpan?: number; // 占用列数 (1-24)
 }
 
 export interface ContainerProps extends BaseComponentProps {
   label?: string; // 容器标题（可选）
   direction?: 'vertical' | 'horizontal'; // 布局方向
+  columns?: number; // 🆕 列数 (用于栅格布局)
+  gutter?: number; // 🆕 列间距
 }
 
 export interface InputProps extends BaseComponentProps {
@@ -89,6 +122,8 @@ export interface TimePickerProps extends BaseComponentProps {
 export interface ButtonProps extends BaseComponentProps {
   content: string;
   type?: 'primary' | 'default' | 'dashed' | 'text' | 'link';
+  htmlType?: 'button' | 'submit' | 'reset'; // 🆕 按钮类型
+  submitConfig?: FormSubmitConfig; // 🆕 表单提交配置
 }
 
 // 3. 使用辨识联合类型 (Discriminated Union)

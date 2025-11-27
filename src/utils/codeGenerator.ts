@@ -1,20 +1,52 @@
-import type { ComponentSchema } from '../types';
+import type { ComponentSchema, ValidationRule } from '../types';
 
 /**
  * 代码生成器 - 将 ComponentSchema 转换为真实的 React 代码
  */
 
+// 🆕 将 ValidationRule 转换为 Ant Design Form rules
+const generateAntdRules = (rules?: ValidationRule[], label?: string): string => {
+  if (!rules || rules.length === 0) return '[]';
+  
+  const antdRules = rules.map(rule => {
+    switch (rule.type) {
+      case 'required':
+        return `{ required: true, message: '${rule.message || `请输入${label}`}' }`;
+      case 'minLength':
+        return `{ min: ${rule.value}, message: '${rule.message || `至少${rule.value}个字符`}' }`;
+      case 'maxLength':
+        return `{ max: ${rule.value}, message: '${rule.message || `最多${rule.value}个字符`}' }`;
+      case 'min':
+        return `{ type: 'number', min: ${rule.value}, message: '${rule.message || `不能小于${rule.value}`}' }`;
+      case 'max':
+        return `{ type: 'number', max: ${rule.value}, message: '${rule.message || `不能大于${rule.value}`}' }`;
+      case 'email':
+        return `{ type: 'email', message: '${rule.message || '请输入有效的邮箱地址'}' }`;
+      case 'pattern':
+        return `{ pattern: /${rule.value}/, message: '${rule.message || '格式不正确'}' }`;
+      case 'phone':
+        return `{ pattern: /^1[3-9]\\d{9}$/, message: '${rule.message || '请输入有效的手机号码'}' }`;
+      default:
+        return '';
+    }
+  }).filter(Boolean);
+  
+  return `[${antdRules.join(', ')}]`;
+};
+
 // 生成组件的 JSX 代码
 const generateComponentCode = (component: ComponentSchema, indent: number = 2): string => {
   const spaces = ' '.repeat(indent);
   const childIndent = indent + 2;
+  const label = 'label' in component.props ? component.props.label : '';
+  const rules = generateAntdRules(component.props.rules, label);
 
   switch (component.type) {
     case 'Input':
       return `${spaces}<Form.Item
 ${spaces}  name="${component.id}"
 ${spaces}  label="${component.props.label}"
-${spaces}  rules={[${component.props.required ? `{ required: true, message: '请输入${component.props.label}' }` : ''}]}
+${spaces}  rules={${rules}}
 ${spaces}>
 ${spaces}  <Input placeholder="${component.props.placeholder || ''}" />
 ${spaces}</Form.Item>`;
@@ -23,7 +55,7 @@ ${spaces}</Form.Item>`;
       return `${spaces}<Form.Item
 ${spaces}  name="${component.id}"
 ${spaces}  label="${component.props.label}"
-${spaces}  rules={[${component.props.required ? `{ required: true, message: '请输入${component.props.label}' }` : ''}]}
+${spaces}  rules={${rules}}
 ${spaces}>
 ${spaces}  <Input.TextArea placeholder="${component.props.placeholder || ''}" rows={${component.props.rows || 4}} />
 ${spaces}</Form.Item>`;
@@ -32,7 +64,7 @@ ${spaces}</Form.Item>`;
       return `${spaces}<Form.Item
 ${spaces}  name="${component.id}"
 ${spaces}  label="${component.props.label}"
-${spaces}  rules={[${component.props.required ? `{ required: true, message: '请输入${component.props.label}' }` : ''}]}
+${spaces}  rules={${rules}}
 ${spaces}>
 ${spaces}  <InputNumber placeholder="${component.props.placeholder || ''}" style={{ width: '100%' }} />
 ${spaces}</Form.Item>`;
@@ -44,7 +76,7 @@ ${spaces}</Form.Item>`;
       return `${spaces}<Form.Item
 ${spaces}  name="${component.id}"
 ${spaces}  label="${component.props.label}"
-${spaces}  rules={[${component.props.required ? `{ required: true, message: '请选择${component.props.label}' }` : ''}]}
+${spaces}  rules={${rules}}
 ${spaces}>
 ${spaces}  <Select placeholder="${component.props.placeholder || ''}" options={[${options}]} />
 ${spaces}</Form.Item>`;
@@ -57,7 +89,7 @@ ${spaces}</Form.Item>`;
       return `${spaces}<Form.Item
 ${spaces}  name="${component.id}"
 ${spaces}  label="${component.props.label}"
-${spaces}  rules={[${component.props.required ? `{ required: true, message: '请选择${component.props.label}' }` : ''}]}
+${spaces}  rules={${rules}}
 ${spaces}>
 ${spaces}  <Radio.Group options={[${options}]} />
 ${spaces}</Form.Item>`;
@@ -70,7 +102,7 @@ ${spaces}</Form.Item>`;
       return `${spaces}<Form.Item
 ${spaces}  name="${component.id}"
 ${spaces}  label="${component.props.label}"
-${spaces}  rules={[${component.props.required ? `{ required: true, message: '请选择${component.props.label}' }` : ''}]}
+${spaces}  rules={${rules}}
 ${spaces}>
 ${spaces}  <Checkbox.Group options={[${options}]} />
 ${spaces}</Form.Item>`;
@@ -89,7 +121,7 @@ ${spaces}</Form.Item>`;
       return `${spaces}<Form.Item
 ${spaces}  name="${component.id}"
 ${spaces}  label="${component.props.label}"
-${spaces}  rules={[${component.props.required ? `{ required: true, message: '请选择${component.props.label}' }` : ''}]}
+${spaces}  rules={${rules}}
 ${spaces}>
 ${spaces}  <DatePicker placeholder="${component.props.placeholder || ''}" style={{ width: '100%' }} />
 ${spaces}</Form.Item>`;
@@ -98,7 +130,7 @@ ${spaces}</Form.Item>`;
       return `${spaces}<Form.Item
 ${spaces}  name="${component.id}"
 ${spaces}  label="${component.props.label}"
-${spaces}  rules={[${component.props.required ? `{ required: true, message: '请选择${component.props.label}' }` : ''}]}
+${spaces}  rules={${rules}}
 ${spaces}>
 ${spaces}  <TimePicker placeholder="${component.props.placeholder || ''}" style={{ width: '100%' }} />
 ${spaces}</Form.Item>`;
@@ -259,16 +291,47 @@ export const generateJsonSchema = (components: ComponentSchema[]): object => {
         break;
     }
 
-    properties[component.id] = prop;
+    // 🆕 添加校验规则到 JSON Schema
+    if (component.props.rules) {
+      component.props.rules.forEach(rule => {
+        switch (rule.type) {
+          case 'required':
+            required.push(component.id);
+            break;
+          case 'minLength':
+            prop.minLength = rule.value;
+            break;
+          case 'maxLength':
+            prop.maxLength = rule.value;
+            break;
+          case 'min':
+            prop.minimum = rule.value;
+            break;
+          case 'max':
+            prop.maximum = rule.value;
+            break;
+          case 'pattern':
+            prop.pattern = rule.value;
+            break;
+          case 'email':
+            prop.format = 'email';
+            break;
+        }
+      });
+    }
 
-    if ('required' in component.props && component.props.required) {
+    // 兼容旧的 required 属性
+    if ('required' in component.props && component.props.required && !required.includes(component.id)) {
       required.push(component.id);
     }
+
+    properties[component.id] = prop;
   };
 
   components.forEach(processComponent);
 
   return {
+    $schema: 'http://json-schema.org/draft-07/schema#',
     type: 'object',
     properties,
     required,

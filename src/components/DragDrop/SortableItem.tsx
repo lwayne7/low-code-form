@@ -46,7 +46,7 @@ export const SortableItem = React.memo(function SortableItem(props: SortableItem
       className={className}
       data-component-id={props.id}
     >
-      {/* 拖拽手柄（仅在 useHandle 模式下显示） */}
+      {/* 拖拽手柄（仅在 useHandle 模式下显示）- 覆盖容器标题栏区域 */}
       {props.useHandle && (
         <div 
           className="drag-handle"
@@ -56,9 +56,11 @@ export const SortableItem = React.memo(function SortableItem(props: SortableItem
             top: 0,
             left: 0,
             right: 0,
-            height: 32,
+            height: 40, // 增加高度以覆盖整个 Card 标题栏
             cursor: 'grab',
-            zIndex: 5,
+            zIndex: 10,
+            // 添加透明背景以便点击事件能穿透
+            background: 'transparent',
           }}
         />
       )}

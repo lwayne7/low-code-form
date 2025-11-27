@@ -87,40 +87,190 @@ body {
 /* --- 画布主容器 --- */
 .canvas-paper {
   width: 100%;
-  max-width: 600px;
+  max-width: 680px;
   background: #fff;
   padding: 32px;
-  border-radius: 8px;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.06);
   /* 修复：最小高度撑满，且允许延伸 */
   min-height: 100%; 
   /* 如果内容少，自动撑满容器；如果内容多，自动延伸 */
   height: fit-content; 
-  border: 1px solid #f0f0f0;
+  border: 1px solid #e8e8e8;
 }
 
 /* 拖拽中的样式 */
 .sortable-item {
   background: white;
-  padding: 16px;
+  padding: 16px 20px;
   margin-bottom: 12px;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
+  border: 1px solid #e8eaed;
+  border-radius: 8px;
   cursor: grab;
   position: relative;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition: all 0.2s ease;
 }
 
 .sortable-item:hover {
-  border-color: #1677ff;
+  border-color: #91caff;
+  box-shadow: 0 2px 8px rgba(22, 119, 255, 0.08);
 }
 
 .sortable-item.selected {
   border: 2px solid #1677ff;
   background-color: #f0f7ff;
-  box-shadow: 0 0 0 2px rgba(22, 119, 255, 0.1);
+  box-shadow: 0 2px 12px rgba(22, 119, 255, 0.15);
 }
 
 .sortable-item:active {
   cursor: grabbing;
+}
+
+/* 🆕 表单项内组件样式优化 */
+.sortable-item .ant-form-item {
+  margin-bottom: 0;
+}
+
+.sortable-item .ant-input,
+.sortable-item .ant-input-number,
+.sortable-item .ant-select-selector,
+.sortable-item .ant-picker {
+  border-radius: 6px;
+}
+
+/* 🆕 容器组件样式 */
+.container-component {
+  border: 2px dashed #d9d9d9;
+  border-radius: 8px;
+  padding: 16px;
+  background: linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%);
+  min-height: 80px;
+  transition: all 0.2s ease;
+}
+
+.container-component:hover {
+  border-color: #91caff;
+  background: linear-gradient(135deg, #f0f7ff 0%, #e6f4ff 100%);
+}
+
+.container-component.selected {
+  border-color: #1677ff;
+  border-style: solid;
+  background: linear-gradient(135deg, #e6f4ff 0%, #d6e8ff 100%);
+}
+
+.container-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px dashed #d9d9d9;
+  color: #666;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* 🆕 空状态提示 */
+.empty-drop-hint {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  color: #999;
+  background: linear-gradient(135deg, #fafafa 0%, #f0f0f0 100%);
+  border: 2px dashed #d9d9d9;
+  border-radius: 8px;
+  text-align: center;
+  transition: all 0.2s ease;
+}
+
+.empty-drop-hint:hover {
+  border-color: #91caff;
+  background: linear-gradient(135deg, #f0f7ff 0%, #e6f4ff 100%);
+}
+
+.empty-drop-hint-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.empty-drop-hint-text {
+  font-size: 14px;
+  color: #666;
+}
+
+/* 🆕 拖拽放置区域激活状态 */
+.drop-zone-active {
+  background: #e6f4ff !important;
+  border-color: #1677ff !important;
+}
+
+/* 🆕 拖拽中的组件透明效果 */
+.sortable-item.dragging {
+  opacity: 0.5;
+  border-style: dashed;
+}
+
+/* 🆕 校验错误样式 */
+.sortable-item.has-error {
+  border-color: #ff4d4f;
+  background-color: #fff2f0;
+}
+
+.sortable-item.has-error:hover {
+  border-color: #ff7875;
+}
+
+/* 🆕 拖拽占位符样式 */
+.drag-placeholder {
+  background: linear-gradient(135deg, #e6f4ff 0%, #d6e8ff 100%);
+  border: 2px dashed #1677ff;
+  border-radius: 8px;
+  min-height: 60px;
+  margin-bottom: 12px;
+}
+
+/* 🆕 响应式调整 */
+@media (max-width: 1400px) {
+  .canvas-paper {
+    max-width: 580px;
+    padding: 24px;
+  }
+}
+
+@media (max-width: 1200px) {
+  .component-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .canvas-paper {
+    max-width: 500px;
+  }
+}
+
+/* 🆕 放置指示器动画 */
+@keyframes dropIndicatorPulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scaleX(1.01);
+  }
+}
+
+/* 🆕 拖拽 Overlay 样式 */
+.drag-overlay {
+  opacity: 0.9;
+  transform: rotate(2deg);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+/* 🆕 拖拽时光标样式 */
+.dragging-cursor {
+  cursor: grabbing !important;
 }
