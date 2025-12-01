@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { message } from 'antd';
 import { useStore } from '../store';
+import { findComponentById } from '../utils/componentHelpers';
 
 /**
  * 键盘快捷键 Hook
@@ -10,6 +11,7 @@ export function useKeyboardShortcuts() {
   const {
     selectedIds,
     clipboard,
+    components,
     deleteComponent,
     undo,
     redo,
@@ -20,6 +22,12 @@ export function useKeyboardShortcuts() {
     clearSelection,
   } = useStore();
 
+  // 检查是否有锁定的组件
+  const hasLockedComponent = selectedIds.some(id => {
+    const comp = findComponentById(components, id);
+    return comp?.props.locked === true;
+  });
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const activeTag = document.activeElement?.tagName.toLowerCase();
@@ -28,7 +36,11 @@ export function useKeyboardShortcuts() {
       // Delete/Backspace - 删除选中组件
       if ((e.key === 'Delete' || e.key === 'Backspace') && selectedIds.length > 0) {
         if (!isInputFocused) {
-          deleteComponent(selectedIds);
+          if (hasLockedComponent) {
+            message.warning('无法删除锁定的组件');
+          } else {
+            deleteComponent(selectedIds);
+          }
         }
       }
 
@@ -85,6 +97,8 @@ export function useKeyboardShortcuts() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [
     selectedIds,
+    components,
+    hasLockedComponent,
     deleteComponent,
     undo,
     redo,

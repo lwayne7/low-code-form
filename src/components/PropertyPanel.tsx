@@ -5,6 +5,12 @@ import type { ComponentSchema, ValidationRule } from '../types';
 
 const { Title, Text } = Typography;
 
+// 辅助函数：安全获取组件属性
+const getComponentProp = <T,>(component: ComponentSchema, key: string, defaultValue: T): T => {
+  const props = component.props as Record<string, unknown>;
+  return (props[key] as T) ?? defaultValue;
+};
+
 interface PropertyPanelProps {
   selectedIds: string[];
   selectedComponent: ComponentSchema | undefined;
@@ -18,8 +24,7 @@ const OptionsEditor: React.FC<{
   component: ComponentSchema;
   updateComponentProps: (id: string, newProps: Partial<ComponentSchema['props']>) => void;
 }> = ({ component, updateComponentProps }) => {
-  // @ts-ignore
-  const options = component.props.options || [];
+  const options = getComponentProp<Array<{ label: string; value: string }>>(component, 'options', []);
   
   // 解析选项到数组形式方便编辑
   const handleAddOption = () => {
@@ -186,8 +191,7 @@ export const PropertyPanel: React.FC<PropertyPanelProps> = ({
           {!['Container', 'Button'].includes(selectedComponent.type) && (
             <Form.Item label="标题 (Label)">
               <Input
-                // @ts-ignore
-                value={selectedComponent.props.label || ''}
+                value={getComponentProp(selectedComponent, 'label', '')}
                 onChange={(e) => updateComponentProps(selectedComponent.id, { label: e.target.value })}
               />
             </Form.Item>
@@ -199,8 +203,7 @@ export const PropertyPanel: React.FC<PropertyPanelProps> = ({
           ) && (
             <Form.Item label="占位符">
               <Input
-                // @ts-ignore
-                value={selectedComponent.props.placeholder || ''}
+                value={getComponentProp(selectedComponent, 'placeholder', '')}
                 onChange={(e) => updateComponentProps(selectedComponent.id, { placeholder: e.target.value })}
                 placeholder="请输入..."
               />
@@ -211,16 +214,14 @@ export const PropertyPanel: React.FC<PropertyPanelProps> = ({
           {!['Container', 'Button'].includes(selectedComponent.type) && (
             <Form.Item label="必填">
               <Button
-                type={'required' in selectedComponent.props && selectedComponent.props.required ? 'primary' : 'default'}
+                type={getComponentProp(selectedComponent, 'required', false) ? 'primary' : 'default'}
                 size="small"
                 onClick={() => {
-                  // @ts-ignore
-                  const current = selectedComponent.props.required || false;
+                  const current = getComponentProp(selectedComponent, 'required', false);
                   updateComponentProps(selectedComponent.id, { required: !current });
                 }}
               >
-                {/* @ts-ignore */}
-                {selectedComponent.props.required ? '✓ 必填' : '非必填'}
+                {getComponentProp(selectedComponent, 'required', false) ? '✓ 必填' : '非必填'}
               </Button>
             </Form.Item>
           )}
@@ -377,8 +378,7 @@ export const PropertyPanel: React.FC<PropertyPanelProps> = ({
               
               <Form.Item label="占用列数" tooltip="组件在父容器栅格中占用的列数 (1-24)">
                 <Select
-                  // @ts-ignore
-                  value={selectedComponent.props.colSpan || 24}
+                  value={getComponentProp(selectedComponent, 'colSpan', 24)}
                   onChange={(val) => updateComponentProps(selectedComponent.id, { colSpan: val })}
                   options={[
                     { label: '满行 (24)', value: 24 },
@@ -399,11 +399,9 @@ export const PropertyPanel: React.FC<PropertyPanelProps> = ({
                       size="small"
                       min={1}
                       max={24}
-                      // @ts-ignore
-                      value={selectedComponent.props.responsive?.xs || 24}
+                      value={getComponentProp<{ xs?: number }>(selectedComponent, 'responsive', {})?.xs ?? 24}
                       onChange={(val) => updateComponentProps(selectedComponent.id, { 
-                        // @ts-ignore
-                        responsive: { ...selectedComponent.props.responsive, xs: val } 
+                        responsive: { ...getComponentProp(selectedComponent, 'responsive', {}), xs: val ?? undefined } 
                       })}
                       style={{ width: '100%' }}
                     />
@@ -414,11 +412,9 @@ export const PropertyPanel: React.FC<PropertyPanelProps> = ({
                       size="small"
                       min={1}
                       max={24}
-                      // @ts-ignore
-                      value={selectedComponent.props.responsive?.sm || 24}
+                      value={getComponentProp<{ sm?: number }>(selectedComponent, 'responsive', {})?.sm ?? 24}
                       onChange={(val) => updateComponentProps(selectedComponent.id, { 
-                        // @ts-ignore
-                        responsive: { ...selectedComponent.props.responsive, sm: val } 
+                        responsive: { ...getComponentProp(selectedComponent, 'responsive', {}), sm: val ?? undefined } 
                       })}
                       style={{ width: '100%' }}
                     />
@@ -429,11 +425,9 @@ export const PropertyPanel: React.FC<PropertyPanelProps> = ({
                       size="small"
                       min={1}
                       max={24}
-                      // @ts-ignore
-                      value={selectedComponent.props.responsive?.md}
+                      value={getComponentProp<{ md?: number }>(selectedComponent, 'responsive', {})?.md}
                       onChange={(val) => updateComponentProps(selectedComponent.id, { 
-                        // @ts-ignore
-                        responsive: { ...selectedComponent.props.responsive, md: val } 
+                        responsive: { ...getComponentProp(selectedComponent, 'responsive', {}), md: val ?? undefined } 
                       })}
                       style={{ width: '100%' }}
                     />
@@ -444,11 +438,9 @@ export const PropertyPanel: React.FC<PropertyPanelProps> = ({
                       size="small"
                       min={1}
                       max={24}
-                      // @ts-ignore
-                      value={selectedComponent.props.responsive?.lg}
+                      value={getComponentProp<{ lg?: number }>(selectedComponent, 'responsive', {})?.lg}
                       onChange={(val) => updateComponentProps(selectedComponent.id, { 
-                        // @ts-ignore
-                        responsive: { ...selectedComponent.props.responsive, lg: val } 
+                        responsive: { ...getComponentProp(selectedComponent, 'responsive', {}), lg: val ?? undefined } 
                       })}
                       style={{ width: '100%' }}
                     />
@@ -466,8 +458,7 @@ export const PropertyPanel: React.FC<PropertyPanelProps> = ({
             tooltip="使用 JavaScript 表达式，通过 values['组件ID'] 访问其他组件的值"
           >
             <Input.TextArea
-              // @ts-ignore
-              value={selectedComponent.props.visibleOn || ''}
+              value={getComponentProp(selectedComponent, 'visibleOn', '')}
               onChange={(e) => updateComponentProps(selectedComponent.id, { visibleOn: e.target.value })}
               placeholder={`例如：values['${allComponents[0]?.id || 'xxx'}'] === 'show'`}
               rows={3}
@@ -484,8 +475,7 @@ export const PropertyPanel: React.FC<PropertyPanelProps> = ({
                       key={c.id}
                       style={{ cursor: 'pointer', fontSize: 11 }}
                       onClick={() => {
-                        // @ts-ignore
-                        const current = selectedComponent.props.visibleOn || '';
+                        const current = getComponentProp(selectedComponent, 'visibleOn', '');
                         updateComponentProps(selectedComponent.id, {
                           visibleOn: current ? current : `values['${c.id}']`,
                         });

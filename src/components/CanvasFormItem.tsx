@@ -207,6 +207,18 @@ export const CanvasFormItem: React.FC<CanvasFormItemProps> = React.memo(({ compo
     </div>
   );
 }, (prevProps, nextProps) => {
-  // 🆕 自定义比较函数，只在 component 引用变化时重渲染
-  return prevProps.component === nextProps.component;
+  // 🆕 自定义比较函数：比较 component 的 id 和 props
+  // 使用浅比较 props 避免不必要的重渲染
+  if (prevProps.component.id !== nextProps.component.id) return false;
+  if (prevProps.component.type !== nextProps.component.type) return false;
+  
+  // 比较 props 的关键字段
+  const prevP = prevProps.component.props;
+  const nextP = nextProps.component.props;
+  
+  return (
+    prevP.visibleOn === nextP.visibleOn &&
+    prevP.locked === nextP.locked &&
+    JSON.stringify(prevP.rules) === JSON.stringify(nextP.rules)
+  );
 });

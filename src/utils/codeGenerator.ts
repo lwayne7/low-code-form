@@ -175,17 +175,35 @@ ${spaces})}`;
   return baseCode;
 };
 
+// 递归检测是否包含某类型组件
+const hasComponentType = (components: ComponentSchema[], type: string): boolean => {
+  for (const c of components) {
+    if (c.type === type) return true;
+    if (c.children && hasComponentType(c.children, type)) return true;
+  }
+  return false;
+};
+
+// 递归检测是否有 visibleOn 条件
+const hasVisibleOnCondition = (components: ComponentSchema[]): boolean => {
+  for (const c of components) {
+    if (c.props.visibleOn) return true;
+    if (c.children && hasVisibleOnCondition(c.children)) return true;
+  }
+  return false;
+};
+
 // 生成完整的 React 组件代码
 export const generateFullCode = (components: ComponentSchema[]): string => {
-  const hasContainer = components.some((c) => c.type === 'Container' || c.children?.length);
-  const hasDatePicker = components.some((c) => c.type === 'DatePicker');
-  const hasTimePicker = components.some((c) => c.type === 'TimePicker');
-  const hasSwitch = components.some((c) => c.type === 'Switch');
-  const hasSelect = components.some((c) => c.type === 'Select');
-  const hasRadio = components.some((c) => c.type === 'Radio');
-  const hasCheckbox = components.some((c) => c.type === 'Checkbox');
-  const hasInputNumber = components.some((c) => c.type === 'InputNumber');
-  const hasVisibleOn = components.some((c) => c.props.visibleOn);
+  const hasContainer = hasComponentType(components, 'Container');
+  const hasDatePicker = hasComponentType(components, 'DatePicker');
+  const hasTimePicker = hasComponentType(components, 'TimePicker');
+  const hasSwitch = hasComponentType(components, 'Switch');
+  const hasSelect = hasComponentType(components, 'Select');
+  const hasRadio = hasComponentType(components, 'Radio');
+  const hasCheckbox = hasComponentType(components, 'Checkbox');
+  const hasInputNumber = hasComponentType(components, 'InputNumber');
+  const hasVisibleOn = hasVisibleOnCondition(components);
 
   // 构建导入列表
   const antdImports = ['Form', 'Input', 'Button'];

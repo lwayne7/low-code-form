@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef } from 'react';
 import { Input, Button, Modal, Layout, Typography, Space, Divider, Tooltip, message, Dropdown, Drawer, FloatButton } from 'antd';
 import {
   UndoOutlined,
@@ -27,6 +27,9 @@ import './App.css';
 
 // Components
 import { FormRenderer, PropertyPanel, DraggableSidebarItem, SortableList, KeyboardShortcutsPanel, Toolbar, HistoryPanel, FormStats } from './components';
+
+// Hooks
+import { useKeyboardShortcuts } from './hooks';
 
 // Utils
 import { generateFullCode, generateJsonSchema, customCollisionDetection } from './utils';
@@ -124,15 +127,10 @@ function App() {
     addComponent,
     addComponents,
     selectComponent,
-    selectAll,
     clearSelection,
     updateComponentProps,
     deleteComponent,
     reorderComponents,
-    copyComponents,
-    pasteComponents,
-    duplicateComponents,
-    clipboard,
     history,
     undo,
     redo,
@@ -172,71 +170,8 @@ function App() {
   const primarySelectedId = selectedIds[selectedIds.length - 1];
   const selectedComponent = primarySelectedId ? findComponentById(components, primarySelectedId) : undefined;
 
-  // 键盘快捷键
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      const activeTag = document.activeElement?.tagName.toLowerCase();
-      const isInputFocused = activeTag === 'input' || activeTag === 'textarea';
-
-      // Delete/Backspace - 删除选中组件
-      if ((e.key === 'Delete' || e.key === 'Backspace') && selectedIds.length > 0) {
-        if (!isInputFocused) {
-          deleteComponent(selectedIds);
-        }
-      }
-
-      // Cmd/Ctrl + Z - 撤销
-      if ((e.metaKey || e.ctrlKey) && e.key === 'z' && !e.shiftKey) {
-        e.preventDefault();
-        undo();
-      }
-
-      // Cmd/Ctrl + Shift + Z - 重做
-      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'z') {
-        e.preventDefault();
-        redo();
-      }
-
-      // Cmd/Ctrl + A - 全选
-      if ((e.metaKey || e.ctrlKey) && e.key === 'a' && !isInputFocused) {
-        e.preventDefault();
-        selectAll();
-      }
-
-      // Cmd/Ctrl + C - 复制
-      if ((e.metaKey || e.ctrlKey) && e.key === 'c' && !isInputFocused) {
-        if (selectedIds.length > 0) {
-          copyComponents();
-          message.success(`已复制 ${selectedIds.length} 个组件`);
-        }
-      }
-
-      // Cmd/Ctrl + V - 粘贴
-      if ((e.metaKey || e.ctrlKey) && e.key === 'v' && !isInputFocused) {
-        if (clipboard.length > 0) {
-          pasteComponents();
-          message.success(`已粘贴 ${clipboard.length} 个组件`);
-        }
-      }
-
-      // Cmd/Ctrl + D - 复制组件
-      if ((e.metaKey || e.ctrlKey) && e.key === 'd') {
-        if (selectedIds.length > 0 && !isInputFocused) {
-          e.preventDefault();
-          duplicateComponents();
-          message.success('已复制组件');
-        }
-      }
-
-      // Escape - 取消选择
-      if (e.key === 'Escape') {
-        clearSelection();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedIds, deleteComponent, undo, redo, selectAll, copyComponents, pasteComponents, duplicateComponents, clipboard, clearSelection]);
+  // 使用键盘快捷键 Hook
+  useKeyboardShortcuts();
 
   // 拖拽传感器
   const sensors = useSensors(
