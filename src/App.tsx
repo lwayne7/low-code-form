@@ -19,6 +19,8 @@ import {
   SettingOutlined,
   FullscreenOutlined,
   FullscreenExitOutlined,
+  SaveOutlined,
+  DeleteOutlined,
 } from '@ant-design/icons';
 import { useStore } from './store';
 import './App.css';
@@ -103,6 +105,10 @@ function App() {
     undo,
     redo,
     resetCanvas,
+    customTemplates,
+    saveAsTemplate,
+    deleteTemplate,
+    importComponents,
   } = useStore();
 
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
@@ -659,37 +665,136 @@ function App() {
         <Space wrap size="small">
           <Dropdown
             menu={{
-              items: formTemplates.map(template => ({
-                key: template.id,
-                label: (
-                  <div style={{ padding: '4px 0' }}>
-                    <span style={{ marginRight: 8 }}>{template.icon}</span>
-                    <strong>{template.name}</strong>
-                    <div style={{ fontSize: 12, color: '#666', marginTop: 2 }}>
-                      {template.description}
-                    </div>
-                  </div>
-                ),
-                onClick: () => {
-                  if (components.length > 0) {
-                    Modal.confirm({
-                      title: '使用模板',
-                      content: '使用模板将清空当前画布内容，是否继续？',
-                      onOk: () => {
-                        useStore.setState({
-                          components: template.getComponents(),
-                          selectedIds: [],
-                          history: { past: [], future: [] },
+              items: [
+                // 内置模板
+                {
+                  key: 'builtin',
+                  type: 'group',
+                  label: '📦 内置模板',
+                  children: formTemplates.map(template => ({
+                    key: template.id,
+                    label: (
+                      <div style={{ padding: '4px 0' }}>
+                        <span style={{ marginRight: 8 }}>{template.icon}</span>
+                        <strong>{template.name}</strong>
+                        <div style={{ fontSize: 12, color: '#666', marginTop: 2 }}>
+                          {template.description}
+                        </div>
+                      </div>
+                    ),
+                    onClick: () => {
+                      if (components.length > 0) {
+                        Modal.confirm({
+                          title: '使用模板',
+                          content: '使用模板将清空当前画布内容，是否继续？',
+                          onOk: () => {
+                            useStore.setState({
+                              components: template.getComponents(),
+                              selectedIds: [],
+                              history: { past: [], future: [] },
+                            });
+                            message.success(`已应用「${template.name}」模板`);
+                          },
                         });
+                      } else {
+                        addComponents(template.getComponents());
                         message.success(`已应用「${template.name}」模板`);
+                      }
+                    },
+                  })),
+                },
+                // 自定义模板
+                ...(customTemplates.length > 0 ? [
+                  { type: 'divider' as const },
+                  {
+                    key: 'custom',
+                    type: 'group' as const,
+                    label: '⭐ 我的模板',
+                    children: customTemplates.map(template => ({
+                      key: template.id,
+                      label: (
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 0' }}>
+                          <div>
+                            <strong>{template.name}</strong>
+                            {template.description && (
+                              <div style={{ fontSize: 12, color: '#666', marginTop: 2 }}>
+                                {template.description}
+                              </div>
+                            )}
+                          </div>
+                          <DeleteOutlined 
+                            style={{ color: '#ff4d4f', marginLeft: 8 }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              Modal.confirm({
+                                title: '删除模板',
+                                content: `确定删除「${template.name}」模板吗？`,
+                                okType: 'danger',
+                                onOk: () => {
+                                  deleteTemplate(template.id);
+                                  message.success('模板已删除');
+                                },
+                              });
+                            }}
+                          />
+                        </div>
+                      ),
+                      onClick: () => {
+                        if (components.length > 0) {
+                          Modal.confirm({
+                            title: '使用模板',
+                            content: '使用模板将清空当前画布内容，是否继续？',
+                            onOk: () => {
+                              importComponents(template.components);
+                              message.success(`已应用「${template.name}」模板`);
+                            },
+                          });
+                        } else {
+                          importComponents(template.components);
+                          message.success(`已应用「${template.name}」模板`);
+                        }
+                      },
+                    })),
+                  },
+                ] : []),
+                // 保存当前为模板
+                { type: 'divider' as const },
+                {
+                  key: 'save',
+                  icon: <SaveOutlined />,
+                  label: '保存为模板',
+                  disabled: components.length === 0,
+                  onClick: () => {
+                    Modal.confirm({
+                      title: '保存为模板',
+                      content: (
+                        <div style={{ marginTop: 16 }}>
+                          <Input 
+                            id="template-name-input"
+                            placeholder="请输入模板名称" 
+                            style={{ marginBottom: 8 }}
+                          />
+                          <Input.TextArea 
+                            id="template-desc-input"
+                            placeholder="模板描述（可选）" 
+                            rows={2}
+                          />
+                        </div>
+                      ),
+                      onOk: () => {
+                        const name = (document.getElementById('template-name-input') as HTMLInputElement)?.value;
+                        const desc = (document.getElementById('template-desc-input') as HTMLTextAreaElement)?.value;
+                        if (!name?.trim()) {
+                          message.error('请输入模板名称');
+                          return Promise.reject();
+                        }
+                        saveAsTemplate(name.trim(), desc?.trim());
+                        message.success('模板已保存');
                       },
                     });
-                  } else {
-                    addComponents(template.getComponents());
-                    message.success(`已应用「${template.name}」模板`);
-                  }
+                  },
                 },
-              })),
+              ],
             }}
             placement="bottomRight"
           >
