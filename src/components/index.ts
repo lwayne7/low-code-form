@@ -6,4 +6,4 @@ export { DraggableSidebarItem } from './Sidebar';
 export { SortableList, SortableItem } from './DragDrop';
 
 // Common components
-export { KeyboardShortcutsPanel, Toolbar, HistoryPanel, ContextMenu } from './common';
+export { KeyboardShortcutsPanel, Toolbar, HistoryPanel, ContextMenu, FormStats } from './common';

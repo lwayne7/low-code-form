@@ -17,12 +17,14 @@ import {
   DesktopOutlined,
   HistoryOutlined,
   SettingOutlined,
+  FullscreenOutlined,
+  FullscreenExitOutlined,
 } from '@ant-design/icons';
 import { useStore } from './store';
 import './App.css';
 
 // Components
-import { FormRenderer, PropertyPanel, DraggableSidebarItem, SortableList, KeyboardShortcutsPanel, Toolbar, HistoryPanel } from './components';
+import { FormRenderer, PropertyPanel, DraggableSidebarItem, SortableList, KeyboardShortcutsPanel, Toolbar, HistoryPanel, FormStats } from './components';
 
 // Utils
 import { generateFullCode, generateJsonSchema, customCollisionDetection } from './utils';
@@ -104,6 +106,7 @@ function App() {
   } = useStore();
 
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false); // 🆕 全屏预览
   const [previewDevice, setPreviewDevice] = useState<'mobile' | 'tablet' | 'desktop'>('desktop'); // 🆕 预览设备
   const [isShortcutsOpen, setIsShortcutsOpen] = useState(false); // 🆕 快捷键面板
   const [isHistoryOpen, setIsHistoryOpen] = useState(false); // 🆕 历史面板
@@ -620,6 +623,9 @@ function App() {
             {/* 🆕 编辑工具栏 */}
             <Toolbar />
             <Divider type="vertical" style={{ height: 20, margin: '0 4px' }} />
+            {/* 🆕 表单统计 */}
+            <FormStats />
+            <Divider type="vertical" style={{ height: 20, margin: '0 4px' }} />
             <Tooltip title="清空画布">
               <Button
                 icon={<ClearOutlined />}
@@ -881,15 +887,27 @@ function App() {
                   onClick={() => setPreviewDevice('desktop')}
                 />
               </Tooltip>
+              <Divider type="vertical" style={{ height: 16 }} />
+              <Tooltip title={isFullscreen ? "退出全屏" : "全屏预览"}>
+                <Button
+                  type="text"
+                  icon={isFullscreen ? <FullscreenExitOutlined /> : <FullscreenOutlined />}
+                  size="small"
+                  onClick={() => setIsFullscreen(!isFullscreen)}
+                />
+              </Tooltip>
             </Space>
           </div>
         }
         open={isPreviewOpen}
-        onCancel={() => setIsPreviewOpen(false)}
+        onCancel={() => { setIsPreviewOpen(false); setIsFullscreen(false); }}
         footer={null}
-        width={previewDevice === 'mobile' ? 435 : previewDevice === 'tablet' ? 830 : 700}
-        centered
-        styles={{ body: { padding: 0 } }}
+        width={isFullscreen ? '100vw' : (previewDevice === 'mobile' ? 435 : previewDevice === 'tablet' ? 830 : 700)}
+        centered={!isFullscreen}
+        style={isFullscreen ? { top: 0, maxWidth: '100vw', padding: 0 } : undefined}
+        styles={{ 
+          body: { padding: 0, height: isFullscreen ? 'calc(100vh - 55px)' : 'auto', overflow: 'auto' },
+        }}
       >
         <div 
           style={{ 
