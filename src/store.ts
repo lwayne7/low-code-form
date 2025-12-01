@@ -9,6 +9,9 @@ interface HistoryState {
   future: ComponentSchema[][];
 }
 
+/** 历史记录最大条数 */
+const MAX_HISTORY_LENGTH = 50;
+
 // 🆕 校验错误类型
 interface ValidationError {
   componentId: string;
@@ -130,6 +133,21 @@ const reorderInList = (list: ComponentSchema[], activeId: string, overId: string
   });
 };
 
+/**
+ * 创建新的历史记录（限制最大长度）
+ * @param pastHistory 现有历史记录
+ * @param currentState 当前状态
+ * @returns 新的历史记录
+ */
+const createNewPast = (pastHistory: ComponentSchema[][], currentState: ComponentSchema[]): ComponentSchema[][] => {
+  const newPast = [...pastHistory, currentState];
+  // 限制历史记录长度，防止内存溢出
+  if (newPast.length > MAX_HISTORY_LENGTH) {
+    return newPast.slice(-MAX_HISTORY_LENGTH);
+  }
+  return newPast;
+};
+
 // 🆕 校验单个值
 const validateValue = (value: any, rules: ValidationRule[] | undefined, label: string): string | null => {
   if (!rules || rules.length === 0) return null;
@@ -244,7 +262,7 @@ export const useStore = create<State>()(
 
       // ⚠️ 修改签名：增加 index 参数
       addComponent: (type, parentId, index) => set((state) => {
-        const newPast = [...state.history.past, state.components];
+        const newPast = createNewPast(state.history.past, state.components);
         
         let newComponent: ComponentSchema;
         
@@ -306,7 +324,7 @@ export const useStore = create<State>()(
       })),
 
       updateComponentProps: (id, newProps) => set((state) => {
-        const newPast = [...state.history.past, state.components];
+        const newPast = createNewPast(state.history.past, state.components);
         return {
           components: updateComponentInTree(state.components, id, newProps),
           history: {
@@ -320,7 +338,7 @@ export const useStore = create<State>()(
         const idsToDelete = Array.isArray(ids) ? ids : [ids];
         if (idsToDelete.length === 0) return {};
 
-        const newPast = [...state.history.past, state.components];
+        const newPast = createNewPast(state.history.past, state.components);
         return {
           components: removeComponents(state.components, idsToDelete),
           selectedIds: state.selectedIds.filter(sid => !idsToDelete.includes(sid)),
@@ -332,7 +350,7 @@ export const useStore = create<State>()(
       }),
 
       reorderComponents: (activeId, overId) => set((state) => {
-        const newPast = [...state.history.past, state.components];
+        const newPast = createNewPast(state.history.past, state.components);
         return {
           components: reorderInList(state.components, activeId, overId),
           history: {
@@ -344,7 +362,7 @@ export const useStore = create<State>()(
 
       // 移动组件到容器内（支持跨容器移动）
       moveComponent: (activeId, targetContainerId, index) => set((state) => {
-        const newPast = [...state.history.past, state.components];
+        const newPast = createNewPast(state.history.past, state.components);
         
         // 1. 找到要移动的组件
         const findAndRemove = (list: ComponentSchema[], id: string): { removed: ComponentSchema | null, rest: ComponentSchema[] } => {
@@ -405,7 +423,7 @@ export const useStore = create<State>()(
 
       // 🆕 批量添加组件
       addComponents: (newComponents: ComponentSchema[]) => set((state) => {
-        const newPast = [...state.history.past, state.components];
+        const newPast = createNewPast(state.history.past, state.components);
         return {
           components: [...state.components, ...newComponents],
           selectedIds: newComponents.map(c => c.id),
@@ -425,7 +443,7 @@ export const useStore = create<State>()(
       pasteComponents: () => set((state) => {
         if (state.clipboard.length === 0) return {};
         
-        const newPast = [...state.history.past, state.components];
+        const newPast = createNewPast(state.history.past, state.components);
         const clonedComponents = state.clipboard.map(cloneComponentWithNewId);
         
         return {
@@ -439,7 +457,7 @@ export const useStore = create<State>()(
       duplicateComponents: () => set((state) => {
         if (state.selectedIds.length === 0) return {};
         
-        const newPast = [...state.history.past, state.components];
+        const newPast = createNewPast(state.history.past, state.components);
         const componentsToDuplicate = state.selectedIds
           .map(id => findComponentById(state.components, id))
           .filter((c): c is ComponentSchema => c !== null);
@@ -457,7 +475,7 @@ export const useStore = create<State>()(
       cutComponents: () => set((state) => {
         if (state.selectedIds.length === 0) return {};
         
-        const newPast = [...state.history.past, state.components];
+        const newPast = createNewPast(state.history.past, state.components);
         const componentsToCut = state.selectedIds
           .map(id => findComponentById(state.components, id))
           .filter((c): c is ComponentSchema => c !== null);
@@ -475,7 +493,7 @@ export const useStore = create<State>()(
 
       // 🆕 在列表内移动组件（上/下/顶/底）
       moveComponentInList: (id: string, direction: 'up' | 'down' | 'top' | 'bottom') => set((state) => {
-        const newPast = [...state.history.past, state.components];
+        const newPast = createNewPast(state.history.past, state.components);
         
         // 递归在组件树中移动
         const moveInList = (components: ComponentSchema[]): ComponentSchema[] => {
@@ -650,7 +668,7 @@ export const useStore = create<State>()(
             if (c.id === id) {
               return { 
                 ...c, 
-                props: { ...c.props, locked: !(c.props as any).locked } 
+                props: { ...c.props, locked: !c.props.locked } 
               } as typeof c;
             }
             if (c.children) {

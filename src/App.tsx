@@ -57,6 +57,38 @@ import type { ComponentType } from './types';
 const { Header, Sider, Content } = Layout;
 const { Title } = Typography;
 
+// ============ 常量定义 ============
+/** 容器边缘区域比例（用于判断 before/after/inside） */
+const CONTAINER_EDGE_RATIO = 0.2;
+/** 滞后区比例（用于防止抖动） */
+const HYSTERESIS_RATIO = 0.05;
+/** 非容器组件的滞后区比例 */
+const ITEM_HYSTERESIS_RATIO = 0.15;
+
+// ============ 辅助函数 ============
+
+/** 解析容器 ID（从 container-xxx 或容器组件 ID 获取） */
+const parseContainerId = (
+  id: string, 
+  findById: (id: string) => ReturnType<typeof findComponentById>
+): string | null => {
+  if (id.startsWith('container-')) {
+    return id.replace('container-', '');
+  }
+  const comp = findById(id);
+  if (comp?.type === 'Container') {
+    return id;
+  }
+  return null;
+};
+
+/** 从拖拽事件中获取当前指针 Y 坐标 */
+const getPointerY = (event: DragOverEvent): number => {
+  const activatorEvent = event.activatorEvent as MouseEvent | undefined;
+  const pointerY = activatorEvent?.clientY ?? 0;
+  return pointerY + (event.delta?.y ?? 0);
+};
+
 // 侧边栏 Overlay 组件
 const SidebarItemOverlay = ({ type }: { type: ComponentType }) => (
   <div
@@ -232,60 +264,93 @@ function App() {
 
     const overId = String(over.id);
     const activeId = String(active.id);
+    const findById = (id: string) => findComponentById(components, id);
 
-    // 🔧 计算鼠标在目标区域的相对位置
-    const getDropPosition = (): 'before' | 'after' | 'inside' => {
-      const overRect = over.rect;
-      // @ts-ignore
-      const pointerY = event.activatorEvent?.clientY ?? 0;
-      // @ts-ignore
-      const currentY = pointerY + (event.delta?.y ?? 0);
-      
-      const topThreshold = overRect.top + overRect.height * 0.25; // 上 25%
-      const bottomThreshold = overRect.top + overRect.height * 0.75; // 下 25%
-      
-      if (currentY < topThreshold) {
-        return 'before';
-      } else if (currentY > bottomThreshold) {
-        return 'after';
-      }
-      return 'inside';
-    };
+    // 防抖：如果当前目标是 container-xxx，且之前的目标也是同一个容器的 inside，保持稳定
+    const currentContainerId = parseContainerId(overId, findById);
+    if (currentContainerId && 
+        dropTarget?.targetId === currentContainerId && 
+        dropTarget?.position === 'inside') {
+      return;
+    }
 
-    // 计算放置位置
+    // 放入容器 droppable 区域（container-xxx 格式）
     if (overId.startsWith('container-')) {
-      // 放入容器 droppable 区域（容器内部空白区域）
       const containerId = overId.replace('container-', '');
-      if (containerId !== activeId) {
-        setDropTarget({ targetId: containerId, position: 'inside' });
+      
+      // 防止拖入自身或形成循环
+      if (containerId === activeId) {
+        setDropTarget(null);
+        return;
       }
-    } else if (overId !== 'canvas-droppable') {
-      // 放置在某个组件上
-      const targetComponent = findComponentById(components, overId);
-      if (targetComponent) {
-        if (targetComponent.type === 'Container' && activeId !== overId) {
-          // 🔧 容器组件：根据鼠标位置判断是放入内部还是前后
-          const position = getDropPosition();
-          setDropTarget({ targetId: overId, position });
-        } else {
-          // 普通组件：判断上方还是下方
-          const overRect = over.rect;
-          // @ts-ignore
-          const pointerY = event.activatorEvent?.clientY ?? 0;
-          // @ts-ignore
-          const currentY = pointerY + (event.delta?.y ?? 0);
-          const midPoint = overRect.top + overRect.height / 2;
-          
-          if (currentY < midPoint) {
-            setDropTarget({ targetId: overId, position: 'before' });
-          } else {
-            setDropTarget({ targetId: overId, position: 'after' });
-          }
+      
+      if (!activeId.startsWith('new-') && isDescendant(components, activeId, containerId)) {
+        setDropTarget(null);
+        return;
+      }
+      
+      setDropTarget({ targetId: containerId, position: 'inside' });
+      return;
+    }
+    
+    // 放入顶层画布
+    if (overId === 'canvas-droppable') {
+      if (dropTarget?.targetId === 'canvas') return;
+      setDropTarget({ targetId: 'canvas', position: 'inside' });
+      return;
+    }
+
+    // 放置在某个组件上
+    const targetComponent = findById(overId);
+    if (!targetComponent) return;
+
+    const overRect = over.rect;
+    const currentY = getPointerY(event);
+
+    if (targetComponent.type === 'Container' && activeId !== overId) {
+      // 容器组件：检测是放在容器的边缘还是内部
+      const topEdge = overRect.top + overRect.height * CONTAINER_EDGE_RATIO;
+      const bottomEdge = overRect.top + overRect.height * (1 - CONTAINER_EDGE_RATIO);
+      
+      let position: 'before' | 'after' | 'inside';
+      if (currentY < topEdge) {
+        position = 'before';
+      } else if (currentY > bottomEdge) {
+        position = 'after';
+      } else {
+        position = 'inside';
+      }
+      
+      // 增强防抖：添加滞后区防止边界抖动
+      if (dropTarget?.targetId === overId) {
+        const hysteresis = overRect.height * HYSTERESIS_RATIO;
+        
+        if (dropTarget.position === 'inside') {
+          const hysteresisTop = overRect.top + overRect.height * (CONTAINER_EDGE_RATIO - HYSTERESIS_RATIO);
+          const hysteresisBottom = overRect.top + overRect.height * (1 - CONTAINER_EDGE_RATIO + HYSTERESIS_RATIO);
+          if (currentY >= hysteresisTop && currentY <= hysteresisBottom) return;
+        } else if (dropTarget.position === 'before' && currentY < topEdge + hysteresis) {
+          return;
+        } else if (dropTarget.position === 'after' && currentY > bottomEdge - hysteresis) {
+          return;
         }
       }
+      
+      setDropTarget({ targetId: overId, position });
     } else {
-      // 放入顶层画布
-      setDropTarget({ targetId: 'canvas', position: 'inside' });
+      // 普通组件：判断上方还是下方（带滞后区）
+      const midPoint = overRect.top + overRect.height / 2;
+      const hysteresis = overRect.height * ITEM_HYSTERESIS_RATIO;
+      
+      if (dropTarget?.targetId === overId) {
+        if (dropTarget.position === 'before' && currentY < midPoint + hysteresis) return;
+        if (dropTarget.position === 'after' && currentY > midPoint - hysteresis) return;
+      }
+      
+      const position = currentY < midPoint ? 'before' : 'after';
+      if (dropTarget?.targetId === overId && dropTarget?.position === position) return;
+      
+      setDropTarget({ targetId: overId, position });
     }
 
     const index = components.findIndex((c) => c.id === over.id);
@@ -365,6 +430,13 @@ function App() {
     // ========== 画布内已有组件拖拽 ==========
     const { moveComponent } = useStore.getState();
 
+    // 🔧 辅助函数：检查两个组件是否在同一个父容器中
+    const areSiblings = (id1: string, id2: string): boolean => {
+      const parent1 = getParentInfo(id1);
+      const parent2 = getParentInfo(id2);
+      return parent1.parentId === parent2.parentId;
+    };
+
     // 拖入 canvas-droppable（顶层画布区域）
     if (overId === 'canvas-droppable') {
       // 将组件移动到顶层
@@ -372,7 +444,7 @@ function App() {
       return;
     }
 
-    // 拖入容器的 droppable 区域
+    // 拖入容器的 droppable 区域（空白区域）
     if (overId.startsWith('container-')) {
       const containerId = overId.replace('container-', '');
       
@@ -382,41 +454,59 @@ function App() {
         return;
       }
       
+      // 移动到容器内（末尾位置）
       moveComponent(activeId, containerId);
       return;
     }
 
     // 拖放到某个组件上
     const targetComponent = findComponentById(components, overId);
-    if (targetComponent) {
-      // 如果目标是容器，根据 dropTarget 的位置决定操作
-      if (targetComponent.type === 'Container') {
-        // 防止容器拖入自身或其后代
-        if (overId === activeId || checkIsDescendant(activeId, overId)) {
-          message.warning('不能将容器拖入自身');
-          return;
-        }
-        
-        // 根据 dropTarget 判断是放入内部还是前后
-        if (currentDropTarget?.position === 'inside') {
-          moveComponent(activeId, overId);
-        } else {
-          // before 或 after：作为兄弟元素移动到目标容器的父级
-          const { parentId, index } = getParentInfo(overId);
-          if (index !== -1) {
-            const insertIndex = currentDropTarget?.position === 'before' ? index : index + 1;
-            // 使用 moveComponent 移动到目标的父容器，指定位置
-            moveComponent(activeId, parentId, insertIndex);
-          } else {
-            reorderComponents(activeId, overId);
-          }
-        }
+    if (!targetComponent) return;
+
+    // 获取目标组件的父容器信息
+    const { parentId: targetParentId, index: targetIndex } = getParentInfo(overId);
+    
+    // 🔧 判断是同容器排序还是跨容器移动
+    const isSameContainer = areSiblings(activeId, overId);
+
+    if (targetComponent.type === 'Container') {
+      // 目标是容器组件
+      
+      // 防止容器拖入自身或其后代
+      if (overId === activeId || checkIsDescendant(activeId, overId)) {
+        message.warning('不能将容器拖入自身');
         return;
       }
       
-      // 否则进行排序
-      if (activeId !== overId) {
+      // 根据 dropTarget 判断是放入内部还是前后
+      if (currentDropTarget?.position === 'inside') {
+        // 放入容器内部
+        moveComponent(activeId, overId);
+      } else if (currentDropTarget?.position === 'before') {
+        // 放在容器前面
+        if (isSameContainer) {
+          reorderComponents(activeId, overId);
+        } else {
+          moveComponent(activeId, targetParentId, targetIndex);
+        }
+      } else {
+        // 放在容器后面
+        if (isSameContainer) {
+          reorderComponents(activeId, overId);
+        } else {
+          moveComponent(activeId, targetParentId, targetIndex + 1);
+        }
+      }
+    } else {
+      // 目标是普通组件
+      
+      if (isSameContainer) {
+        // 同容器内排序
         reorderComponents(activeId, overId);
+      } else {
+        // 🔧 跨容器移动：移动到目标组件的位置
+        const insertIndex = currentDropTarget?.position === 'before' ? targetIndex : targetIndex + 1;
+        moveComponent(activeId, targetParentId, insertIndex);
       }
     }
   };

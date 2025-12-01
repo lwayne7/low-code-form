@@ -15,6 +15,7 @@ interface SortableItemProps {
   isFirst?: boolean;  // 是否是列表第一项
   isLast?: boolean;   // 是否是列表最后一项
   isLocked?: boolean; // 🆕 是否锁定
+  depth?: number;     // 🆕 组件深度，用于碰撞检测
 }
 
 // ⚠️ 性能优化：使用 React.memo 包裹
@@ -26,7 +27,11 @@ export const SortableItem = React.memo(function SortableItem(props: SortableItem
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: props.id, disabled: props.isLocked });
+  } = useSortable({ 
+    id: props.id, 
+    disabled: props.isLocked,
+    data: { depth: props.depth ?? 0 }  // 🆕 传递深度信息给碰撞检测
+  });
 
   // 从 store 获取右键菜单需要的方法
   const { 

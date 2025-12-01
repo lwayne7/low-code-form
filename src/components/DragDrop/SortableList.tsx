@@ -156,15 +156,29 @@ export const SortableList: React.FC<SortableListProps> = React.memo(({
     </SortableContext>
   );
 }, (prevProps, nextProps) => {
-  // 🆕 自定义比较函数
+  // 自定义比较函数，优化渲染性能
+  // 基础比较
+  if (
+    prevProps.items !== nextProps.items ||
+    prevProps.selectedIds !== nextProps.selectedIds ||
+    prevProps.activeDragId !== nextProps.activeDragId ||
+    prevProps.overIndex !== nextProps.overIndex ||
+    prevProps.parentId !== nextProps.parentId ||
+    prevProps.depth !== nextProps.depth
+  ) {
+    return false;
+  }
+  
+  // dropTarget 深比较（避免不必要的引用变化触发重渲染）
+  const prevDrop = prevProps.dropTarget;
+  const nextDrop = nextProps.dropTarget;
+  if (prevDrop === nextDrop) return true;
+  if (!prevDrop || !nextDrop) return false;
+  
   return (
-    prevProps.items === nextProps.items &&
-    prevProps.selectedIds === nextProps.selectedIds &&
-    prevProps.activeDragId === nextProps.activeDragId &&
-    prevProps.overIndex === nextProps.overIndex &&
-    prevProps.parentId === nextProps.parentId &&
-    prevProps.depth === nextProps.depth &&
-    prevProps.dropTarget === nextProps.dropTarget
+    prevDrop.targetId === nextDrop.targetId &&
+    prevDrop.position === nextDrop.position &&
+    prevDrop.parentId === nextDrop.parentId
   );
 });
 
@@ -213,24 +227,17 @@ const SortableListItem: React.FC<SortableListItemProps> = React.memo(({
     onSelect(component.id, e.metaKey || e.ctrlKey);
   }, [component.id, onSelect]);
 
-  // 🆕 容器内部使用 useDroppable 检测是否有拖拽悬停
-  const { isOver: isContainerOver } = useDroppable({
-    id: `container-${component.id}`,
-    disabled: !isContainer,
-    data: { parentId: component.id, depth: depth + 1 },
-  });
-
-  // 🆕 判断当前容器是否是放置目标
-  const isContainerDropTarget = dropTarget?.targetId === component.id && dropTarget?.position === 'inside';
+  // 🆕 判断当前容器是否是放置目标（通过 dropTarget 状态判断）
+  const isContainerDropTarget = isContainer && dropTarget?.targetId === component.id && dropTarget?.position === 'inside';
 
   // 🆕 使用 useMemo 缓存容器样式 - 增强视觉反馈
   const cardStyle = useMemo(() => ({
-    background: getContainerBgColor(depth, (isContainerOver || isContainerDropTarget) && !isDragging),
-    border: (isContainerOver || isContainerDropTarget) && !isDragging ? '2px dashed #1677ff' : '1px dashed #d9d9d9',
+    background: getContainerBgColor(depth, isContainerDropTarget && !isDragging),
+    border: isContainerDropTarget && !isDragging ? '2px dashed #1677ff' : '1px dashed #d9d9d9',
     borderLeft: `3px solid ${getContainerBorderColor(depth)}`,
     transition: 'all 0.2s ease',
     opacity: isDragging ? 0.5 : 1,
-  }), [depth, isContainerOver, isContainerDropTarget, isDragging]);
+  }), [depth, isContainerDropTarget, isDragging]);
 
   return (
     <SortableItem
@@ -241,13 +248,14 @@ const SortableListItem: React.FC<SortableListItemProps> = React.memo(({
       isFirst={isFirst}
       isLast={isLast}
       isLocked={isLocked}
+      depth={depth}
     >
       {/* 🆕 放置位置指示器 */}
       {showDropIndicator === 'before' && <DropIndicator position="before" />}
       {showDropIndicator === 'after' && <DropIndicator position="after" />}
       
-      <div style={{ pointerEvents: 'none' }}>
-        {isContainer ? (
+      {isContainer ? (
+        <div style={{ pointerEvents: 'none' }}>
           <Card
             size="small"
             title={
@@ -256,7 +264,7 @@ const SortableListItem: React.FC<SortableListItemProps> = React.memo(({
                 <span style={{ marginLeft: 8, fontSize: 11, color: '#999' }}>
                   (层级 {depth + 1})
                 </span>
-                {(isContainerOver || isContainerDropTarget) && !isDragging && (
+                {isContainerDropTarget && !isDragging && (
                   <span style={{ marginLeft: 8, fontSize: 11, color: '#1677ff' }}>
                     📥 可放入
                   </span>
@@ -266,6 +274,7 @@ const SortableListItem: React.FC<SortableListItemProps> = React.memo(({
             style={cardStyle}
             styles={{ body: { padding: 8, minHeight: 60 } }}
           >
+            {/* 🔧 容器内部需要启用 pointerEvents 以支持嵌套拖拽 */}
             <div style={{ pointerEvents: 'auto' }}>
               <SortableList
                 items={component.children || []}
@@ -278,27 +287,53 @@ const SortableListItem: React.FC<SortableListItemProps> = React.memo(({
               />
             </div>
           </Card>
-        ) : (
+        </div>
+      ) : (
+        <div style={{ pointerEvents: 'none' }}>
           <div style={{ pointerEvents: 'auto' }}>
             <CanvasFormItem component={component} />
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </SortableItem>
   );
 }, (prevProps, nextProps) => {
-  // 🆕 精确比较，避免不必要的重渲染
-  const prevIsTarget = prevProps.dropTarget?.targetId === prevProps.component.id;
-  const nextIsTarget = nextProps.dropTarget?.targetId === nextProps.component.id;
+  // 精确比较，避免不必要的重渲染
+  const isContainer = prevProps.component.type === 'Container';
   
-  return (
-    prevProps.component === nextProps.component &&
-    prevProps.selectedIds.includes(prevProps.component.id) === nextProps.selectedIds.includes(nextProps.component.id) &&
-    prevProps.activeDragId === nextProps.activeDragId &&
-    prevProps.depth === nextProps.depth &&
-    prevProps.isFirst === nextProps.isFirst &&
-    prevProps.isLast === nextProps.isLast &&
-    prevIsTarget === nextIsTarget &&
-    (prevIsTarget ? prevProps.dropTarget?.position === nextProps.dropTarget?.position : true)
-  );
+  // 基础比较
+  if (
+    prevProps.component !== nextProps.component ||
+    prevProps.selectedIds.includes(prevProps.component.id) !== nextProps.selectedIds.includes(nextProps.component.id) ||
+    prevProps.activeDragId !== nextProps.activeDragId ||
+    prevProps.depth !== nextProps.depth ||
+    prevProps.isFirst !== nextProps.isFirst ||
+    prevProps.isLast !== nextProps.isLast
+  ) {
+    return false;
+  }
+  
+  // dropTarget 深比较
+  const prevDrop = prevProps.dropTarget;
+  const nextDrop = nextProps.dropTarget;
+  
+  // 如果是容器，需要在 dropTarget 变化时重渲染（子组件可能需要更新）
+  if (isContainer) {
+    if (prevDrop === nextDrop) return true;
+    if (!prevDrop || !nextDrop) return false;
+    return (
+      prevDrop.targetId === nextDrop.targetId &&
+      prevDrop.position === nextDrop.position &&
+      prevDrop.parentId === nextDrop.parentId
+    );
+  }
+  
+  // 非容器组件，只检查自己是否是目标
+  const prevIsTarget = prevDrop?.targetId === prevProps.component.id;
+  const nextIsTarget = nextDrop?.targetId === nextProps.component.id;
+  
+  if (prevIsTarget !== nextIsTarget) return false;
+  if (prevIsTarget && prevDrop?.position !== nextDrop?.position) return false;
+  
+  return true;
 });
