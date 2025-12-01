@@ -32,7 +32,10 @@ interface State {
   deleteComponent: (ids: string | string[]) => void;
   reorderComponents: (activeId: string, overId: string) => void;
   moveComponent: (activeId: string, targetContainerId: string | null, index?: number) => void;
+  moveComponentInList: (id: string, direction: 'up' | 'down' | 'top' | 'bottom') => void; // 🆕 列表内移动
+  cutComponents: () => void; // 🆕 剪切
   resetCanvas: () => void; // 🆕 重置画布
+  importComponents: (components: ComponentSchema[]) => void; // 🆕 导入组件
   setFormValue: (id: string, value: any) => void;
   getFormValues: () => Record<string, any>;
   
@@ -434,6 +437,70 @@ export const useStore = create<State>()(
         };
       }),
 
+      // 🆕 剪切组件
+      cutComponents: () => set((state) => {
+        if (state.selectedIds.length === 0) return {};
+        
+        const newPast = [...state.history.past, state.components];
+        const componentsToCut = state.selectedIds
+          .map(id => findComponentById(state.components, id))
+          .filter((c): c is ComponentSchema => c !== null);
+        
+        const clonedForClipboard = componentsToCut.map(cloneComponentWithNewId);
+        const newComponents = removeComponents(state.components, state.selectedIds);
+        
+        return {
+          components: newComponents,
+          clipboard: clonedForClipboard,
+          selectedIds: [],
+          history: { past: newPast, future: [] }
+        };
+      }),
+
+      // 🆕 在列表内移动组件（上/下/顶/底）
+      moveComponentInList: (id: string, direction: 'up' | 'down' | 'top' | 'bottom') => set((state) => {
+        const newPast = [...state.history.past, state.components];
+        
+        // 递归在组件树中移动
+        const moveInList = (components: ComponentSchema[]): ComponentSchema[] => {
+          const index = components.findIndex(c => c.id === id);
+          
+          if (index !== -1) {
+            const newList = [...components];
+            const [item] = newList.splice(index, 1);
+            
+            switch (direction) {
+              case 'up':
+                if (index > 0) newList.splice(index - 1, 0, item);
+                else newList.splice(index, 0, item);
+                break;
+              case 'down':
+                if (index < components.length - 1) newList.splice(index + 1, 0, item);
+                else newList.splice(index, 0, item);
+                break;
+              case 'top':
+                newList.unshift(item);
+                break;
+              case 'bottom':
+                newList.push(item);
+                break;
+            }
+            return newList;
+          }
+          
+          // 递归处理子组件
+          return components.map(c => ({
+            ...c,
+            children: c.children ? moveInList(c.children) : undefined
+          }));
+        };
+        
+        return {
+          components: moveInList(state.components),
+          history: { past: newPast, future: [] }
+        };
+      }),
+
       // 校验单个字段
       validateField: (id: string): string | null => {
         const state = get();
@@ -529,6 +596,27 @@ export const useStore = create<State>()(
           : state.history.past;
         return {
           components: [],
+          selectedIds: [],
+          formValues: {},
+          validationErrors: {},
+          history: {
+            past: newPast,
+            future: []
+          }
+        };
+      }),
+
+      // 🆕 导入组件（替换当前画布）
+      importComponents: (importedComponents: ComponentSchema[]) => set((state) => {
+        const newPast = state.components.length > 0 
+          ? [...state.history.past, state.components] 
+          : state.history.past;
+        
+        // 为导入的组件生成新 ID，避免冲突
+        const clonedComponents = importedComponents.map(cloneComponentWithNewId);
+        
+        return {
+          components: clonedComponents,
           selectedIds: [],
           formValues: {},
           validationErrors: {},

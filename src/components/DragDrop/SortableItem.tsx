@@ -1,6 +1,8 @@
 import React from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { ContextMenu } from '../common/ContextMenu';
+import { useStore } from '../../store';
 
 interface SortableItemProps {
   id: string;
@@ -10,6 +12,8 @@ interface SortableItemProps {
   isOverlay?: boolean;
   showDropIndicator?: 'top' | 'bottom' | null;
   useHandle?: boolean; // 是否使用拖拽手柄模式
+  isFirst?: boolean;  // 是否是列表第一项
+  isLast?: boolean;   // 是否是列表最后一项
 }
 
 // ⚠️ 性能优化：使用 React.memo 包裹
@@ -22,6 +26,17 @@ export const SortableItem = React.memo(function SortableItem(props: SortableItem
     transition,
     isDragging,
   } = useSortable({ id: props.id });
+
+  // 从 store 获取右键菜单需要的方法
+  const { 
+    copyComponents, 
+    cutComponents, 
+    pasteComponents, 
+    deleteComponent, 
+    moveComponentInList,
+    clipboard,
+    selectComponent 
+  } = useStore();
 
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
@@ -37,7 +52,43 @@ export const SortableItem = React.memo(function SortableItem(props: SortableItem
     ? { ...attributes }
     : { ...attributes, ...listeners };
 
-  return (
+  // 右键菜单处理函数
+  const handleCopy = () => {
+    selectComponent(props.id);
+    setTimeout(() => copyComponents(), 0);
+  };
+
+  const handleCut = () => {
+    selectComponent(props.id);
+    setTimeout(() => cutComponents(), 0);
+  };
+
+  const handlePaste = () => {
+    pasteComponents();
+  };
+
+  const handleDelete = () => {
+    selectComponent(props.id);
+    setTimeout(() => deleteComponent(props.id), 0);
+  };
+
+  const handleMoveUp = () => {
+    moveComponentInList(props.id, 'up');
+  };
+
+  const handleMoveDown = () => {
+    moveComponentInList(props.id, 'down');
+  };
+
+  const handleMoveToTop = () => {
+    moveComponentInList(props.id, 'top');
+  };
+
+  const handleMoveToBottom = () => {
+    moveComponentInList(props.id, 'bottom');
+  };
+
+  const content = (
     <div 
       ref={setNodeRef} 
       style={style} 
@@ -94,12 +145,32 @@ export const SortableItem = React.memo(function SortableItem(props: SortableItem
       {props.children}
     </div>
   );
+
+  return (
+    <ContextMenu
+      onCopy={handleCopy}
+      onCut={handleCut}
+      onPaste={handlePaste}
+      onDelete={handleDelete}
+      onMoveUp={handleMoveUp}
+      onMoveDown={handleMoveDown}
+      onMoveToTop={handleMoveToTop}
+      onMoveToBottom={handleMoveToBottom}
+      canPaste={clipboard.length > 0}
+      canMoveUp={!props.isFirst}
+      canMoveDown={!props.isLast}
+    >
+      {content}
+    </ContextMenu>
+  );
 }, (prevProps, nextProps) => {
   return (
     prevProps.id === nextProps.id &&
     prevProps.isSelected === nextProps.isSelected &&
     prevProps.showDropIndicator === nextProps.showDropIndicator &&
     prevProps.useHandle === nextProps.useHandle &&
+    prevProps.isFirst === nextProps.isFirst &&
+    prevProps.isLast === nextProps.isLast &&
     prevProps.children === nextProps.children
   );
 });

@@ -121,7 +121,7 @@ export const SortableList: React.FC<SortableListProps> = React.memo(({
   return (
     <SortableContext items={itemIds} strategy={verticalListSortingStrategy}>
       <div ref={setNodeRef} style={containerStyle}>
-        {items.map((component) => (
+        {items.map((component, index) => (
           <SortableListItem
             key={component.id}
             component={component}
@@ -130,6 +130,8 @@ export const SortableList: React.FC<SortableListProps> = React.memo(({
             activeDragId={activeDragId}
             depth={depth}
             dropTarget={dropTarget}
+            isFirst={index === 0}
+            isLast={index === items.length - 1}
           />
         ))}
         
@@ -174,6 +176,8 @@ interface SortableListItemProps {
   activeDragId?: string | null;
   depth: number;
   dropTarget?: DropTarget | null;
+  isFirst: boolean;  // 🆕 是否是列表第一项
+  isLast: boolean;   // 🆕 是否是列表最后一项
 }
 
 const SortableListItem: React.FC<SortableListItemProps> = React.memo(({
@@ -183,6 +187,8 @@ const SortableListItem: React.FC<SortableListItemProps> = React.memo(({
   activeDragId,
   depth,
   dropTarget,
+  isFirst,
+  isLast,
 }) => {
   const isSelected = selectedIds.includes(component.id);
   const isContainer = component.type === 'Container';
@@ -231,6 +237,8 @@ const SortableListItem: React.FC<SortableListItemProps> = React.memo(({
       isSelected={isSelected}
       onClick={handleClick}
       useHandle={isContainer}
+      isFirst={isFirst}
+      isLast={isLast}
     >
       {/* 🆕 放置位置指示器 */}
       {showDropIndicator === 'before' && <DropIndicator position="before" />}
@@ -286,6 +294,8 @@ const SortableListItem: React.FC<SortableListItemProps> = React.memo(({
     prevProps.selectedIds.includes(prevProps.component.id) === nextProps.selectedIds.includes(nextProps.component.id) &&
     prevProps.activeDragId === nextProps.activeDragId &&
     prevProps.depth === nextProps.depth &&
+    prevProps.isFirst === nextProps.isFirst &&
+    prevProps.isLast === nextProps.isLast &&
     prevIsTarget === nextIsTarget &&
     (prevIsTarget ? prevProps.dropTarget?.position === nextProps.dropTarget?.position : true)
   );
