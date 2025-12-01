@@ -26,7 +26,7 @@ import { useStore } from './store';
 import './App.css';
 
 // Components
-import { FormRenderer, PropertyPanel, DraggableSidebarItem, SortableList, KeyboardShortcutsPanel, Toolbar, HistoryPanel, FormStats } from './components';
+import { PropertyPanel, DraggableSidebarItem, SortableList, LazyKeyboardShortcutsPanel, Toolbar, LazyHistoryPanel, FormStats, LazyFormRenderer } from './components';
 
 // Hooks
 import { useKeyboardShortcuts } from './hooks';
@@ -1051,25 +1051,25 @@ function App() {
           }}
         >
           <div style={{ background: 'white', padding: 16, borderRadius: previewDevice !== 'desktop' ? 8 : 0 }}>
-            <FormRenderer components={components} />
+            <LazyFormRenderer components={components} />
           </div>
         </div>
       </Modal>
 
       {/* 🆕 快捷键面板 */}
-      <KeyboardShortcutsPanel
+      <LazyKeyboardShortcutsPanel
         open={isShortcutsOpen}
         onClose={() => setIsShortcutsOpen(false)}
       />
 
       {/* 🆕 历史记录面板 */}
-      <HistoryPanel
+      <LazyHistoryPanel
         open={isHistoryOpen}
         onClose={() => setIsHistoryOpen(false)}
         past={history.past}
         future={history.future}
         currentComponents={components}
-        onJumpTo={(steps) => {
+        onJumpTo={(steps: number) => {
           // steps < 0 表示撤销，steps > 0 表示重做
           if (steps < 0) {
             for (let i = 0; i < Math.abs(steps); i++) {
