@@ -193,6 +193,7 @@ const SortableListItem: React.FC<SortableListItemProps> = React.memo(({
   const isSelected = selectedIds.includes(component.id);
   const isContainer = component.type === 'Container';
   const isDragging = activeDragId === component.id;
+  const isLocked = component.props.locked === true; // 🆕 是否锁定
 
   // 🆕 计算是否显示放置指示器
   const showDropIndicator = useMemo(() => {
@@ -239,6 +240,7 @@ const SortableListItem: React.FC<SortableListItemProps> = React.memo(({
       useHandle={isContainer}
       isFirst={isFirst}
       isLast={isLast}
+      isLocked={isLocked}
     >
       {/* 🆕 放置位置指示器 */}
       {showDropIndicator === 'before' && <DropIndicator position="before" />}
@@ -249,8 +251,8 @@ const SortableListItem: React.FC<SortableListItemProps> = React.memo(({
           <Card
             size="small"
             title={
-              <span style={{ cursor: 'grab' }}>
-                ⠿ {component.props.label || '容器'}
+              <span style={{ cursor: isLocked ? 'not-allowed' : 'grab' }}>
+                {isLocked ? '🔒' : '⠿'} {component.props.label || '容器'}
                 <span style={{ marginLeft: 8, fontSize: 11, color: '#999' }}>
                   (层级 {depth + 1})
                 </span>

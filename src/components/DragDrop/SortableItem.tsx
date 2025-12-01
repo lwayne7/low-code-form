@@ -14,6 +14,7 @@ interface SortableItemProps {
   useHandle?: boolean; // 是否使用拖拽手柄模式
   isFirst?: boolean;  // 是否是列表第一项
   isLast?: boolean;   // 是否是列表最后一项
+  isLocked?: boolean; // 🆕 是否锁定
 }
 
 // ⚠️ 性能优化：使用 React.memo 包裹
@@ -25,7 +26,7 @@ export const SortableItem = React.memo(function SortableItem(props: SortableItem
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: props.id });
+  } = useSortable({ id: props.id, disabled: props.isLocked });
 
   // 从 store 获取右键菜单需要的方法
   const { 
@@ -34,6 +35,7 @@ export const SortableItem = React.memo(function SortableItem(props: SortableItem
     pasteComponents, 
     deleteComponent, 
     moveComponentInList,
+    toggleLock,
     clipboard,
     selectComponent 
   } = useStore();
@@ -86,6 +88,10 @@ export const SortableItem = React.memo(function SortableItem(props: SortableItem
 
   const handleMoveToBottom = () => {
     moveComponentInList(props.id, 'bottom');
+  };
+
+  const handleToggleLock = () => {
+    toggleLock(props.id);
   };
 
   const content = (
@@ -156,9 +162,11 @@ export const SortableItem = React.memo(function SortableItem(props: SortableItem
       onMoveDown={handleMoveDown}
       onMoveToTop={handleMoveToTop}
       onMoveToBottom={handleMoveToBottom}
+      onToggleLock={handleToggleLock}
       canPaste={clipboard.length > 0}
       canMoveUp={!props.isFirst}
       canMoveDown={!props.isLast}
+      isLocked={props.isLocked}
     >
       {content}
     </ContextMenu>
@@ -171,6 +179,7 @@ export const SortableItem = React.memo(function SortableItem(props: SortableItem
     prevProps.useHandle === nextProps.useHandle &&
     prevProps.isFirst === nextProps.isFirst &&
     prevProps.isLast === nextProps.isLast &&
+    prevProps.isLocked === nextProps.isLocked &&
     prevProps.children === nextProps.children
   );
 });

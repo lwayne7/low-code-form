@@ -15,6 +15,15 @@ interface ValidationError {
   message: string;
 }
 
+// 🆕 自定义模板类型
+export interface CustomTemplate {
+  id: string;
+  name: string;
+  description: string;
+  components: ComponentSchema[];
+  createdAt: number;
+}
+
 interface State {
   components: ComponentSchema[];
   selectedIds: string[];
@@ -22,6 +31,7 @@ interface State {
   validationErrors: Record<string, string>; // 校验错误 { [componentId]: errorMessage }
   clipboard: ComponentSchema[]; // 🆕 剪贴板
   history: HistoryState;
+  customTemplates: CustomTemplate[]; // 🆕 自定义模板
 
   addComponent: (type: ComponentType, parentId?: string, index?: number) => void;
   addComponents: (components: ComponentSchema[]) => void; // 🆕 批量添加组件
@@ -36,6 +46,7 @@ interface State {
   cutComponents: () => void; // 🆕 剪切
   resetCanvas: () => void; // 🆕 重置画布
   importComponents: (components: ComponentSchema[]) => void; // 🆕 导入组件
+  toggleLock: (id: string) => void; // 🆕 切换锁定状态
   setFormValue: (id: string, value: any) => void;
   getFormValues: () => Record<string, any>;
   
@@ -43,6 +54,10 @@ interface State {
   copyComponents: () => void; // 复制选中组件到剪贴板
   pasteComponents: () => void; // 粘贴剪贴板内容
   duplicateComponents: () => void; // 复制并粘贴（Cmd+D）
+  
+  // 🆕 自定义模板
+  saveAsTemplate: (name: string, description?: string) => void;
+  deleteTemplate: (id: string) => void;
   
   // 校验相关
   validateField: (id: string) => string | null;
@@ -221,6 +236,7 @@ export const useStore = create<State>()(
       formValues: {} as Record<string, any>,
       validationErrors: {} as Record<string, string>,
       clipboard: [] as ComponentSchema[], // 🆕 剪贴板
+      customTemplates: [] as CustomTemplate[], // 🆕 自定义模板
       history: {
         past: [] as ComponentSchema[][],
         future: [] as ComponentSchema[][],
@@ -625,11 +641,55 @@ export const useStore = create<State>()(
             future: []
           }
         };
-      })
+      }),
+
+      // 🆕 切换组件锁定状态
+      toggleLock: (id: string) => set((state) => {
+        const updateLock = (components: ComponentSchema[]): ComponentSchema[] => {
+          return components.map(c => {
+            if (c.id === id) {
+              return { 
+                ...c, 
+                props: { ...c.props, locked: !(c.props as any).locked } 
+              } as typeof c;
+            }
+            if (c.children) {
+              return { ...c, children: updateLock(c.children) } as typeof c;
+            }
+            return c;
+          });
+        };
+        return { components: updateLock(state.components) };
+      }),
+
+      // 🆕 保存为自定义模板
+      saveAsTemplate: (name: string, description?: string) => set((state) => {
+        if (state.components.length === 0) return {};
+        
+        const newTemplate: CustomTemplate = {
+          id: nanoid(),
+          name,
+          description: description || '',
+          components: state.components.map(cloneComponentWithNewId),
+          createdAt: Date.now(),
+        };
+        
+        return {
+          customTemplates: [...state.customTemplates, newTemplate]
+        };
+      }),
+
+      // 🆕 删除自定义模板
+      deleteTemplate: (id: string) => set((state) => ({
+        customTemplates: state.customTemplates.filter(t => t.id !== id)
+      }))
     }),
     {
       name: 'lowcode-storage', 
-      partialize: (state) => ({ components: state.components }),
+      partialize: (state) => ({ 
+        components: state.components,
+        customTemplates: state.customTemplates, // 🆕 持久化自定义模板
+      }),
     }
   )
 );

@@ -51,6 +51,7 @@ export interface BaseComponentProps {
   rules?: ValidationRule[]; // 🆕 校验规则数组
   responsive?: ResponsiveConfig; // 🆕 响应式布局
   colSpan?: number; // 占用列数 (1-24)
+  locked?: boolean; // 🆕 锁定状态（防止编辑和删除）
 }
 
 export interface ContainerProps extends BaseComponentProps {
