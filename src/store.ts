@@ -1,8 +1,16 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { nanoid } from 'nanoid';
-import type { ComponentSchema, ComponentType, ValidationRule } from './types';
+import type { ComponentSchema, ComponentType } from './types';
 import { arrayMove } from '@dnd-kit/sortable';
+
+// 导入辅助函数
+import { 
+  findComponentById, 
+  flattenComponents 
+} from './utils/componentHelpers';
+import { validateValue } from './utils/validation';
+import { createComponent, cloneComponentWithNewId } from './utils/componentFactory';
 
 interface HistoryState {
   past: ComponentSchema[][];
@@ -148,103 +156,8 @@ const createNewPast = (pastHistory: ComponentSchema[][], currentState: Component
   return newPast;
 };
 
-// 🆕 校验单个值
-const validateValue = (value: any, rules: ValidationRule[] | undefined, label: string): string | null => {
-  if (!rules || rules.length === 0) return null;
-
-  for (const rule of rules) {
-    switch (rule.type) {
-      case 'required':
-        if (value === undefined || value === null || value === '' || 
-            (Array.isArray(value) && value.length === 0)) {
-          return rule.message || `${label}不能为空`;
-        }
-        break;
-      case 'minLength':
-        if (typeof value === 'string' && value.length < (rule.value as number)) {
-          return rule.message || `${label}至少需要${rule.value}个字符`;
-        }
-        break;
-      case 'maxLength':
-        if (typeof value === 'string' && value.length > (rule.value as number)) {
-          return rule.message || `${label}最多${rule.value}个字符`;
-        }
-        break;
-      case 'min':
-        if (typeof value === 'number' && value < (rule.value as number)) {
-          return rule.message || `${label}不能小于${rule.value}`;
-        }
-        break;
-      case 'max':
-        if (typeof value === 'number' && value > (rule.value as number)) {
-          return rule.message || `${label}不能大于${rule.value}`;
-        }
-        break;
-      case 'pattern':
-        if (typeof value === 'string' && rule.value) {
-          const regex = new RegExp(rule.value as string);
-          if (!regex.test(value)) {
-            return rule.message || `${label}格式不正确`;
-          }
-        }
-        break;
-      case 'email':
-        if (typeof value === 'string' && value) {
-          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-          if (!emailRegex.test(value)) {
-            return rule.message || '请输入有效的邮箱地址';
-          }
-        }
-        break;
-      case 'phone':
-        if (typeof value === 'string' && value) {
-          const phoneRegex = /^1[3-9]\d{9}$/;
-          if (!phoneRegex.test(value)) {
-            return rule.message || '请输入有效的手机号码';
-          }
-        }
-        break;
-    }
-  }
-  return null;
-};
-
-// 🆕 递归获取所有组件（扁平化）
-const flattenComponents = (components: ComponentSchema[]): ComponentSchema[] => {
-  const result: ComponentSchema[] = [];
-  const traverse = (list: ComponentSchema[]) => {
-    list.forEach((c) => {
-      result.push(c);
-      if (c.children) traverse(c.children);
-    });
-  };
-  traverse(components);
-  return result;
-};
-
-// 🆕 根据 ID 查找组件
-const findComponentById = (components: ComponentSchema[], id: string): ComponentSchema | null => {
-  for (const c of components) {
-    if (c.id === id) return c;
-    if (c.children) {
-      const found = findComponentById(c.children, id);
-      if (found) return found;
-    }
-  }
-  return null;
-};
-
-// 🆕 深拷贝组件并重新生成 ID
-const cloneComponentWithNewId = (component: ComponentSchema): ComponentSchema => {
-  const newComponent = {
-    ...component,
-    id: nanoid(),
-    props: { ...component.props },
-    children: component.children?.map(cloneComponentWithNewId),
-  };
-  return newComponent as ComponentSchema;
-};
-
+// 🆕 使用工厂函数创建组件（从 componentFactory.ts 导入）
+// createComponent 和 cloneComponentWithNewId 已从 utils/componentFactory.ts 导入
 
 export const useStore = create<State>()(
   persist(
@@ -262,24 +175,10 @@ export const useStore = create<State>()(
 
       // ⚠️ 修改签名：增加 index 参数
       addComponent: (type, parentId, index) => set((state) => {
+        const newComponent = createComponent(type);
+        if (!newComponent) return state;
+        
         const newPast = createNewPast(state.history.past, state.components);
-        
-        let newComponent: ComponentSchema;
-        
-        switch (type) {
-            case 'Input': newComponent = { id: nanoid(), type: 'Input', props: { label: '输入框', placeholder: '请输入...' } }; break;
-            case 'TextArea': newComponent = { id: nanoid(), type: 'TextArea', props: { label: '多行文本', placeholder: '请输入...', rows: 4 } }; break;
-            case 'InputNumber': newComponent = { id: nanoid(), type: 'InputNumber', props: { label: '数字输入', placeholder: '请输入数字' } }; break;
-            case 'Select': newComponent = { id: nanoid(), type: 'Select', props: { label: '下拉选择', placeholder: '请选择', options: [{ label: 'A', value: 'A' }] } }; break;
-            case 'Radio': newComponent = { id: nanoid(), type: 'Radio', props: { label: '单选框', options: [{ label: 'A', value: 'A' }] } }; break;
-            case 'Checkbox': newComponent = { id: nanoid(), type: 'Checkbox', props: { label: '多选框', options: [{ label: 'A', value: 'A' }] } }; break;
-            case 'Switch': newComponent = { id: nanoid(), type: 'Switch', props: { label: '开关' } }; break;
-            case 'DatePicker': newComponent = { id: nanoid(), type: 'DatePicker', props: { label: '日期', placeholder: '请选择' } }; break;
-            case 'TimePicker': newComponent = { id: nanoid(), type: 'TimePicker', props: { label: '时间', placeholder: '请选择' } }; break;
-            case 'Button': newComponent = { id: nanoid(), type: 'Button', props: { content: '提交', type: 'primary', htmlType: 'submit' } }; break;
-            case 'Container': newComponent = { id: nanoid(), type: 'Container', props: { label: '容器', direction: 'vertical' }, children: [] }; break;
-            default: return state;
-        }
 
         let newComponents = [];
         if (parentId) {

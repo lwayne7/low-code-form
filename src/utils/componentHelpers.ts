@@ -91,3 +91,20 @@ export function getAllComponentIds(components: ComponentSchema[]): string[] {
 export function countComponents(components: ComponentSchema[]): number {
   return getAllComponentIds(components).length;
 }
+
+/**
+ * 扁平化组件树（包括嵌套组件）
+ */
+export function flattenComponents(components: ComponentSchema[]): ComponentSchema[] {
+  const result: ComponentSchema[] = [];
+  const flatten = (items: ComponentSchema[]) => {
+    for (const item of items) {
+      result.push(item);
+      if (item.children) {
+        flatten(item.children);
+      }
+    }
+  };
+  flatten(components);
+  return result;
+}

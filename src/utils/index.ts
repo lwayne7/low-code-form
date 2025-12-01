@@ -2,3 +2,7 @@ export * from './codeGenerator';
 export * from './formTemplates';
 export * from './componentHelpers';
 export * from './collisionDetection';
+export * from './storeHelpers';
+export * from './componentFactory';
+export * from './validation';
+export * from './selectors';
