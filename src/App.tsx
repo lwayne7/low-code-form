@@ -21,12 +21,13 @@ import {
   FullscreenExitOutlined,
   SaveOutlined,
   DeleteOutlined,
+  DashboardOutlined,
 } from '@ant-design/icons';
 import { useStore } from './store';
 import './App.css';
 
 // Components
-import { PropertyPanel, DraggableSidebarItem, SortableList, LazyKeyboardShortcutsPanel, Toolbar, LazyHistoryPanel, FormStats, LazyFormRenderer } from './components';
+import { PropertyPanel, DraggableSidebarItem, SortableList, LazyKeyboardShortcutsPanel, Toolbar, LazyHistoryPanel, FormStats, LazyFormRenderer, PerformancePanel } from './components';
 
 // Hooks
 import { useKeyboardShortcuts } from './hooks';
@@ -146,6 +147,7 @@ function App() {
   const [previewDevice, setPreviewDevice] = useState<'mobile' | 'tablet' | 'desktop'>('desktop'); // 🆕 预览设备
   const [isShortcutsOpen, setIsShortcutsOpen] = useState(false); // 🆕 快捷键面板
   const [isHistoryOpen, setIsHistoryOpen] = useState(false); // 🆕 历史面板
+  const [isPerfPanelOpen, setIsPerfPanelOpen] = useState(false); // 🆕 性能监控面板
   const [componentSearch, setComponentSearch] = useState(''); // 🆕 组件搜索
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false); // 🆕 移动端组件抽屉
   const [isPropertyDrawerOpen, setIsPropertyDrawerOpen] = useState(false); // 🆕 移动端属性抽屉
@@ -685,6 +687,13 @@ function App() {
                 type="text"
               />
             </Tooltip>
+            <Tooltip title="性能监控">
+              <Button
+                icon={<DashboardOutlined />}
+                onClick={() => setIsPerfPanelOpen(true)}
+                type="text"
+              />
+            </Tooltip>
           </Space>
         </div>
         <Space wrap size="small">
@@ -1081,6 +1090,12 @@ function App() {
             }
           }
         }}
+      />
+
+      {/* 🆕 性能监控面板 */}
+      <PerformancePanel
+        open={isPerfPanelOpen}
+        onClose={() => setIsPerfPanelOpen(false)}
       />
 
       {/* 📱 移动端组件库抽屉 */}
