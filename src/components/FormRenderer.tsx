@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Form, Input, Button, Select, Radio, Checkbox, Switch, DatePicker, TimePicker, InputNumber, Card } from 'antd';
-import type { ComponentSchema } from '../types';
+import { Form, Input, Button, Select, Radio, Checkbox, Switch, DatePicker, TimePicker, InputNumber, Card, message } from 'antd';
+import type { ComponentSchema, FormSubmitConfig } from '../types';
 
 interface FormRendererProps {
   components: ComponentSchema[]; // 接收 JSON 数组
@@ -18,7 +18,7 @@ const evaluateCondition = (condition: string, values: any) => {
 };
 
 // 递归渲染组件
-const renderComponent = (component: ComponentSchema, formValues: any) => {
+const renderComponent = (component: ComponentSchema, formValues: any, submitting: boolean) => {
   // 显隐逻辑
   if (component.props.visibleOn) {
     const shouldShow = evaluateCondition(component.props.visibleOn, formValues);
@@ -35,7 +35,7 @@ const renderComponent = (component: ComponentSchema, formValues: any) => {
         style={{ marginBottom: 16, background: '#fafafa' }}
         styles={{ body: { padding: 16 } }}
       >
-        {component.children?.map(child => renderComponent(child, formValues))}
+        {component.children?.map(child => renderComponent(child, formValues, submitting))}
       </Card>
     );
   }
@@ -99,29 +99,92 @@ const renderComponent = (component: ComponentSchema, formValues: any) => {
           <TimePicker placeholder={component.props.placeholder} style={{ width: '100%' }} />
         </Form.Item>
       );
-          case 'Button':
+          case 'Button': {
+            // 如果按钮内容包含"提交"且没有明确设置 htmlType，则默认为 submit
+            const content = component.props.content || '';
+            const defaultHtmlType = content.includes('提交') ? 'submit' : 'button';
+            const htmlType = component.props.htmlType || defaultHtmlType;
+            const buttonType = component.props.type || 'primary';
+            const isSubmit = htmlType === 'submit';
             return (
               <Form.Item key={component.id}>
-                <Button type="primary" htmlType="submit" block>
-                  {component.props.content}
+                <Button 
+                  type={buttonType} 
+                  htmlType={htmlType}
+                  loading={isSubmit && submitting}
+                  block
+                >
+                  {content}
                 </Button>
               </Form.Item>
             );
+          }
           default:
             return null;
         }
 };
 
+// 查找提交按钮的配置
+const findSubmitConfig = (components: ComponentSchema[]): FormSubmitConfig | undefined => {
+  for (const comp of components) {
+    if (comp.type === 'Button' && comp.props.htmlType === 'submit' && comp.props.submitConfig) {
+      return comp.props.submitConfig;
+    }
+    if (comp.children) {
+      const found = findSubmitConfig(comp.children);
+      if (found) return found;
+    }
+  }
+  return undefined;
+};
+
 export const FormRenderer: React.FC<FormRendererProps> = ({ components, onSubmit }) => {
   const [form] = Form.useForm();
   const [formValues, setFormValues] = useState<any>({});
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleFinish = (values: any) => {
+  const handleFinish = async (values: any) => {
     console.log('用户提交的数据:', values);
+    
+    const submitConfig = findSubmitConfig(components);
+    
+    // 如果有自定义 onSubmit 回调，优先使用
     if (onSubmit) {
       onSubmit(values);
+      return;
     }
-    alert('提交成功！请在控制台查看数据');
+
+    // 如果配置了提交地址，发送请求
+    if (submitConfig?.action) {
+      setSubmitting(true);
+      try {
+        const response = await fetch(submitConfig.action, {
+          method: submitConfig.method || 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(values),
+        });
+
+        if (response.ok) {
+          message.success(submitConfig.successMessage || '提交成功！');
+          if (submitConfig.redirectUrl) {
+            window.location.href = submitConfig.redirectUrl;
+          }
+        } else {
+          message.error(submitConfig.errorMessage || '提交失败，请重试');
+        }
+      } catch (error) {
+        console.error('提交错误:', error);
+        message.error(submitConfig.errorMessage || '提交失败，请检查网络');
+      } finally {
+        setSubmitting(false);
+      }
+    } else {
+      // 没有配置提交地址，显示默认提示
+      message.success('表单验证通过！');
+      console.log('表单数据:', values);
+    }
   };
 
   const handleValuesChange = (_: any, allValues: any) => {
@@ -135,7 +198,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({ components, onSubmit
       onFinish={handleFinish}
       onValuesChange={handleValuesChange}
     >
-      {components.map(c => renderComponent(c, formValues))}
+      {components.map(c => renderComponent(c, formValues, submitting))}
     </Form>
   );
 };

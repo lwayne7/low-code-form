@@ -239,7 +239,7 @@ export const useStore = create<State>()(
             case 'Switch': newComponent = { id: nanoid(), type: 'Switch', props: { label: '开关' } }; break;
             case 'DatePicker': newComponent = { id: nanoid(), type: 'DatePicker', props: { label: '日期', placeholder: '请选择' } }; break;
             case 'TimePicker': newComponent = { id: nanoid(), type: 'TimePicker', props: { label: '时间', placeholder: '请选择' } }; break;
-            case 'Button': newComponent = { id: nanoid(), type: 'Button', props: { content: '提交', type: 'primary' } }; break;
+            case 'Button': newComponent = { id: nanoid(), type: 'Button', props: { content: '提交', type: 'primary', htmlType: 'submit' } }; break;
             case 'Container': newComponent = { id: nanoid(), type: 'Container', props: { label: '容器', direction: 'vertical' }, children: [] }; break;
             default: return state;
         }

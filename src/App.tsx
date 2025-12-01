@@ -11,12 +11,16 @@ import {
   ClearOutlined,
   RocketOutlined,
   QuestionCircleOutlined,
+  MobileOutlined,
+  TabletOutlined,
+  DesktopOutlined,
+  HistoryOutlined,
 } from '@ant-design/icons';
 import { useStore } from './store';
 import './App.css';
 
 // Components
-import { FormRenderer, PropertyPanel, DraggableSidebarItem, SortableList, KeyboardShortcutsPanel, Toolbar } from './components';
+import { FormRenderer, PropertyPanel, DraggableSidebarItem, SortableList, KeyboardShortcutsPanel, Toolbar, HistoryPanel } from './components';
 
 // Utils
 import { generateFullCode, generateJsonSchema, customCollisionDetection } from './utils';
@@ -98,7 +102,10 @@ function App() {
   } = useStore();
 
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [previewDevice, setPreviewDevice] = useState<'mobile' | 'tablet' | 'desktop'>('desktop'); // 🆕 预览设备
   const [isShortcutsOpen, setIsShortcutsOpen] = useState(false); // 🆕 快捷键面板
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false); // 🆕 历史面板
+  const [componentSearch, setComponentSearch] = useState(''); // 🆕 组件搜索
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
   const [activeDragType, setActiveDragType] = useState<ComponentType | null>(null);
   const [overIndex, setOverIndex] = useState<number | undefined>(undefined);
@@ -594,6 +601,13 @@ function App() {
                 type="text"
               />
             </Tooltip>
+            <Tooltip title="操作历史">
+              <Button
+                icon={<HistoryOutlined />}
+                onClick={() => setIsHistoryOpen(true)}
+                type="text"
+              />
+            </Tooltip>
             <Divider type="vertical" style={{ height: 20, margin: '0 4px' }} />
             {/* 🆕 编辑工具栏 */}
             <Toolbar />
@@ -692,15 +706,29 @@ function App() {
           {/* 左侧组件库 */}
           <Sider width={280} theme="light" style={{ borderRight: '1px solid #f0f0f0', overflowY: 'auto' }}>
             <div style={{ padding: '20px 16px' }}>
-              <Space align="center" style={{ marginBottom: 16 }}>
+              <Space align="center" style={{ marginBottom: 12 }}>
                 <AppstoreAddOutlined style={{ color: '#1677ff' }} />
                 <Title level={5} style={{ margin: 0 }}>
                   组件库
                 </Title>
               </Space>
 
+              {/* 🆕 组件搜索 */}
+              <Input
+                placeholder="搜索组件..."
+                value={componentSearch}
+                onChange={(e) => setComponentSearch(e.target.value)}
+                allowClear
+                style={{ marginBottom: 12 }}
+              />
+
               <div className="component-grid">
-                {COMPONENT_MATERIALS.map((item) => (
+                {COMPONENT_MATERIALS
+                  .filter((item) => 
+                    item.label.toLowerCase().includes(componentSearch.toLowerCase()) ||
+                    item.type.toLowerCase().includes(componentSearch.toLowerCase())
+                  )
+                  .map((item) => (
                   <DraggableSidebarItem
                     key={item.type}
                     id={`new-${item.type}`}
@@ -710,6 +738,14 @@ function App() {
                     <span className="component-card-label">{item.label}</span>
                   </DraggableSidebarItem>
                 ))}
+                {COMPONENT_MATERIALS.filter((item) => 
+                  item.label.toLowerCase().includes(componentSearch.toLowerCase()) ||
+                  item.type.toLowerCase().includes(componentSearch.toLowerCase())
+                ).length === 0 && (
+                  <div style={{ gridColumn: '1 / -1', textAlign: 'center', color: '#999', padding: 16 }}>
+                    未找到匹配的组件
+                  </div>
+                )}
               </div>
             </div>
           </Sider>
@@ -809,15 +845,58 @@ function App() {
 
       {/* 预览 Modal */}
       <Modal
-        title="表单预览"
+        title={
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingRight: 32 }}>
+            <span>表单预览</span>
+            <Space>
+              <Tooltip title="手机 (375px)">
+                <Button
+                  type={previewDevice === 'mobile' ? 'primary' : 'text'}
+                  icon={<MobileOutlined />}
+                  size="small"
+                  onClick={() => setPreviewDevice('mobile')}
+                />
+              </Tooltip>
+              <Tooltip title="平板 (768px)">
+                <Button
+                  type={previewDevice === 'tablet' ? 'primary' : 'text'}
+                  icon={<TabletOutlined />}
+                  size="small"
+                  onClick={() => setPreviewDevice('tablet')}
+                />
+              </Tooltip>
+              <Tooltip title="桌面 (100%)">
+                <Button
+                  type={previewDevice === 'desktop' ? 'primary' : 'text'}
+                  icon={<DesktopOutlined />}
+                  size="small"
+                  onClick={() => setPreviewDevice('desktop')}
+                />
+              </Tooltip>
+            </Space>
+          </div>
+        }
         open={isPreviewOpen}
         onCancel={() => setIsPreviewOpen(false)}
         footer={null}
-        width={600}
+        width={previewDevice === 'mobile' ? 435 : previewDevice === 'tablet' ? 830 : 700}
         centered
+        styles={{ body: { padding: 0 } }}
       >
-        <div style={{ padding: 20 }}>
-          <FormRenderer components={components} />
+        <div 
+          style={{ 
+            padding: 20,
+            maxWidth: previewDevice === 'mobile' ? 375 : previewDevice === 'tablet' ? 768 : '100%',
+            margin: '0 auto',
+            background: previewDevice !== 'desktop' ? '#f5f5f5' : 'transparent',
+            minHeight: previewDevice === 'mobile' ? 600 : previewDevice === 'tablet' ? 500 : 'auto',
+            borderRadius: previewDevice !== 'desktop' ? 8 : 0,
+            boxShadow: previewDevice !== 'desktop' ? '0 2px 8px rgba(0,0,0,0.1)' : 'none',
+          }}
+        >
+          <div style={{ background: 'white', padding: 16, borderRadius: previewDevice !== 'desktop' ? 8 : 0 }}>
+            <FormRenderer components={components} />
+          </div>
         </div>
       </Modal>
 
@@ -825,6 +904,27 @@ function App() {
       <KeyboardShortcutsPanel
         open={isShortcutsOpen}
         onClose={() => setIsShortcutsOpen(false)}
+      />
+
+      {/* 🆕 历史记录面板 */}
+      <HistoryPanel
+        open={isHistoryOpen}
+        onClose={() => setIsHistoryOpen(false)}
+        past={history.past}
+        future={history.future}
+        currentComponents={components}
+        onJumpTo={(steps) => {
+          // steps < 0 表示撤销，steps > 0 表示重做
+          if (steps < 0) {
+            for (let i = 0; i < Math.abs(steps); i++) {
+              undo();
+            }
+          } else {
+            for (let i = 0; i < steps; i++) {
+              redo();
+            }
+          }
+        }}
       />
     </Layout>
   );

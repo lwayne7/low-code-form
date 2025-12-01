@@ -153,7 +153,11 @@ export const CanvasFormItem: React.FC<CanvasFormItemProps> = React.memo(({ compo
         );
       case 'Button':
         return (
-          <Button type={component.props.type || 'primary'} block>
+          <Button 
+            type={component.props.type || 'primary'} 
+            htmlType={component.props.htmlType || 'button'}
+            block
+          >
             {component.props.content}
           </Button>
         );
