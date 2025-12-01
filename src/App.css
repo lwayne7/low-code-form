@@ -265,8 +265,13 @@ body {
 
 /* 📱 手机适配 */
 @media (max-width: 768px) {
-  /* 隐藏侧边栏 */
-  .ant-layout-sider {
+  /* 只隐藏左侧组件库侧边栏 */
+  .sidebar-left {
+    display: none !important;
+  }
+  
+  /* 右侧属性面板也隐藏，改用抽屉 */
+  .sidebar-right {
     display: none !important;
   }
   

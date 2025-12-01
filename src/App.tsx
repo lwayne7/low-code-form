@@ -16,6 +16,7 @@ import {
   TabletOutlined,
   DesktopOutlined,
   HistoryOutlined,
+  SettingOutlined,
 } from '@ant-design/icons';
 import { useStore } from './store';
 import './App.css';
@@ -108,6 +109,7 @@ function App() {
   const [isHistoryOpen, setIsHistoryOpen] = useState(false); // 🆕 历史面板
   const [componentSearch, setComponentSearch] = useState(''); // 🆕 组件搜索
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false); // 🆕 移动端组件抽屉
+  const [isPropertyDrawerOpen, setIsPropertyDrawerOpen] = useState(false); // 🆕 移动端属性抽屉
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
   const [activeDragType, setActiveDragType] = useState<ComponentType | null>(null);
   const [overIndex, setOverIndex] = useState<number | undefined>(undefined);
@@ -710,7 +712,7 @@ function App() {
       >
         <Layout>
           {/* 左侧组件库 */}
-          <Sider width={280} theme="light" style={{ borderRight: '1px solid #f0f0f0', overflowY: 'auto' }}>
+          <Sider className="sidebar-left" width={280} theme="light" style={{ borderRight: '1px solid #f0f0f0', overflowY: 'auto' }}>
             <div style={{ padding: '20px 16px' }}>
               <Space align="center" style={{ marginBottom: 12 }}>
                 <AppstoreAddOutlined style={{ color: '#1677ff' }} />
@@ -816,7 +818,7 @@ function App() {
           </Content>
 
           {/* 右侧属性面板 */}
-          <Sider width={320} theme="light" style={{ borderLeft: '1px solid #f0f0f0', overflowY: 'auto' }}>
+          <Sider className="sidebar-right" width={320} theme="light" style={{ borderLeft: '1px solid #f0f0f0', overflowY: 'auto' }}>
             <PropertyPanel
               selectedIds={selectedIds}
               selectedComponent={selectedComponent}
@@ -975,17 +977,44 @@ function App() {
         </div>
       </Drawer>
 
-      {/* 📱 移动端浮动按钮 */}
-      <FloatButton
-        icon={<PlusOutlined />}
-        type="primary"
-        onClick={() => setIsMobileDrawerOpen(true)}
-        className="mobile-fab"
-        style={{
-          right: 24,
-          bottom: 24,
-        }}
-      />
+      {/* 📱 移动端属性面板抽屉 */}
+      <Drawer
+        title={
+          <Space>
+            <SettingOutlined style={{ color: '#1677ff' }} />
+            <span>组件属性</span>
+          </Space>
+        }
+        placement="right"
+        open={isPropertyDrawerOpen}
+        onClose={() => setIsPropertyDrawerOpen(false)}
+        width={320}
+      >
+        <PropertyPanel
+          selectedIds={selectedIds}
+          selectedComponent={selectedComponent}
+          components={components}
+          updateComponentProps={updateComponentProps}
+          deleteComponent={deleteComponent}
+        />
+      </Drawer>
+
+      {/* 📱 移动端浮动按钮组 */}
+      <FloatButton.Group className="mobile-fab" shape="square" style={{ right: 24, bottom: 24 }}>
+        <FloatButton
+          icon={<PlusOutlined />}
+          tooltip="添加组件"
+          onClick={() => setIsMobileDrawerOpen(true)}
+        />
+        {selectedIds.length > 0 && (
+          <FloatButton
+            icon={<SettingOutlined />}
+            tooltip="编辑属性"
+            type="primary"
+            onClick={() => setIsPropertyDrawerOpen(true)}
+          />
+        )}
+      </FloatButton.Group>
     </Layout>
   );
 }
