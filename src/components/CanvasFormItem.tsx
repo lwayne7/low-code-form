@@ -175,17 +175,36 @@ export const CanvasFormItem: React.FC<CanvasFormItemProps> = React.memo(({ compo
   const required = ('required' in component.props) ? component.props.required : false;
   // 🆕 如果有校验规则且包含 required，自动标记为必填
   const hasRequiredRule = component.props.rules?.some(r => r.type === 'required');
+  const isLocked = component.props.locked === true;
 
   return (
-    <Form.Item 
-      label={label} 
-      required={required || hasRequiredRule}
-      validateStatus={validationError ? 'error' : undefined}
-      help={validationError}
-      style={{ marginBottom: 0 }}
-    >
-      {renderField()}
-    </Form.Item>
+    <div style={{ position: 'relative' }}>
+      {/* 🆕 锁定标识 */}
+      {isLocked && (
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          right: 0,
+          background: '#faad14',
+          color: '#fff',
+          fontSize: 10,
+          padding: '1px 6px',
+          borderRadius: '0 0 0 4px',
+          zIndex: 5,
+        }}>
+          🔒 已锁定
+        </div>
+      )}
+      <Form.Item 
+        label={label} 
+        required={required || hasRequiredRule}
+        validateStatus={validationError ? 'error' : undefined}
+        help={validationError}
+        style={{ marginBottom: 0, opacity: isLocked ? 0.7 : 1 }}
+      >
+        {renderField()}
+      </Form.Item>
+    </div>
   );
 }, (prevProps, nextProps) => {
   // 🆕 自定义比较函数，只在 component 引用变化时重渲染
