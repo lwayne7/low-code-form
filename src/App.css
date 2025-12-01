@@ -251,6 +251,114 @@ body {
   }
 }
 
+/* 📱 平板适配 */
+@media (max-width: 992px) {
+  .canvas-container {
+    padding: 16px;
+  }
+  
+  .canvas-paper {
+    max-width: 100%;
+    padding: 20px;
+  }
+}
+
+/* 📱 手机适配 */
+@media (max-width: 768px) {
+  /* 隐藏侧边栏 */
+  .ant-layout-sider {
+    display: none !important;
+  }
+  
+  /* Header 调整为可换行 */
+  .app-header,
+  .ant-layout-header {
+    padding: 8px 12px !important;
+    height: auto !important;
+    min-height: 56px !important;
+  }
+  
+  /* 标题缩短 */
+  .app-title {
+    font-size: 14px !important;
+  }
+  
+  /* 隐藏分割线 */
+  .header-divider,
+  .ant-divider-vertical {
+    display: none !important;
+  }
+  
+  /* 按钮文字隐藏，只显示图标 */
+  .btn-text {
+    display: none !important;
+  }
+  
+  /* 画布占满宽度 */
+  .canvas-container {
+    padding: 12px;
+  }
+  
+  .canvas-paper {
+    max-width: 100%;
+    padding: 16px;
+    border-radius: 8px;
+  }
+  
+  .sortable-item {
+    padding: 12px;
+    margin-bottom: 8px;
+  }
+  
+  .component-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+  
+  .component-card {
+    padding: 10px 6px;
+  }
+  
+  .component-card .anticon {
+    font-size: 20px;
+    margin-bottom: 4px;
+  }
+  
+  .component-card-label {
+    font-size: 11px;
+  }
+}
+
+/* 📱 小屏手机适配 */
+@media (max-width: 480px) {
+  .app-header,
+  .ant-layout-header {
+    padding: 6px 8px !important;
+  }
+  
+  .app-title {
+    display: none !important;
+  }
+  
+  .canvas-container {
+    padding: 8px;
+    background-size: 15px 15px;
+  }
+  
+  .canvas-paper {
+    padding: 12px;
+  }
+  
+  .sortable-item {
+    padding: 10px;
+  }
+  
+  /* 按钮更紧凑 */
+  .ant-btn {
+    padding: 4px 8px !important;
+  }
+}
+
 /* 🆕 放置指示器动画 */
 @keyframes dropIndicatorPulse {
   0%, 100% {
@@ -273,4 +381,23 @@ body {
 /* 🆕 拖拽时光标样式 */
 .dragging-cursor {
   cursor: grabbing !important;
+}
+
+/* 📱 移动端浮动按钮 - 默认隐藏 */
+.mobile-fab {
+  display: none !important;
+}
+
+/* 桌面端显示侧边栏时隐藏浮动按钮 */
+@media (min-width: 769px) {
+  .mobile-fab {
+    display: none !important;
+  }
+}
+
+/* 移动端显示浮动按钮 */
+@media (max-width: 768px) {
+  .mobile-fab {
+    display: flex !important;
+  }
 }

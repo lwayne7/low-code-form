@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Input, Button, Modal, Layout, Typography, Space, Divider, Tooltip, message, Dropdown } from 'antd';
+import { Input, Button, Modal, Layout, Typography, Space, Divider, Tooltip, message, Dropdown, Drawer, FloatButton } from 'antd';
 import {
   UndoOutlined,
   RedoOutlined,
@@ -9,6 +9,7 @@ import {
   ExportOutlined,
   FileAddOutlined,
   ClearOutlined,
+  PlusOutlined,
   RocketOutlined,
   QuestionCircleOutlined,
   MobileOutlined,
@@ -106,6 +107,7 @@ function App() {
   const [isShortcutsOpen, setIsShortcutsOpen] = useState(false); // 🆕 快捷键面板
   const [isHistoryOpen, setIsHistoryOpen] = useState(false); // 🆕 历史面板
   const [componentSearch, setComponentSearch] = useState(''); // 🆕 组件搜索
+  const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false); // 🆕 移动端组件抽屉
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
   const [activeDragType, setActiveDragType] = useState<ComponentType | null>(null);
   const [overIndex, setOverIndex] = useState<number | undefined>(undefined);
@@ -554,6 +556,7 @@ function App() {
     <Layout style={{ height: '100vh' }}>
       {/* 顶部工具栏 */}
       <Header
+        className="app-header"
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -563,9 +566,11 @@ function App() {
           borderBottom: '1px solid #f0f0f0',
           height: 64,
           zIndex: 10,
+          flexWrap: 'wrap',
+          gap: 8,
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
           <div
             style={{
               width: 32,
@@ -576,15 +581,16 @@ function App() {
               alignItems: 'center',
               justifyContent: 'center',
               color: '#fff',
+              flexShrink: 0,
             }}
           >
             <RocketOutlined style={{ fontSize: 18 }} />
           </div>
-          <Title level={4} style={{ margin: 0, fontWeight: 600, fontSize: 18 }}>
+          <Title level={4} className="app-title" style={{ margin: 0, fontWeight: 600, fontSize: 18, whiteSpace: 'nowrap' }}>
             LowCode Form
           </Title>
-          <Divider type="vertical" style={{ height: 24, margin: '0 8px' }} />
-          <Space size="small">
+          <Divider type="vertical" className="header-divider" style={{ height: 24, margin: '0 8px' }} />
+          <Space size="small" wrap>
             <Tooltip title="撤销 (Cmd/Ctrl + Z)">
               <Button
                 icon={<UndoOutlined />}
@@ -642,7 +648,7 @@ function App() {
             </Tooltip>
           </Space>
         </div>
-        <Space>
+        <Space wrap size="small">
           <Dropdown
             menu={{
               items: formTemplates.map(template => ({
@@ -680,17 +686,17 @@ function App() {
             placement="bottomRight"
           >
             <Button icon={<FileAddOutlined />}>
-              模板
+              <span className="btn-text">模板</span>
             </Button>
           </Dropdown>
           <Button icon={<CodeOutlined />} onClick={handleShowJson}>
-            JSON
+            <span className="btn-text">JSON</span>
           </Button>
           <Button icon={<ExportOutlined />} onClick={handleExportCode}>
-            导出代码
+            <span className="btn-text">导出</span>
           </Button>
           <Button type="primary" icon={<EyeOutlined />} onClick={() => setIsPreviewOpen(true)}>
-            预览
+            <span className="btn-text">预览</span>
           </Button>
         </Space>
       </Header>
@@ -924,6 +930,60 @@ function App() {
               redo();
             }
           }
+        }}
+      />
+
+      {/* 📱 移动端组件库抽屉 */}
+      <Drawer
+        title={
+          <Space>
+            <AppstoreAddOutlined style={{ color: '#1677ff' }} />
+            <span>组件库</span>
+          </Space>
+        }
+        placement="left"
+        open={isMobileDrawerOpen}
+        onClose={() => setIsMobileDrawerOpen(false)}
+        width={280}
+      >
+        <Input
+          placeholder="搜索组件..."
+          value={componentSearch}
+          onChange={(e) => setComponentSearch(e.target.value)}
+          allowClear
+          style={{ marginBottom: 12 }}
+        />
+        <div className="component-grid" style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>
+          {COMPONENT_MATERIALS
+            .filter((item) =>
+              item.label.toLowerCase().includes(componentSearch.toLowerCase()) ||
+              item.type.toLowerCase().includes(componentSearch.toLowerCase())
+            )
+            .map((item) => (
+              <div
+                key={item.type}
+                className="component-card"
+                onClick={() => {
+                  addComponent(item.type as ComponentType);
+                  setIsMobileDrawerOpen(false);
+                }}
+              >
+                {item.icon}
+                <span className="component-card-label">{item.label}</span>
+              </div>
+            ))}
+        </div>
+      </Drawer>
+
+      {/* 📱 移动端浮动按钮 */}
+      <FloatButton
+        icon={<PlusOutlined />}
+        type="primary"
+        onClick={() => setIsMobileDrawerOpen(true)}
+        className="mobile-fab"
+        style={{
+          right: 24,
+          bottom: 24,
         }}
       />
     </Layout>
