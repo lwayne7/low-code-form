@@ -191,9 +191,15 @@ function App() {
    * 2. 滞后区扩大 - 边界区域扩大，减少来回切换
    * 3. 位置稳定 - 相同目标相同位置不重复设置
    * 4. 空容器优先 - 空容器内部优先级最高
+   * 5. 🆕 修饰键控制 - 按住 Shift 强制嵌套模式，按住 Alt/Option 强制移动模式
    */
   const handleDragOver = useCallback((event: DragOverEvent) => {
     const { over, active } = event;
+    
+    // 🆕 获取修饰键状态
+    const nativeEvent = (event.activatorEvent as MouseEvent | TouchEvent);
+    const isShiftHeld = nativeEvent && 'shiftKey' in nativeEvent && nativeEvent.shiftKey;
+    const isAltHeld = nativeEvent && 'altKey' in nativeEvent && nativeEvent.altKey;
     
     if (!over) {
       // 清理防抖计时器
@@ -282,6 +288,22 @@ function App() {
       // 防止拖入自身后代
       if (!activeId.startsWith('new-') && isDescendant(components, activeId, overId)) {
         safeSetDropTarget(null, true);
+        return;
+      }
+      
+      // 🆕 修饰键优先判断
+      // Shift: 强制嵌套模式（放入容器内部）
+      // Alt/Option: 强制移动模式（在容器前后放置）
+      if (isShiftHeld) {
+        safeSetDropTarget({ targetId: overId, position: 'inside' }, true);
+        return;
+      }
+      
+      if (isAltHeld) {
+        // Alt 模式下使用中点判断 before/after
+        const midPoint = overRect.top + overRect.height / 2;
+        const newPosition = currentY < midPoint ? 'before' : 'after';
+        safeSetDropTarget({ targetId: overId, position: newPosition }, true);
         return;
       }
       
@@ -652,9 +674,9 @@ function App() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          background: '#fff',
+          background: isDark ? '#1f1f1f' : '#fff',
           padding: '0 24px',
-          borderBottom: '1px solid #f0f0f0',
+          borderBottom: `1px solid ${isDark ? '#303030' : '#f0f0f0'}`,
           height: 64,
           zIndex: 10,
           flexWrap: 'wrap',
@@ -944,11 +966,11 @@ function App() {
       >
         <Layout>
           {/* 左侧组件库 */}
-          <Sider className="sidebar-left" width={280} theme="light" style={{ borderRight: '1px solid #f0f0f0', overflowY: 'auto' }}>
+          <Sider className="sidebar-left" width={280} theme="light" style={{ borderRight: `1px solid ${isDark ? '#303030' : '#f0f0f0'}`, overflowY: 'auto', background: isDark ? '#1f1f1f' : '#fff' }}>
             <div style={{ padding: '20px 16px' }}>
               <Space align="center" style={{ marginBottom: 12 }}>
-                <AppstoreAddOutlined style={{ color: '#1677ff' }} />
-                <Title level={5} style={{ margin: 0 }}>
+                <AppstoreAddOutlined style={{ color: isDark ? '#4096ff' : '#1677ff' }} />
+                <Title level={5} style={{ margin: 0, color: isDark ? '#e6e6e6' : undefined }}>
                   组件库
                 </Title>
               </Space>

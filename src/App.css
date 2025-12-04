@@ -938,6 +938,40 @@
   border-bottom-color: var(--border-color, #303030);
 }
 
+/* 🆕 深色模式下 Header 内的按钮和文字 */
+[data-theme="dark"] .ant-layout-header .ant-btn-text {
+  color: #e6e6e6 !important;
+}
+
+[data-theme="dark"] .ant-layout-header .ant-btn-text:hover {
+  color: #4096ff !important;
+  background: rgba(64, 150, 255, 0.1) !important;
+}
+
+[data-theme="dark"] .ant-layout-header .ant-btn-text:disabled {
+  color: #525252 !important;
+}
+
+[data-theme="dark"] .ant-layout-header .ant-btn-text.ant-btn-dangerous {
+  color: #ff7875 !important;
+}
+
+[data-theme="dark"] .ant-layout-header .ant-btn-text.ant-btn-dangerous:hover {
+  color: #ff4d4f !important;
+  background: rgba(255, 77, 79, 0.1) !important;
+}
+
+[data-theme="dark"] .ant-layout-header .ant-divider {
+  border-color: #404040 !important;
+}
+
+[data-theme="dark"] .ant-layout-header .app-title {
+  background: linear-gradient(135deg, #4096ff 0%, #69b1ff 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
 [data-theme="dark"] .ant-layout-sider {
   background: var(--component-background, #1f1f1f) !important;
   border-right-color: var(--border-color, #303030);
@@ -992,6 +1026,35 @@
   [data-theme="auto"] .ant-layout-header {
     background: rgba(31, 31, 31, 0.95) !important;
     border-bottom-color: var(--border-color, #303030);
+  }
+  
+  /* 🆕 自动模式下 Header 内的按钮和文字 */
+  [data-theme="auto"] .ant-layout-header .ant-btn-text {
+    color: #e6e6e6 !important;
+  }
+  
+  [data-theme="auto"] .ant-layout-header .ant-btn-text:hover {
+    color: #4096ff !important;
+    background: rgba(64, 150, 255, 0.1) !important;
+  }
+  
+  [data-theme="auto"] .ant-layout-header .ant-btn-text:disabled {
+    color: #525252 !important;
+  }
+  
+  [data-theme="auto"] .ant-layout-header .ant-btn-text.ant-btn-dangerous {
+    color: #ff7875 !important;
+  }
+  
+  [data-theme="auto"] .ant-layout-header .ant-divider {
+    border-color: #404040 !important;
+  }
+  
+  [data-theme="auto"] .ant-layout-header .app-title {
+    background: linear-gradient(135deg, #4096ff 0%, #69b1ff 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
   
   [data-theme="auto"] .ant-layout-sider {

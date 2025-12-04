@@ -9,6 +9,8 @@ import {
   SelectOutlined,
   CloseCircleOutlined,
   BlockOutlined,
+  SwapOutlined,
+  DragOutlined,
 } from '@ant-design/icons';
 
 const { Text, Title } = Typography;
@@ -29,6 +31,12 @@ const shortcuts: ShortcutItem[] = [
   { keys: ['Delete'], description: '删除选中组件', icon: <DeleteOutlined /> },
   { keys: ['Backspace'], description: '删除选中组件', icon: <DeleteOutlined /> },
   { keys: ['Esc'], description: '取消选择', icon: <CloseCircleOutlined /> },
+];
+
+// 🆕 拖拽相关快捷键
+const dragShortcuts: ShortcutItem[] = [
+  { keys: ['Shift', '+ 拖拽'], description: '强制嵌套到容器内部', icon: <BlockOutlined /> },
+  { keys: ['Alt/Option', '+ 拖拽'], description: '强制在容器前/后放置', icon: <SwapOutlined /> },
 ];
 
 interface KeyboardShortcutsPanelProps {
@@ -160,6 +168,53 @@ export const KeyboardShortcutsPanel: React.FC<KeyboardShortcutsPanelProps> = ({
             <Text>拖拽</Text>
             <Text type="secondary">移动组件位置</Text>
           </div>
+        </div>
+
+        <Divider />
+
+        <Title level={5} style={{ marginBottom: 16 }}>
+          <DragOutlined style={{ marginRight: 8 }} />
+          拖拽修饰键
+        </Title>
+        
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {dragShortcuts.map((shortcut, index) => (
+            <div
+              key={index}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '8px 12px',
+                background: '#e6f4ff',
+                borderRadius: 6,
+                border: '1px solid #91caff',
+              }}
+            >
+              <Space>
+                <span style={{ color: '#1677ff', fontSize: 16 }}>{shortcut.icon}</span>
+                <Text>{shortcut.description}</Text>
+              </Space>
+              <Space size={4}>
+                {shortcut.keys.map((key, i) => (
+                  <React.Fragment key={i}>
+                    <Tag
+                      color="blue"
+                      style={{
+                        margin: 0,
+                        padding: '2px 8px',
+                        borderRadius: 4,
+                        fontFamily: 'monospace',
+                        fontSize: 12,
+                      }}
+                    >
+                      {key}
+                    </Tag>
+                  </React.Fragment>
+                ))}
+              </Space>
+            </div>
+          ))}
         </div>
       </div>
     </Modal>
