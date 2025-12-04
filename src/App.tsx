@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Input, Button, Modal, Layout, Typography, Space, Divider, Tooltip, message, Dropdown, Drawer, FloatButton } from 'antd';
+import { Input, Button, Modal, Layout, Typography, Space, Divider, Tooltip, message, Dropdown, Drawer, FloatButton, Segmented } from 'antd';
 import {
   UndoOutlined,
   RedoOutlined,
@@ -22,6 +22,9 @@ import {
   SaveOutlined,
   DeleteOutlined,
   DashboardOutlined,
+  SunOutlined,
+  MoonOutlined,
+  LaptopOutlined,
 } from '@ant-design/icons';
 import { useStore } from './store';
 import './App.css';
@@ -30,7 +33,7 @@ import './App.css';
 import { PropertyPanel, DraggableSidebarItem, SortableList, LazyKeyboardShortcutsPanel, Toolbar, LazyHistoryPanel, FormStats, LazyFormRenderer, PerformancePanel } from './components';
 
 // Hooks
-import { useKeyboardShortcuts } from './hooks';
+import { useKeyboardShortcuts, useTheme } from './hooks';
 
 // Utils
 import { generateFullCode, generateJsonSchema, customCollisionDetection } from './utils';
@@ -118,6 +121,33 @@ const DroppableCanvas = ({ children }: { children: React.ReactNode }) => {
     <div ref={setNodeRef} style={{ minHeight: '100%', width: '100%' }}>
       {children}
     </div>
+  );
+};
+
+// 🆕 主题切换器组件
+const ThemeSwitcher = () => {
+  const { themeMode, setThemeMode, isDark } = useTheme();
+  
+  const themeOptions = [
+    { value: 'light', icon: <SunOutlined />, label: '浅色' },
+    { value: 'dark', icon: <MoonOutlined />, label: '深色' },
+    { value: 'system', icon: <LaptopOutlined />, label: '系统' },
+  ];
+  
+  return (
+    <Segmented
+      size="small"
+      value={themeMode}
+      onChange={(value) => setThemeMode(value as 'light' | 'dark' | 'system')}
+      options={themeOptions.map(opt => ({
+        value: opt.value,
+        icon: opt.icon,
+        title: opt.label,
+      }))}
+      style={{ 
+        background: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.04)',
+      }}
+    />
   );
 };
 
@@ -694,6 +724,9 @@ function App() {
                 type="text"
               />
             </Tooltip>
+            <Divider type="vertical" style={{ height: 20, margin: '0 4px' }} />
+            {/* 🆕 主题切换 */}
+            <ThemeSwitcher />
           </Space>
         </div>
         <Space wrap size="small">

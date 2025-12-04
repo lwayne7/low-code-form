@@ -15,7 +15,7 @@
   --warning-color: #faad14;
   --error-color: #ff4d4f;
   
-  /* 中性色 */
+  /* 中性色 - 浅色模式默认 */
   --text-color: #1f1f1f;
   --text-color-secondary: #666666;
   --text-color-tertiary: #999999;
@@ -57,24 +57,25 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* 深色模式变量 */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text-color: #e6e6e6;
-    --text-color-secondary: #a3a3a3;
-    --text-color-tertiary: #737373;
-    --border-color: #303030;
-    --border-color-light: #262626;
-    --background-color: #141414;
-    --background-color-light: #1f1f1f;
-    --component-background: #1f1f1f;
-    
-    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.2);
-    --shadow-md: 0 3px 6px -4px rgba(0, 0, 0, 0.3), 0 6px 16px 0 rgba(0, 0, 0, 0.25);
-    --shadow-lg: 0 6px 16px -8px rgba(0, 0, 0, 0.4), 0 9px 28px 0 rgba(0, 0, 0, 0.3);
-    
-    color-scheme: dark;
-  }
+/* ============================================
+   深色模式变量 - 通过类名控制
+   ============================================ */
+
+:root.theme-dark {
+  --text-color: #e6e6e6;
+  --text-color-secondary: #a3a3a3;
+  --text-color-tertiary: #737373;
+  --border-color: #303030;
+  --border-color-light: #262626;
+  --background-color: #141414;
+  --background-color-light: #1f1f1f;
+  --component-background: #1f1f1f;
+  
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 3px 6px -4px rgba(0, 0, 0, 0.3), 0 6px 16px 0 rgba(0, 0, 0, 0.25);
+  --shadow-lg: 0 6px 16px -8px rgba(0, 0, 0, 0.4), 0 9px 28px 0 rgba(0, 0, 0, 0.3);
+  
+  color-scheme: dark;
 }
 
 body {

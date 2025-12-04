@@ -864,53 +864,66 @@
 }
 
 /* ============================================
-   深色模式适配
+   深色模式适配 - 通过类名控制
    ============================================ */
 
-@media (prefers-color-scheme: dark) {
-  .canvas-container {
-    background-color: var(--background-color, #141414);
-    background-image: radial-gradient(circle at center, #303030 1px, transparent 1px);
-  }
-  
-  .canvas-container::before {
-    background: linear-gradient(180deg, var(--background-color, #141414) 0%, transparent 100%);
-  }
-  
-  .sortable-item {
-    background: var(--component-background, #1f1f1f);
-    border-color: var(--border-color, #303030);
-  }
-  
-  .sortable-item:hover {
-    background: #262626;
-  }
-  
-  .sortable-item.selected {
-    background: linear-gradient(135deg, #0d2847 0%, #1f1f1f 100%);
-  }
-  
-  .component-card {
-    background: var(--component-background, #1f1f1f);
-    border-color: var(--border-color, #303030);
-  }
-  
-  .container-component {
-    background: linear-gradient(145deg, #1a1a1a 0%, #262626 100%);
-    border-color: var(--border-color, #303030);
-  }
-  
-  .empty-drop-hint {
-    background: linear-gradient(145deg, #1a1a1a 0%, #262626 100%);
-  }
-  
-  ::-webkit-scrollbar-thumb {
-    background: linear-gradient(180deg, #404040 0%, #525252 100%);
-  }
-  
-  ::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(180deg, #525252 0%, #6b6b6b 100%);
-  }
+:root.theme-dark .canvas-container {
+  background-color: var(--background-color, #141414);
+  background-image: radial-gradient(circle at center, #303030 1px, transparent 1px);
+}
+
+:root.theme-dark .canvas-container::before {
+  background: linear-gradient(180deg, var(--background-color, #141414) 0%, transparent 100%);
+}
+
+:root.theme-dark .canvas-paper {
+  background: rgba(31, 31, 31, 0.85);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+:root.theme-dark .sortable-item {
+  background: var(--component-background, #1f1f1f);
+  border-color: var(--border-color, #303030);
+}
+
+:root.theme-dark .sortable-item:hover {
+  background: #262626;
+}
+
+:root.theme-dark .sortable-item.selected {
+  background: linear-gradient(135deg, #0d2847 0%, #1f1f1f 100%);
+}
+
+:root.theme-dark .component-card {
+  background: var(--component-background, #1f1f1f);
+  border-color: var(--border-color, #303030);
+}
+
+:root.theme-dark .container-component {
+  background: linear-gradient(145deg, #1a1a1a 0%, #262626 100%);
+  border-color: var(--border-color, #303030);
+}
+
+:root.theme-dark .empty-drop-hint {
+  background: linear-gradient(145deg, #1a1a1a 0%, #262626 100%);
+}
+
+:root.theme-dark ::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #404040 0%, #525252 100%);
+}
+
+:root.theme-dark ::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #525252 0%, #6b6b6b 100%);
+}
+
+:root.theme-dark .ant-layout-header {
+  background: rgba(31, 31, 31, 0.95) !important;
+  border-bottom-color: var(--border-color, #303030);
+}
+
+:root.theme-dark .ant-layout-sider {
+  background: var(--component-background, #1f1f1f) !important;
+  border-color: var(--border-color, #303030);
 }
 
 /* ============================================

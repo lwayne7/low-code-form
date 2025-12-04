@@ -15,3 +15,6 @@ export {
 
 // Web Worker
 export { useCodeWorker, useCodeGeneratorFallback } from './useCodeWorker';
+
+// 主题切换
+export { useTheme } from './useTheme';
