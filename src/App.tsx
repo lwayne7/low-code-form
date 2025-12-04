@@ -1,5 +1,5 @@
-import { useState, useRef } from 'react';
-import { Input, Button, Modal, Layout, Typography, Space, Divider, Tooltip, message, Dropdown, Drawer, FloatButton, Segmented } from 'antd';
+import { useState, useRef, useCallback } from 'react';
+import { Input, Button, Modal, Layout, Typography, Space, Divider, Tooltip, message, Dropdown, Drawer, FloatButton } from 'antd';
 import {
   UndoOutlined,
   RedoOutlined,
@@ -24,7 +24,6 @@ import {
   DashboardOutlined,
   SunOutlined,
   MoonOutlined,
-  LaptopOutlined,
 } from '@ant-design/icons';
 import { useStore } from './store';
 import './App.css';
@@ -66,30 +65,13 @@ const { Title } = Typography;
 
 // ============ 常量定义 ============
 /** 容器边缘区域比例（用于判断 before/after/inside） */
-const CONTAINER_EDGE_RATIO = 0.15; // 减小边缘区域，让内部区域更大
+const CONTAINER_EDGE_RATIO = 0.2;
 /** 滞后区比例（用于防止抖动） */
-const HYSTERESIS_RATIO = 0.08; // 增加滞后区
+const HYSTERESIS_RATIO = 0.05;
 /** 非容器组件的滞后区比例 */
 const ITEM_HYSTERESIS_RATIO = 0.15;
-/** 空容器的边缘区域比例（更宽松，优先放入内部） */
-const EMPTY_CONTAINER_EDGE_RATIO = 0.1;
 
 // ============ 辅助函数 ============
-
-/** 解析容器 ID（从 container-xxx 或容器组件 ID 获取） */
-const parseContainerId = (
-  id: string, 
-  findById: (id: string) => ReturnType<typeof findComponentById>
-): string | null => {
-  if (id.startsWith('container-')) {
-    return id.replace('container-', '');
-  }
-  const comp = findById(id);
-  if (comp?.type === 'Container') {
-    return id;
-  }
-  return null;
-};
 
 /** 从拖拽事件中获取当前指针 Y 坐标 */
 const getPointerY = (event: DragOverEvent): number => {
@@ -126,33 +108,6 @@ const DroppableCanvas = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-// 🆕 主题切换器组件
-const ThemeSwitcher = () => {
-  const { themeMode, setThemeMode, isDark } = useTheme();
-  
-  const themeOptions = [
-    { value: 'light', icon: <SunOutlined />, label: '浅色' },
-    { value: 'dark', icon: <MoonOutlined />, label: '深色' },
-    { value: 'system', icon: <LaptopOutlined />, label: '系统' },
-  ];
-  
-  return (
-    <Segmented
-      size="small"
-      value={themeMode}
-      onChange={(value) => setThemeMode(value as 'light' | 'dark' | 'system')}
-      options={themeOptions.map(opt => ({
-        value: opt.value,
-        icon: opt.icon,
-        title: opt.label,
-      }))}
-      style={{ 
-        background: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.04)',
-      }}
-    />
-  );
-};
-
 function App() {
   const {
     components,
@@ -174,6 +129,9 @@ function App() {
     importComponents,
   } = useStore();
 
+  // 主题切换
+  const { themeMode, isDark, toggleTheme } = useTheme();
+
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false); // 🆕 全屏预览
   const [previewDevice, setPreviewDevice] = useState<'mobile' | 'tablet' | 'desktop'>('desktop'); // 🆕 预览设备
@@ -192,6 +150,10 @@ function App() {
     position: 'before' | 'after' | 'inside';  // 放置位置
     parentId?: string;  // 父容器 ID
   } | null>(null);
+  // 🆕 上一次的拖拽目标，用于防抖
+  const lastDropTargetRef = useRef<typeof dropTarget>(null);
+  // 🆕 防抖计时器
+  const dropTargetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [isSelecting, setIsSelecting] = useState(false);
   const [selectionBox, setSelectionBox] = useState<{
     startX: number;
@@ -206,9 +168,6 @@ function App() {
 
   // 使用键盘快捷键 Hook
   useKeyboardShortcuts();
-
-  // 🆕 初始化主题（确保页面加载时应用正确的主题类）
-  useTheme();
 
   // 拖拽传感器
   const sensors = useSensors(
@@ -225,12 +184,26 @@ function App() {
     }
   };
 
-  const handleDragOver = (event: DragOverEvent) => {
+  /**
+   * 🔧 优化的拖拽悬停处理
+   * 核心优化点：
+   * 1. 延迟更新 - 使用 debounce 避免频繁状态变化
+   * 2. 滞后区扩大 - 边界区域扩大，减少来回切换
+   * 3. 位置稳定 - 相同目标相同位置不重复设置
+   * 4. 空容器优先 - 空容器内部优先级最高
+   */
+  const handleDragOver = useCallback((event: DragOverEvent) => {
     const { over, active } = event;
     
     if (!over) {
+      // 清理防抖计时器
+      if (dropTargetTimerRef.current) {
+        clearTimeout(dropTargetTimerRef.current);
+        dropTargetTimerRef.current = null;
+      }
       setOverIndex(undefined);
       setDropTarget(null);
+      lastDropTargetRef.current = null;
       return;
     }
 
@@ -238,139 +211,143 @@ function App() {
     const activeId = String(active.id);
     const findById = (id: string) => findComponentById(components, id);
 
-    // 防抖：如果当前目标是 container-xxx，且之前的目标也是同一个容器的 inside，保持稳定
-    const currentContainerId = parseContainerId(overId, findById);
-    if (currentContainerId && 
-        dropTarget?.targetId === currentContainerId && 
-        dropTarget?.position === 'inside') {
-      return;
-    }
+    // 辅助函数：安全设置 dropTarget（带防抖）
+    const safeSetDropTarget = (newTarget: typeof dropTarget, immediate = false) => {
+      // 如果目标完全相同，不更新
+      if (
+        lastDropTargetRef.current?.targetId === newTarget?.targetId &&
+        lastDropTargetRef.current?.position === newTarget?.position
+      ) {
+        return;
+      }
+      
+      // 清除之前的计时器
+      if (dropTargetTimerRef.current) {
+        clearTimeout(dropTargetTimerRef.current);
+        dropTargetTimerRef.current = null;
+      }
+      
+      if (immediate) {
+        lastDropTargetRef.current = newTarget;
+        setDropTarget(newTarget);
+      } else {
+        // 延迟 30ms 更新，减少抖动
+        dropTargetTimerRef.current = setTimeout(() => {
+          lastDropTargetRef.current = newTarget;
+          setDropTarget(newTarget);
+        }, 30);
+      }
+    };
 
-    // 放入容器 droppable 区域（container-xxx 格式）
+    // === 1. 容器内部区域（container-xxx 格式）- 最高优先级 ===
     if (overId.startsWith('container-')) {
       const containerId = overId.replace('container-', '');
       
       // 防止拖入自身或形成循环
       if (containerId === activeId) {
-        setDropTarget(null);
+        safeSetDropTarget(null, true);
         return;
       }
       
       if (!activeId.startsWith('new-') && isDescendant(components, activeId, containerId)) {
-        setDropTarget(null);
+        safeSetDropTarget(null, true);
         return;
       }
       
-      setDropTarget({ targetId: containerId, position: 'inside' });
+      // 容器内部 - 立即响应，优先级高
+      safeSetDropTarget({ targetId: containerId, position: 'inside' }, true);
       return;
     }
     
-    // 放入顶层画布
+    // === 2. 顶层画布区域 ===
     if (overId === 'canvas-droppable') {
-      if (dropTarget?.targetId === 'canvas') return;
-      setDropTarget({ targetId: 'canvas', position: 'inside' });
+      safeSetDropTarget({ targetId: 'canvas', position: 'inside' });
       return;
     }
 
-    // 放置在某个组件上
+    // === 3. 放置在某个组件上 ===
     const targetComponent = findById(overId);
     if (!targetComponent) return;
 
     const overRect = over.rect;
     const currentY = getPointerY(event);
 
+    // 计算边界区域
+    const containerEdgeRatio = CONTAINER_EDGE_RATIO;
+    const hysteresisRatio = HYSTERESIS_RATIO * 1.5; // 增加滞后区
+
     if (targetComponent.type === 'Container' && activeId !== overId) {
-      // 容器组件：检测是放在容器的边缘还是内部
+      // === 容器组件：三区域判断 (before / inside / after) ===
       
-      // 🔧 判断目标容器是否为空
-      const isEmptyContainer = !targetComponent.children || targetComponent.children.length === 0;
-      
-      // 🔧 判断拖拽的组件是否是有子组件的大容器
-      const activeComponent = !activeId.startsWith('new-') ? findById(activeId) : null;
-      const isLargeContainer = activeComponent?.type === 'Container' && 
-        activeComponent.children && activeComponent.children.length > 0;
-      
-      // 🔧 如果拖拽大容器到空容器上，大幅增加 inside 区域
-      // 这样可以避免大容器和空容器频繁交换位置
-      let edgeRatio: number;
-      if (isEmptyContainer && isLargeContainer) {
-        edgeRatio = 0.05; // 只有最顶部和最底部 5% 才是 before/after
-      } else if (isEmptyContainer) {
-        edgeRatio = EMPTY_CONTAINER_EDGE_RATIO;
-      } else {
-        edgeRatio = CONTAINER_EDGE_RATIO;
+      // 防止拖入自身后代
+      if (!activeId.startsWith('new-') && isDescendant(components, activeId, overId)) {
+        safeSetDropTarget(null, true);
+        return;
       }
       
-      const topEdge = overRect.top + overRect.height * edgeRatio;
-      const bottomEdge = overRect.top + overRect.height * (1 - edgeRatio);
+      const topEdge = overRect.top + overRect.height * containerEdgeRatio;
+      const bottomEdge = overRect.top + overRect.height * (1 - containerEdgeRatio);
       
-      let position: 'before' | 'after' | 'inside';
+      // 计算当前应该的位置
+      let newPosition: 'before' | 'after' | 'inside';
       if (currentY < topEdge) {
-        position = 'before';
+        newPosition = 'before';
       } else if (currentY > bottomEdge) {
-        position = 'after';
+        newPosition = 'after';
       } else {
-        position = 'inside';
+        newPosition = 'inside';
       }
       
-      // 🔧 空容器 + 大容器拖拽：强制保持 inside 状态，避免抖动
-      if (isEmptyContainer && isLargeContainer) {
-        // 一旦进入空容器，就锁定为 inside，除非完全离开容器区域
-        if (dropTarget?.targetId === overId && dropTarget?.position === 'inside') {
-          return; // 保持 inside 不变
-        }
-        // 大容器拖入空容器时，默认就是 inside
-        position = 'inside';
-      } else if (isEmptyContainer && position !== 'inside') {
-        // 普通组件拖入空容器的逻辑
-        if (dropTarget?.targetId === overId && dropTarget?.position === 'inside') {
-          return;
-        }
-        const centerZone = overRect.height * 0.7; // 中心70%区域都算inside
-        const centerTop = overRect.top + (overRect.height - centerZone) / 2;
-        const centerBottom = centerTop + centerZone;
-        if (currentY >= centerTop && currentY <= centerBottom) {
-          position = 'inside';
-        }
-      }
-      
-      // 增强防抖：添加滞后区防止边界抖动
-      if (dropTarget?.targetId === overId) {
-        const hysteresis = overRect.height * HYSTERESIS_RATIO;
+      // 滞后区检测：如果在边界附近且之前有状态，保持原状态
+      if (lastDropTargetRef.current?.targetId === overId) {
+        const hysteresis = overRect.height * hysteresisRatio;
+        const lastPos = lastDropTargetRef.current.position;
         
-        if (dropTarget.position === 'inside') {
-          const hysteresisTop = overRect.top + overRect.height * (edgeRatio - HYSTERESIS_RATIO);
-          const hysteresisBottom = overRect.top + overRect.height * (1 - edgeRatio + HYSTERESIS_RATIO);
-          if (currentY >= hysteresisTop && currentY <= hysteresisBottom) return;
-        } else if (dropTarget.position === 'before' && currentY < topEdge + hysteresis) {
-          return;
-        } else if (dropTarget.position === 'after' && currentY > bottomEdge - hysteresis) {
-          return;
+        if (lastPos === 'inside') {
+          // 从 inside 切换出去需要更明确的移动
+          const expandedTop = overRect.top + overRect.height * (containerEdgeRatio - hysteresisRatio);
+          const expandedBottom = overRect.top + overRect.height * (1 - containerEdgeRatio + hysteresisRatio);
+          if (currentY >= expandedTop && currentY <= expandedBottom) {
+            return; // 保持 inside
+          }
+        } else if (lastPos === 'before') {
+          if (currentY < topEdge + hysteresis) {
+            return; // 保持 before
+          }
+        } else if (lastPos === 'after') {
+          if (currentY > bottomEdge - hysteresis) {
+            return; // 保持 after
+          }
         }
       }
       
-      setDropTarget({ targetId: overId, position });
+      safeSetDropTarget({ targetId: overId, position: newPosition });
     } else {
-      // 普通组件：判断上方还是下方（带滞后区）
+      // === 普通组件：二区域判断 (before / after) ===
       const midPoint = overRect.top + overRect.height / 2;
-      const hysteresis = overRect.height * ITEM_HYSTERESIS_RATIO;
+      const hysteresis = overRect.height * ITEM_HYSTERESIS_RATIO * 1.5;
       
-      if (dropTarget?.targetId === overId) {
-        if (dropTarget.position === 'before' && currentY < midPoint + hysteresis) return;
-        if (dropTarget.position === 'after' && currentY > midPoint - hysteresis) return;
+      // 滞后区检测
+      if (lastDropTargetRef.current?.targetId === overId) {
+        const lastPos = lastDropTargetRef.current.position;
+        if (lastPos === 'before' && currentY < midPoint + hysteresis) {
+          return; // 保持 before
+        }
+        if (lastPos === 'after' && currentY > midPoint - hysteresis) {
+          return; // 保持 after
+        }
       }
       
-      const position = currentY < midPoint ? 'before' : 'after';
-      if (dropTarget?.targetId === overId && dropTarget?.position === position) return;
-      
-      setDropTarget({ targetId: overId, position });
+      const newPosition = currentY < midPoint ? 'before' : 'after';
+      safeSetDropTarget({ targetId: overId, position: newPosition });
     }
 
+    // 更新索引（用于非嵌套列表）
     const index = components.findIndex((c) => c.id === over.id);
     if (index !== -1) {
       setOverIndex(index);
     }
-  };
+  }, [components, dropTarget]);
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
@@ -770,9 +747,13 @@ function App() {
                 type="text"
               />
             </Tooltip>
-            <Divider type="vertical" style={{ height: 20, margin: '0 4px' }} />
-            {/* 🆕 主题切换 */}
-            <ThemeSwitcher />
+            <Tooltip title={`主题: ${themeMode === 'light' ? '亮色' : themeMode === 'dark' ? '深色' : '跟随系统'}`}>
+              <Button
+                icon={isDark ? <MoonOutlined /> : <SunOutlined />}
+                onClick={toggleTheme}
+                type="text"
+              />
+            </Tooltip>
           </Space>
         </div>
         <Space wrap size="small">

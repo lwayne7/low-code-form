@@ -35,12 +35,7 @@ export interface CustomTemplate {
   createdAt: number;
 }
 
-// 🆕 主题模式类型
-export type ThemeMode = 'light' | 'dark' | 'system';
-
 interface State {
-  // 🆕 主题设置
-  themeMode: ThemeMode;
   components: ComponentSchema[];
   selectedIds: string[];
   formValues: Record<string, any>; // 表单值状态
@@ -74,9 +69,6 @@ interface State {
   // 🆕 自定义模板
   saveAsTemplate: (name: string, description?: string) => void;
   deleteTemplate: (id: string) => void;
-  
-  // 🆕 主题设置
-  setThemeMode: (mode: ThemeMode) => void;
   
   // 校验相关
   validateField: (id: string) => string | null;
@@ -176,7 +168,6 @@ export const useStore = create<State>()(
       validationErrors: {} as Record<string, string>,
       clipboard: [] as ComponentSchema[], // 🆕 剪贴板
       customTemplates: [] as CustomTemplate[], // 🆕 自定义模板
-      themeMode: 'system' as ThemeMode, // 🆕 默认跟随系统
       history: {
         past: [] as ComponentSchema[][],
         future: [] as ComponentSchema[][],
@@ -608,17 +599,13 @@ export const useStore = create<State>()(
       // 🆕 删除自定义模板
       deleteTemplate: (id: string) => set((state) => ({
         customTemplates: state.customTemplates.filter(t => t.id !== id)
-      })),
-
-      // 🆕 设置主题模式
-      setThemeMode: (mode: ThemeMode) => set({ themeMode: mode })
+      }))
     }),
     {
       name: 'lowcode-storage', 
       partialize: (state) => ({ 
         components: state.components,
         customTemplates: state.customTemplates, // 🆕 持久化自定义模板
-        themeMode: state.themeMode, // 🆕 持久化主题设置
       }),
     }
   )

@@ -18,3 +18,4 @@ export { useCodeWorker, useCodeGeneratorFallback } from './useCodeWorker';
 
 // 主题切换
 export { useTheme } from './useTheme';
+export type { ThemeMode } from './useTheme';

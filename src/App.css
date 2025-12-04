@@ -38,9 +38,9 @@
 /* --- 画布背景 - 现代网格 --- */
 .canvas-container {
   background-color: var(--background-color, #f5f7fa);
-  /* 更柔和的点状网格 - 使用 CSS 变量 */
+  /* 更柔和的点状网格 */
   background-image: 
-    radial-gradient(circle at center, var(--canvas-dot-color, #d4d4d8) 1px, transparent 1px);
+    radial-gradient(circle at center, #d4d4d8 1px, transparent 1px);
   background-size: 24px 24px;
   background-position: 12px 12px;
   overflow-y: auto;
@@ -172,9 +172,15 @@
     0 0 0 1px rgba(22, 119, 255, 0.1);
 }
 
-/* 深色模式适配 */
+/* 深色模式适配 - 手动深色模式 */
+[data-theme="dark"] .canvas-paper {
+  background: rgba(31, 31, 31, 0.85);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* 深色模式适配 - 跟随系统 */
 @media (prefers-color-scheme: dark) {
-  .canvas-paper {
+  [data-theme="auto"] .canvas-paper {
     background: rgba(31, 31, 31, 0.85);
     border-color: rgba(255, 255, 255, 0.1);
   }
@@ -864,66 +870,120 @@
 }
 
 /* ============================================
-   深色模式适配 - 通过类名控制
+   深色模式适配
+   支持三种模式：light / dark / auto（跟随系统）
    ============================================ */
 
-:root.theme-dark .canvas-container {
+/* 手动深色模式 */
+[data-theme="dark"] .canvas-container {
   background-color: var(--background-color, #141414);
-  /* 使用 CSS 变量，已在 index.css 中定义 */
+  background-image: radial-gradient(circle at center, #303030 1px, transparent 1px);
 }
 
-:root.theme-dark .canvas-container::before {
+[data-theme="dark"] .canvas-container::before {
   background: linear-gradient(180deg, var(--background-color, #141414) 0%, transparent 100%);
 }
 
-:root.theme-dark .canvas-paper {
-  background: rgba(31, 31, 31, 0.85);
-  border-color: rgba(255, 255, 255, 0.1);
-}
-
-:root.theme-dark .sortable-item {
+[data-theme="dark"] .sortable-item {
   background: var(--component-background, #1f1f1f);
   border-color: var(--border-color, #303030);
 }
 
-:root.theme-dark .sortable-item:hover {
+[data-theme="dark"] .sortable-item:hover {
   background: #262626;
 }
 
-:root.theme-dark .sortable-item.selected {
+[data-theme="dark"] .sortable-item.selected {
   background: linear-gradient(135deg, #0d2847 0%, #1f1f1f 100%);
 }
 
-:root.theme-dark .component-card {
+[data-theme="dark"] .component-card {
   background: var(--component-background, #1f1f1f);
   border-color: var(--border-color, #303030);
 }
 
-:root.theme-dark .container-component {
+[data-theme="dark"] .container-component {
   background: linear-gradient(145deg, #1a1a1a 0%, #262626 100%);
   border-color: var(--border-color, #303030);
 }
 
-:root.theme-dark .empty-drop-hint {
+[data-theme="dark"] .empty-drop-hint {
   background: linear-gradient(145deg, #1a1a1a 0%, #262626 100%);
 }
 
-:root.theme-dark ::-webkit-scrollbar-thumb {
+[data-theme="dark"] ::-webkit-scrollbar-thumb {
   background: linear-gradient(180deg, #404040 0%, #525252 100%);
 }
 
-:root.theme-dark ::-webkit-scrollbar-thumb:hover {
+[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
   background: linear-gradient(180deg, #525252 0%, #6b6b6b 100%);
 }
 
-:root.theme-dark .ant-layout-header {
+[data-theme="dark"] .ant-layout-header {
   background: rgba(31, 31, 31, 0.95) !important;
   border-bottom-color: var(--border-color, #303030);
 }
 
-:root.theme-dark .ant-layout-sider {
+[data-theme="dark"] .ant-layout-sider {
   background: var(--component-background, #1f1f1f) !important;
-  border-color: var(--border-color, #303030);
+  border-right-color: var(--border-color, #303030);
+}
+
+/* 自动模式 - 跟随系统深色设置 */
+@media (prefers-color-scheme: dark) {
+  [data-theme="auto"] .canvas-container {
+    background-color: var(--background-color, #141414);
+    background-image: radial-gradient(circle at center, #303030 1px, transparent 1px);
+  }
+  
+  [data-theme="auto"] .canvas-container::before {
+    background: linear-gradient(180deg, var(--background-color, #141414) 0%, transparent 100%);
+  }
+  
+  [data-theme="auto"] .sortable-item {
+    background: var(--component-background, #1f1f1f);
+    border-color: var(--border-color, #303030);
+  }
+  
+  [data-theme="auto"] .sortable-item:hover {
+    background: #262626;
+  }
+  
+  [data-theme="auto"] .sortable-item.selected {
+    background: linear-gradient(135deg, #0d2847 0%, #1f1f1f 100%);
+  }
+  
+  [data-theme="auto"] .component-card {
+    background: var(--component-background, #1f1f1f);
+    border-color: var(--border-color, #303030);
+  }
+  
+  [data-theme="auto"] .container-component {
+    background: linear-gradient(145deg, #1a1a1a 0%, #262626 100%);
+    border-color: var(--border-color, #303030);
+  }
+  
+  [data-theme="auto"] .empty-drop-hint {
+    background: linear-gradient(145deg, #1a1a1a 0%, #262626 100%);
+  }
+  
+  [data-theme="auto"] ::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #404040 0%, #525252 100%);
+  }
+  
+  [data-theme="auto"] ::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, #525252 0%, #6b6b6b 100%);
+  }
+  
+  [data-theme="auto"] .ant-layout-header {
+    background: rgba(31, 31, 31, 0.95) !important;
+    border-bottom-color: var(--border-color, #303030);
+  }
+  
+  [data-theme="auto"] .ant-layout-sider {
+    background: var(--component-background, #1f1f1f) !important;
+    border-right-color: var(--border-color, #303030);
+  }
 }
 
 /* ============================================
@@ -937,13 +997,6 @@
   border-bottom: 1px solid var(--border-color-light, #f0f0f0);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
   z-index: 100;
-}
-
-@media (prefers-color-scheme: dark) {
-  .ant-layout-header {
-    background: rgba(31, 31, 31, 0.95) !important;
-    border-bottom-color: var(--border-color, #303030);
-  }
 }
 
 .app-title {
@@ -981,13 +1034,6 @@
 .ant-layout-sider {
   background: var(--component-background, #ffffff) !important;
   border-right: 1px solid var(--border-color-light, #f0f0f0);
-}
-
-@media (prefers-color-scheme: dark) {
-  .ant-layout-sider {
-    background: var(--component-background, #1f1f1f) !important;
-    border-right-color: var(--border-color, #303030);
-  }
 }
 
 .sidebar-title {

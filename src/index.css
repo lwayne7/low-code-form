@@ -15,7 +15,7 @@
   --warning-color: #faad14;
   --error-color: #ff4d4f;
   
-  /* 中性色 - 浅色模式默认 */
+  /* 中性色 - 亮色模式 */
   --text-color: #1f1f1f;
   --text-color-secondary: #666666;
   --text-color-tertiary: #999999;
@@ -25,10 +25,7 @@
   --background-color-light: #fafafa;
   --component-background: #ffffff;
   
-  /* 画布网格点颜色 */
-  --canvas-dot-color: #d4d4d8;
-  
-  /* 阴影 */
+  /* 阴影 - 亮色模式 */
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.03), 0 1px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px 0 rgba(0, 0, 0, 0.02);
   --shadow-md: 0 3px 6px -4px rgba(0, 0, 0, 0.06), 0 6px 16px 0 rgba(0, 0, 0, 0.05), 0 9px 28px 8px rgba(0, 0, 0, 0.03);
   --shadow-lg: 0 6px 16px -8px rgba(0, 0, 0, 0.08), 0 9px 28px 0 rgba(0, 0, 0, 0.05), 0 12px 48px 16px rgba(0, 0, 0, 0.03);
@@ -61,26 +58,11 @@
 }
 
 /* ============================================
-   深色模式变量 - 通过类名控制
+   手动深色模式 - 通过 data-theme 属性控制
    ============================================ */
 
-/* 浅色模式 - 显式定义（作为默认值的备份） */
-:root.theme-light {
-  --text-color: #1f1f1f;
-  --text-color-secondary: #666666;
-  --text-color-tertiary: #999999;
-  --border-color: #e8e8e8;
-  --border-color-light: #f0f0f0;
-  --background-color: #f5f7fa;
-  --background-color-light: #fafafa;
-  --component-background: #ffffff;
-  --canvas-dot-color: #d4d4d8;
-  
-  color-scheme: light;
-}
-
-/* 深色模式 */
-:root.theme-dark {
+/* 深色模式变量 */
+[data-theme="dark"] {
   --text-color: #e6e6e6;
   --text-color-secondary: #a3a3a3;
   --text-color-tertiary: #737373;
@@ -90,14 +72,31 @@
   --background-color-light: #1f1f1f;
   --component-background: #1f1f1f;
   
-  /* 深色模式网格点颜色 */
-  --canvas-dot-color: #3f3f46;
-  
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.2);
   --shadow-md: 0 3px 6px -4px rgba(0, 0, 0, 0.3), 0 6px 16px 0 rgba(0, 0, 0, 0.25);
   --shadow-lg: 0 6px 16px -8px rgba(0, 0, 0, 0.4), 0 9px 28px 0 rgba(0, 0, 0, 0.3);
   
   color-scheme: dark;
+}
+
+/* 自动模式 - 跟随系统设置（默认亮色，media query 会覆盖） */
+@media (prefers-color-scheme: dark) {
+  [data-theme="auto"] {
+    --text-color: #e6e6e6;
+    --text-color-secondary: #a3a3a3;
+    --text-color-tertiary: #737373;
+    --border-color: #303030;
+    --border-color-light: #262626;
+    --background-color: #141414;
+    --background-color-light: #1f1f1f;
+    --component-background: #1f1f1f;
+    
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.2);
+    --shadow-md: 0 3px 6px -4px rgba(0, 0, 0, 0.3), 0 6px 16px 0 rgba(0, 0, 0, 0.25);
+    --shadow-lg: 0 6px 16px -8px rgba(0, 0, 0, 0.4), 0 9px 28px 0 rgba(0, 0, 0, 0.3);
+    
+    color-scheme: dark;
+  }
 }
 
 body {
