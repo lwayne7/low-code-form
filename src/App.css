@@ -38,9 +38,9 @@
 /* --- 画布背景 - 现代网格 --- */
 .canvas-container {
   background-color: var(--background-color, #f5f7fa);
-  /* 更柔和的点状网格 */
+  /* 更柔和的点状网格 - 使用 CSS 变量 */
   background-image: 
-    radial-gradient(circle at center, #d4d4d8 1px, transparent 1px);
+    radial-gradient(circle at center, var(--canvas-dot-color, #d4d4d8) 1px, transparent 1px);
   background-size: 24px 24px;
   background-position: 12px 12px;
   overflow-y: auto;
@@ -869,7 +869,7 @@
 
 :root.theme-dark .canvas-container {
   background-color: var(--background-color, #141414);
-  background-image: radial-gradient(circle at center, #303030 1px, transparent 1px);
+  /* 使用 CSS 变量，已在 index.css 中定义 */
 }
 
 :root.theme-dark .canvas-container::before {

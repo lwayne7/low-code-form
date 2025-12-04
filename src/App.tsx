@@ -66,11 +66,13 @@ const { Title } = Typography;
 
 // ============ 常量定义 ============
 /** 容器边缘区域比例（用于判断 before/after/inside） */
-const CONTAINER_EDGE_RATIO = 0.2;
+const CONTAINER_EDGE_RATIO = 0.15; // 减小边缘区域，让内部区域更大
 /** 滞后区比例（用于防止抖动） */
-const HYSTERESIS_RATIO = 0.05;
+const HYSTERESIS_RATIO = 0.08; // 增加滞后区
 /** 非容器组件的滞后区比例 */
 const ITEM_HYSTERESIS_RATIO = 0.15;
+/** 空容器的边缘区域比例（更宽松，优先放入内部） */
+const EMPTY_CONTAINER_EDGE_RATIO = 0.1;
 
 // ============ 辅助函数 ============
 
@@ -276,8 +278,13 @@ function App() {
 
     if (targetComponent.type === 'Container' && activeId !== overId) {
       // 容器组件：检测是放在容器的边缘还是内部
-      const topEdge = overRect.top + overRect.height * CONTAINER_EDGE_RATIO;
-      const bottomEdge = overRect.top + overRect.height * (1 - CONTAINER_EDGE_RATIO);
+      
+      // 🔧 判断目标容器是否为空，空容器使用更宽松的边缘判断
+      const isEmptyContainer = !targetComponent.children || targetComponent.children.length === 0;
+      const edgeRatio = isEmptyContainer ? EMPTY_CONTAINER_EDGE_RATIO : CONTAINER_EDGE_RATIO;
+      
+      const topEdge = overRect.top + overRect.height * edgeRatio;
+      const bottomEdge = overRect.top + overRect.height * (1 - edgeRatio);
       
       let position: 'before' | 'after' | 'inside';
       if (currentY < topEdge) {
@@ -288,13 +295,28 @@ function App() {
         position = 'inside';
       }
       
+      // 🔧 空容器优先放入内部，减少位置交换
+      if (isEmptyContainer && position !== 'inside') {
+        // 如果当前已经是 inside 状态，保持不变
+        if (dropTarget?.targetId === overId && dropTarget?.position === 'inside') {
+          return;
+        }
+        // 空容器更倾向于接收放入内部
+        const centerZone = overRect.height * 0.6; // 中心60%区域都算inside
+        const centerTop = overRect.top + (overRect.height - centerZone) / 2;
+        const centerBottom = centerTop + centerZone;
+        if (currentY >= centerTop && currentY <= centerBottom) {
+          position = 'inside';
+        }
+      }
+      
       // 增强防抖：添加滞后区防止边界抖动
       if (dropTarget?.targetId === overId) {
         const hysteresis = overRect.height * HYSTERESIS_RATIO;
         
         if (dropTarget.position === 'inside') {
-          const hysteresisTop = overRect.top + overRect.height * (CONTAINER_EDGE_RATIO - HYSTERESIS_RATIO);
-          const hysteresisBottom = overRect.top + overRect.height * (1 - CONTAINER_EDGE_RATIO + HYSTERESIS_RATIO);
+          const hysteresisTop = overRect.top + overRect.height * (edgeRatio - HYSTERESIS_RATIO);
+          const hysteresisBottom = overRect.top + overRect.height * (1 - edgeRatio + HYSTERESIS_RATIO);
           if (currentY >= hysteresisTop && currentY <= hysteresisBottom) return;
         } else if (dropTarget.position === 'before' && currentY < topEdge + hysteresis) {
           return;
