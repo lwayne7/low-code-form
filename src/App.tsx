@@ -130,7 +130,7 @@ function App() {
   } = useStore();
 
   // 主题切换
-  const { themeMode, isDark, toggleTheme } = useTheme();
+  const { themeMode, isDark, setThemeMode } = useTheme();
 
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false); // 🆕 全屏预览
@@ -747,13 +747,40 @@ function App() {
                 type="text"
               />
             </Tooltip>
-            <Tooltip title={`主题: ${themeMode === 'light' ? '亮色' : themeMode === 'dark' ? '深色' : '跟随系统'}`}>
-              <Button
-                icon={isDark ? <MoonOutlined /> : <SunOutlined />}
-                onClick={toggleTheme}
-                type="text"
-              />
-            </Tooltip>
+            <Dropdown
+              menu={{
+                items: [
+                  {
+                    key: 'light',
+                    icon: <SunOutlined />,
+                    label: '亮色模式',
+                    onClick: () => setThemeMode('light'),
+                  },
+                  {
+                    key: 'dark',
+                    icon: <MoonOutlined />,
+                    label: '深色模式',
+                    onClick: () => setThemeMode('dark'),
+                  },
+                  { type: 'divider' as const },
+                  {
+                    key: 'auto',
+                    icon: <SettingOutlined />,
+                    label: '跟随系统',
+                    onClick: () => setThemeMode('auto'),
+                  },
+                ],
+                selectedKeys: [themeMode],
+              }}
+              placement="bottomRight"
+            >
+              <Tooltip title={`主题: ${themeMode === 'light' ? '亮色' : themeMode === 'dark' ? '深色' : '跟随系统'}`}>
+                <Button
+                  icon={isDark ? <MoonOutlined /> : <SunOutlined />}
+                  type="text"
+                />
+              </Tooltip>
+            </Dropdown>
           </Space>
         </div>
         <Space wrap size="small">

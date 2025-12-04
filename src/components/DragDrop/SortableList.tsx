@@ -37,50 +37,108 @@ const getContainerBorderColor = (d: number) => {
   return colors[d % colors.length];
 };
 
-// 🆕 放置指示器组件
+// 🆕 放置指示器组件 - 增强视觉效果
 const DropIndicator: React.FC<{ position: 'before' | 'after' }> = ({ position }) => (
   <div
+    className="drop-indicator-line"
     style={{
       position: 'absolute',
-      left: 0,
-      right: 0,
-      [position === 'before' ? 'top' : 'bottom']: -2,
-      height: 3,
+      left: -8,
+      right: -8,
+      [position === 'before' ? 'top' : 'bottom']: -6,
+      height: 4,
       background: 'linear-gradient(90deg, #1677ff 0%, #69b1ff 50%, #1677ff 100%)',
       borderRadius: 2,
-      zIndex: 100,
-      boxShadow: '0 0 8px rgba(22, 119, 255, 0.5)',
-      animation: 'dropIndicatorPulse 1s ease-in-out infinite',
+      zIndex: 1000,
+      boxShadow: '0 0 12px rgba(22, 119, 255, 0.6), 0 0 4px rgba(22, 119, 255, 0.8)',
+      animation: 'dropIndicatorPulse 0.8s ease-in-out infinite',
     }}
   >
-    {/* 左侧圆点 */}
+    {/* 左侧圆点 - 更大更明显 */}
     <div
       style={{
         position: 'absolute',
-        left: -4,
-        top: -3,
-        width: 9,
-        height: 9,
+        left: -6,
+        top: -5,
+        width: 14,
+        height: 14,
         borderRadius: '50%',
-        background: '#1677ff',
-        border: '2px solid #fff',
-        boxShadow: '0 0 4px rgba(22, 119, 255, 0.5)',
+        background: 'linear-gradient(135deg, #1677ff 0%, #4096ff 100%)',
+        border: '3px solid #fff',
+        boxShadow: '0 2px 8px rgba(22, 119, 255, 0.5)',
       }}
     />
     {/* 右侧圆点 */}
     <div
       style={{
         position: 'absolute',
-        right: -4,
-        top: -3,
-        width: 9,
-        height: 9,
+        right: -6,
+        top: -5,
+        width: 14,
+        height: 14,
         borderRadius: '50%',
-        background: '#1677ff',
-        border: '2px solid #fff',
-        boxShadow: '0 0 4px rgba(22, 119, 255, 0.5)',
+        background: 'linear-gradient(135deg, #1677ff 0%, #4096ff 100%)',
+        border: '3px solid #fff',
+        boxShadow: '0 2px 8px rgba(22, 119, 255, 0.5)',
       }}
     />
+    {/* 中间文字提示 */}
+    <div
+      style={{
+        position: 'absolute',
+        left: '50%',
+        top: -24,
+        transform: 'translateX(-50%)',
+        background: '#1677ff',
+        color: '#fff',
+        fontSize: 11,
+        fontWeight: 600,
+        padding: '2px 8px',
+        borderRadius: 4,
+        whiteSpace: 'nowrap',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+      }}
+    >
+      {position === 'before' ? '↑ 插入到上方' : '↓ 插入到下方'}
+    </div>
+  </div>
+);
+
+// 🆕 容器嵌套指示器组件
+const ContainerDropOverlay: React.FC<{ label?: string }> = ({ label }) => (
+  <div
+    className="container-drop-overlay"
+    style={{
+      position: 'absolute',
+      inset: 0,
+      background: 'rgba(22, 119, 255, 0.08)',
+      border: '3px dashed #1677ff',
+      borderRadius: 8,
+      zIndex: 50,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      pointerEvents: 'none',
+      animation: 'containerDropPulse 1s ease-in-out infinite',
+    }}
+  >
+    <div
+      style={{
+        background: 'linear-gradient(135deg, #1677ff 0%, #4096ff 100%)',
+        color: '#fff',
+        fontSize: 13,
+        fontWeight: 600,
+        padding: '8px 16px',
+        borderRadius: 6,
+        boxShadow: '0 4px 12px rgba(22, 119, 255, 0.3)',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 6,
+      }}
+    >
+      <span style={{ fontSize: 16 }}>📥</span>
+      放入「{label || '容器'}」内部
+    </div>
   </div>
 );
 
@@ -255,7 +313,11 @@ const SortableListItem: React.FC<SortableListItemProps> = React.memo(({
       {showDropIndicator === 'after' && <DropIndicator position="after" />}
       
       {isContainer ? (
-        <div style={{ pointerEvents: 'none' }}>
+        <div style={{ pointerEvents: 'none', position: 'relative' }}>
+          {/* 🆕 容器嵌套放置指示器 - 更明显 */}
+          {isContainerDropTarget && !isDragging && (
+            <ContainerDropOverlay label={component.props.label} />
+          )}
           <Card
             size="small"
             title={
@@ -264,11 +326,6 @@ const SortableListItem: React.FC<SortableListItemProps> = React.memo(({
                 <span style={{ marginLeft: 8, fontSize: 11, color: '#999' }}>
                   (层级 {depth + 1})
                 </span>
-                {isContainerDropTarget && !isDragging && (
-                  <span style={{ marginLeft: 8, fontSize: 11, color: '#1677ff' }}>
-                    📥 可放入
-                  </span>
-                )}
               </span>
             }
             style={cardStyle}
