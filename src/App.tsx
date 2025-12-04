@@ -66,13 +66,13 @@ const { Title } = Typography;
 
 // ============ 常量定义 ============
 /** 容器边缘区域比例（用于判断 before/after/inside） */
-const CONTAINER_EDGE_RATIO = 0.15; // 减小边缘区域，让内部区域更大
+const CONTAINER_EDGE_RATIO = 0.12; // 进一步减小边缘区域
 /** 滞后区比例（用于防止抖动） */
-const HYSTERESIS_RATIO = 0.08; // 增加滞后区
+const HYSTERESIS_RATIO = 0.1; // 增加滞后区
 /** 非容器组件的滞后区比例 */
-const ITEM_HYSTERESIS_RATIO = 0.15;
+const ITEM_HYSTERESIS_RATIO = 0.2;
 /** 空容器的边缘区域比例（更宽松，优先放入内部） */
-const EMPTY_CONTAINER_EDGE_RATIO = 0.1;
+const EMPTY_CONTAINER_EDGE_RATIO = 0.08;
 
 // ============ 辅助函数 ============
 
@@ -173,6 +173,9 @@ function App() {
     deleteTemplate,
     importComponents,
   } = useStore();
+
+  // 🆕 初始化主题（必须在 App 级别调用以确保页面加载时主题正确）
+  useTheme();
 
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false); // 🆕 全屏预览
@@ -279,9 +282,25 @@ function App() {
     if (targetComponent.type === 'Container' && activeId !== overId) {
       // 容器组件：检测是放在容器的边缘还是内部
       
-      // 🔧 判断目标容器是否为空，空容器使用更宽松的边缘判断
+      // 🔧 判断目标容器是否为空
       const isEmptyContainer = !targetComponent.children || targetComponent.children.length === 0;
-      const edgeRatio = isEmptyContainer ? EMPTY_CONTAINER_EDGE_RATIO : CONTAINER_EDGE_RATIO;
+      
+      // 🔧 判断被拖拽的是否是容器（有子组件的大容器）
+      const activeComponent = !activeId.startsWith('new-') ? findById(activeId) : null;
+      const isDraggingContainer = activeComponent?.type === 'Container';
+      const isDraggingLargeContainer = isDraggingContainer && 
+        activeComponent?.children && activeComponent.children.length > 0;
+      
+      // 🔧 根据情况调整边缘比例
+      let edgeRatio = CONTAINER_EDGE_RATIO;
+      if (isEmptyContainer) {
+        // 空容器使用更小的边缘，优先接收放入
+        edgeRatio = EMPTY_CONTAINER_EDGE_RATIO;
+      }
+      if (isDraggingLargeContainer && isEmptyContainer) {
+        // 大容器拖入空容器时，几乎总是放入内部
+        edgeRatio = 0.05;
+      }
       
       const topEdge = overRect.top + overRect.height * edgeRatio;
       const bottomEdge = overRect.top + overRect.height * (1 - edgeRatio);
@@ -295,18 +314,28 @@ function App() {
         position = 'inside';
       }
       
-      // 🔧 空容器优先放入内部，减少位置交换
-      if (isEmptyContainer && position !== 'inside') {
-        // 如果当前已经是 inside 状态，保持不变
+      // 🔧 空容器强制优先放入内部
+      if (isEmptyContainer) {
+        // 如果当前已经是 inside 状态，保持不变（强锁定）
         if (dropTarget?.targetId === overId && dropTarget?.position === 'inside') {
           return;
         }
-        // 空容器更倾向于接收放入内部
-        const centerZone = overRect.height * 0.6; // 中心60%区域都算inside
+        // 空容器中心 80% 区域都算 inside
+        const centerZone = overRect.height * 0.8;
         const centerTop = overRect.top + (overRect.height - centerZone) / 2;
         const centerBottom = centerTop + centerZone;
         if (currentY >= centerTop && currentY <= centerBottom) {
           position = 'inside';
+        }
+      }
+      
+      // 🔧 大容器拖拽时，增强 inside 状态的锁定
+      if (isDraggingLargeContainer && dropTarget?.targetId === overId && dropTarget?.position === 'inside') {
+        // 大容器已经在 inside 状态，除非明确移到边缘外，否则保持
+        const strictTopEdge = overRect.top + overRect.height * 0.03;
+        const strictBottomEdge = overRect.top + overRect.height * 0.97;
+        if (currentY >= strictTopEdge && currentY <= strictBottomEdge) {
+          return;
         }
       }
       
@@ -323,6 +352,11 @@ function App() {
         } else if (dropTarget.position === 'after' && currentY > bottomEdge - hysteresis) {
           return;
         }
+      }
+      
+      // 🔧 防止频繁切换：如果目标和位置都没变，直接返回
+      if (dropTarget?.targetId === overId && dropTarget?.position === position) {
+        return;
       }
       
       setDropTarget({ targetId: overId, position });
