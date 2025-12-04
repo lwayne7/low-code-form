@@ -775,12 +775,11 @@ function App() {
               placement="bottomRight"
               trigger={['click']}
             >
-              <Tooltip title={`主题: ${themeMode === 'light' ? '亮色' : themeMode === 'dark' ? '深色' : '跟随系统'}`}>
-                <Button
-                  icon={isDark ? <MoonOutlined /> : <SunOutlined />}
-                  type="text"
-                />
-              </Tooltip>
+              <Button
+                icon={isDark ? <MoonOutlined /> : <SunOutlined />}
+                type="text"
+                title={`主题: ${themeMode === 'light' ? '亮色' : themeMode === 'dark' ? '深色' : '跟随系统'}`}
+              />
             </Dropdown>
           </Space>
         </div>

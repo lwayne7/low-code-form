@@ -4,6 +4,7 @@ import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { SortableItem } from './SortableItem';
 import { CanvasFormItem } from '../CanvasFormItem';
+import { useTheme } from '../../hooks/useTheme';
 import type { ComponentSchema } from '../../types';
 
 // 🆕 放置目标类型
@@ -24,15 +25,25 @@ interface SortableListProps {
   dropTarget?: DropTarget | null;
 }
 
-// 根据嵌套深度计算背景色
-const getContainerBgColor = (d: number, isOver: boolean) => {
+// 根据嵌套深度和主题计算背景色
+const getContainerBgColor = (d: number, isOver: boolean, isDark = false) => {
+  if (isDark) {
+    const colors = ['#1a1a1a', '#1a1a2e', '#1a1f1a', '#1f1a1a', '#1a1a1f'];
+    const hoverColors = ['#0d2847', '#1a1a3d', '#1a2a1a', '#2a1a1a', '#1a1a2a'];
+    return isOver ? hoverColors[d % hoverColors.length] : colors[d % colors.length];
+  }
   const colors = ['#fafafa', '#f0f5ff', '#fff7e6', '#f6ffed', '#fff1f0'];
   const hoverColors = ['#e6f4ff', '#d6e4ff', '#ffe7ba', '#d9f7be', '#ffccc7'];
   return isOver ? hoverColors[d % hoverColors.length] : colors[d % colors.length];
 };
 
 // 根据嵌套深度计算左边框颜色
-const getContainerBorderColor = (d: number) => {
+const getContainerBorderColor = (d: number, isDark = false) => {
+  // 深色模式下使用更亮的颜色
+  if (isDark) {
+    const colors = ['#4096ff', '#9254de', '#ffc53d', '#73d13d', '#ff7875'];
+    return colors[d % colors.length];
+  }
   const colors = ['#1677ff', '#722ed1', '#fa8c16', '#52c41a', '#f5222d'];
   return colors[d % colors.length];
 };
@@ -152,6 +163,7 @@ export const SortableList: React.FC<SortableListProps> = React.memo(({
   depth = 0,
   dropTarget,
 }) => {
+  const { isDark } = useTheme(); // 🆕 获取当前主题
   const droppableId = parentId ? `container-${parentId}` : 'canvas-droppable';
   
   const { setNodeRef, isOver, active } = useDroppable({
@@ -170,11 +182,13 @@ export const SortableList: React.FC<SortableListProps> = React.memo(({
     minHeight: parentId ? 60 : 10,
     padding: parentId ? 8 : 4,
     background: isDropTarget ? 'rgba(22, 119, 255, 0.08)' : undefined,
-    border: isDropTarget ? '2px dashed #1677ff' : '2px dashed transparent',
+    border: isDropTarget 
+      ? `2px dashed ${isDark ? '#4096ff' : '#1677ff'}` 
+      : '2px dashed transparent',
     borderRadius: 6,
     transition: 'all 0.2s ease',
     boxShadow: isDropTarget ? 'inset 0 0 8px rgba(22, 119, 255, 0.1)' : undefined,
-  }), [isDropTarget, parentId]);
+  }), [isDropTarget, parentId, isDark]);
 
   return (
     <SortableContext items={itemIds} strategy={verticalListSortingStrategy}>
@@ -198,12 +212,18 @@ export const SortableList: React.FC<SortableListProps> = React.memo(({
           <div 
             style={{ 
               textAlign: 'center', 
-              color: isDropTarget ? '#1677ff' : '#999', 
+              color: isDropTarget 
+                ? (isDark ? '#4096ff' : '#1677ff') 
+                : (isDark ? '#737373' : '#999'), 
               padding: '20px 16px', 
               fontSize: 13,
-              border: isDropTarget ? '1px dashed #1677ff' : '1px dashed #d9d9d9',
+              border: isDropTarget 
+                ? `1px dashed ${isDark ? '#4096ff' : '#1677ff'}` 
+                : `1px dashed ${isDark ? '#404040' : '#d9d9d9'}`,
               borderRadius: 4,
-              background: isDropTarget ? 'rgba(22, 119, 255, 0.04)' : '#fafafa',
+              background: isDropTarget 
+                ? 'rgba(22, 119, 255, 0.08)' 
+                : (isDark ? '#262626' : '#fafafa'),
               transition: 'all 0.2s ease',
             }}
           >
@@ -262,6 +282,7 @@ const SortableListItem: React.FC<SortableListItemProps> = React.memo(({
   isFirst,
   isLast,
 }) => {
+  const { isDark } = useTheme(); // 🆕 获取当前主题
   const isSelected = selectedIds.includes(component.id);
   const isContainer = component.type === 'Container';
   const isDragging = activeDragId === component.id;
@@ -293,12 +314,14 @@ const SortableListItem: React.FC<SortableListItemProps> = React.memo(({
 
   // 🆕 使用 useMemo 缓存容器样式 - 增强视觉反馈
   const cardStyle = useMemo(() => ({
-    background: getContainerBgColor(depth, isContainerDropTarget && !isDragging),
-    border: isContainerDropTarget && !isDragging ? '2px dashed #1677ff' : '1px dashed #d9d9d9',
-    borderLeft: `3px solid ${getContainerBorderColor(depth)}`,
+    background: getContainerBgColor(depth, isContainerDropTarget && !isDragging, isDark),
+    border: isContainerDropTarget && !isDragging 
+      ? `2px dashed ${isDark ? '#4096ff' : '#1677ff'}` 
+      : `1px dashed ${isDark ? '#404040' : '#d9d9d9'}`,
+    borderLeft: `3px solid ${getContainerBorderColor(depth, isDark)}`,
     transition: 'all 0.2s ease',
     opacity: isDragging ? 0.5 : 1,
-  }), [depth, isContainerDropTarget, isDragging]);
+  }), [depth, isContainerDropTarget, isDragging, isDark]);
 
   return (
     <SortableItem
@@ -325,15 +348,18 @@ const SortableListItem: React.FC<SortableListItemProps> = React.memo(({
           <Card
             size="small"
             title={
-              <span style={{ cursor: isLocked ? 'not-allowed' : 'grab' }}>
+              <span style={{ cursor: isLocked ? 'not-allowed' : 'grab', color: isDark ? '#e6e6e6' : undefined }}>
                 {isLocked ? '🔒' : '⠿'} {component.props.label || '容器'}
-                <span style={{ marginLeft: 8, fontSize: 11, color: '#999' }}>
+                <span style={{ marginLeft: 8, fontSize: 11, color: isDark ? '#737373' : '#999' }}>
                   (层级 {depth + 1})
                 </span>
               </span>
             }
             style={cardStyle}
-            styles={{ body: { padding: 8, minHeight: 60 } }}
+            styles={{ 
+              body: { padding: 8, minHeight: 60 },
+              header: { background: 'transparent', borderBottom: `1px solid ${isDark ? '#303030' : '#f0f0f0'}` }
+            }}
           >
             {/* 🔧 容器内部需要启用 pointerEvents 以支持嵌套拖拽 */}
             <div style={{ pointerEvents: 'auto' }}>

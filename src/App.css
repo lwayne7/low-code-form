@@ -1299,3 +1299,246 @@
   box-shadow: var(--shadow-lg) !important;
 }
 
+/* ============================================
+   深色模式 - Ant Design 组件适配
+   ============================================ */
+
+/* Dropdown 深色模式 */
+[data-theme="dark"] .ant-dropdown-menu {
+  background: #262626 !important;
+  border-color: #404040 !important;
+}
+
+[data-theme="dark"] .ant-dropdown-menu-item {
+  color: #e6e6e6 !important;
+}
+
+[data-theme="dark"] .ant-dropdown-menu-item:hover {
+  background: #0d2847 !important;
+}
+
+[data-theme="dark"] .ant-dropdown-menu-item-selected {
+  background: #0d2847 !important;
+  color: #4096ff !important;
+}
+
+/* Modal 深色模式 */
+[data-theme="dark"] .ant-modal-content {
+  background: #1f1f1f !important;
+}
+
+[data-theme="dark"] .ant-modal-header {
+  background: #1f1f1f !important;
+  border-bottom-color: #303030 !important;
+}
+
+[data-theme="dark"] .ant-modal-title {
+  color: #e6e6e6 !important;
+}
+
+[data-theme="dark"] .ant-modal-close-x {
+  color: #a3a3a3 !important;
+}
+
+[data-theme="dark"] .ant-modal-footer {
+  border-top-color: #303030 !important;
+}
+
+/* Drawer 深色模式 */
+[data-theme="dark"] .ant-drawer-content {
+  background: #1f1f1f !important;
+}
+
+[data-theme="dark"] .ant-drawer-header {
+  background: #1f1f1f !important;
+  border-bottom-color: #303030 !important;
+}
+
+[data-theme="dark"] .ant-drawer-title {
+  color: #e6e6e6 !important;
+}
+
+[data-theme="dark"] .ant-drawer-close {
+  color: #a3a3a3 !important;
+}
+
+/* Card 深色模式 */
+[data-theme="dark"] .ant-card {
+  background: #1f1f1f !important;
+  border-color: #303030 !important;
+}
+
+[data-theme="dark"] .ant-card-head {
+  background: transparent !important;
+  border-bottom-color: #303030 !important;
+  color: #e6e6e6 !important;
+}
+
+/* Form 深色模式 */
+[data-theme="dark"] .ant-form-item-label > label {
+  color: #e6e6e6 !important;
+}
+
+/* Input 深色模式 */
+[data-theme="dark"] .ant-input,
+[data-theme="dark"] .ant-input-number,
+[data-theme="dark"] .ant-input-affix-wrapper {
+  background: #262626 !important;
+  border-color: #404040 !important;
+  color: #e6e6e6 !important;
+}
+
+[data-theme="dark"] .ant-input::placeholder,
+[data-theme="dark"] .ant-input-number-input::placeholder {
+  color: #737373 !important;
+}
+
+[data-theme="dark"] .ant-input:hover,
+[data-theme="dark"] .ant-input-number:hover,
+[data-theme="dark"] .ant-input-affix-wrapper:hover {
+  border-color: #4096ff !important;
+}
+
+/* Select 深色模式 */
+[data-theme="dark"] .ant-select-selector {
+  background: #262626 !important;
+  border-color: #404040 !important;
+  color: #e6e6e6 !important;
+}
+
+[data-theme="dark"] .ant-select-dropdown {
+  background: #262626 !important;
+  border-color: #404040 !important;
+}
+
+[data-theme="dark"] .ant-select-item {
+  color: #e6e6e6 !important;
+}
+
+[data-theme="dark"] .ant-select-item-option-active {
+  background: #0d2847 !important;
+}
+
+[data-theme="dark"] .ant-select-item-option-selected {
+  background: #0d2847 !important;
+  color: #4096ff !important;
+}
+
+/* Tabs 深色模式 */
+[data-theme="dark"] .ant-tabs-tab {
+  color: #a3a3a3 !important;
+}
+
+[data-theme="dark"] .ant-tabs-tab:hover {
+  color: #4096ff !important;
+}
+
+[data-theme="dark"] .ant-tabs-tab-active .ant-tabs-tab-btn {
+  color: #4096ff !important;
+}
+
+/* Collapse 深色模式 */
+[data-theme="dark"] .ant-collapse {
+  background: #1f1f1f !important;
+  border-color: #303030 !important;
+}
+
+[data-theme="dark"] .ant-collapse-header {
+  color: #e6e6e6 !important;
+}
+
+[data-theme="dark"] .ant-collapse-content {
+  background: #1a1a1a !important;
+  border-top-color: #303030 !important;
+}
+
+/* Switch 深色模式 */
+[data-theme="dark"] .ant-switch {
+  background: #404040 !important;
+}
+
+/* Tooltip 深色模式 - 保持与亮色一致避免冲突 */
+[data-theme="dark"] .ant-tooltip-inner {
+  background: #262626 !important;
+  color: #e6e6e6 !important;
+}
+
+/* Radio/Checkbox 深色模式 */
+[data-theme="dark"] .ant-radio-wrapper,
+[data-theme="dark"] .ant-checkbox-wrapper {
+  color: #e6e6e6 !important;
+}
+
+/* Popover 深色模式 */
+[data-theme="dark"] .ant-popover-inner {
+  background: #262626 !important;
+}
+
+[data-theme="dark"] .ant-popover-title {
+  color: #e6e6e6 !important;
+  border-bottom-color: #303030 !important;
+}
+
+/* 自动模式深色支持 */
+@media (prefers-color-scheme: dark) {
+  [data-theme="auto"] .ant-dropdown-menu {
+    background: #262626 !important;
+    border-color: #404040 !important;
+  }
+  
+  [data-theme="auto"] .ant-dropdown-menu-item {
+    color: #e6e6e6 !important;
+  }
+  
+  [data-theme="auto"] .ant-dropdown-menu-item:hover,
+  [data-theme="auto"] .ant-dropdown-menu-item-selected {
+    background: #0d2847 !important;
+  }
+  
+  [data-theme="auto"] .ant-modal-content,
+  [data-theme="auto"] .ant-drawer-content {
+    background: #1f1f1f !important;
+  }
+  
+  [data-theme="auto"] .ant-modal-header,
+  [data-theme="auto"] .ant-drawer-header {
+    background: #1f1f1f !important;
+    border-bottom-color: #303030 !important;
+  }
+  
+  [data-theme="auto"] .ant-modal-title,
+  [data-theme="auto"] .ant-drawer-title {
+    color: #e6e6e6 !important;
+  }
+  
+  [data-theme="auto"] .ant-card {
+    background: #1f1f1f !important;
+    border-color: #303030 !important;
+  }
+  
+  [data-theme="auto"] .ant-input,
+  [data-theme="auto"] .ant-input-number,
+  [data-theme="auto"] .ant-input-affix-wrapper,
+  [data-theme="auto"] .ant-select-selector {
+    background: #262626 !important;
+    border-color: #404040 !important;
+    color: #e6e6e6 !important;
+  }
+  
+  [data-theme="auto"] .ant-select-dropdown {
+    background: #262626 !important;
+  }
+  
+  [data-theme="auto"] .ant-collapse {
+    background: #1f1f1f !important;
+    border-color: #303030 !important;
+  }
+  
+  [data-theme="auto"] .ant-collapse-header {
+    color: #e6e6e6 !important;
+  }
+  
+  [data-theme="auto"] .ant-form-item-label > label {
+    color: #e6e6e6 !important;
+  }
+}
