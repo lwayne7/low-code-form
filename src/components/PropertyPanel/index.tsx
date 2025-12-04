@@ -38,6 +38,7 @@ interface PropertyPanelProps {
   components: ComponentSchema[];
   updateComponentProps: (id: string, newProps: Partial<ComponentSchema['props']>) => void;
   deleteComponent: (ids: string | string[]) => void;
+  isDark?: boolean; // 🆕 深色模式标志
 }
 
 export const PropertyPanel: React.FC<PropertyPanelProps> = ({
@@ -46,6 +47,7 @@ export const PropertyPanel: React.FC<PropertyPanelProps> = ({
   components,
   updateComponentProps,
   deleteComponent,
+  isDark = false,
 }) => {
   const allComponents = flattenComponents(components);
 
@@ -59,15 +61,15 @@ export const PropertyPanel: React.FC<PropertyPanelProps> = ({
   return (
     <div style={{ padding: '20px 16px' }}>
       <Space align="center" style={{ marginBottom: 24 }}>
-        <SettingOutlined style={{ color: '#1677ff' }} />
-        <Title level={5} style={{ margin: 0 }}>
+        <SettingOutlined style={{ color: isDark ? '#4096ff' : '#1677ff' }} />
+        <Title level={5} style={{ margin: 0, color: isDark ? '#e6e6e6' : undefined }}>
           属性配置
         </Title>
       </Space>
 
       {selectedIds.length > 1 ? (
         // 多选状态
-        <div style={{ textAlign: 'center', color: '#666', padding: '40px 0' }}>
+        <div style={{ textAlign: 'center', color: isDark ? '#a3a3a3' : '#666', padding: '40px 0' }}>
           <div style={{ fontSize: 48, marginBottom: 16 }}>📚</div>
           <p>已选中 {selectedIds.length} 个组件</p>
           <Button
@@ -83,7 +85,7 @@ export const PropertyPanel: React.FC<PropertyPanelProps> = ({
         // 单选状态
         <Form layout="vertical">
           {/* 组件信息 */}
-          <div style={{ background: '#f9fafb', padding: 12, borderRadius: 6, marginBottom: 20 }}>
+          <div style={{ background: isDark ? '#262626' : '#f9fafb', padding: 12, borderRadius: 6, marginBottom: 20 }}>
             <Form.Item label="组件 ID" style={{ marginBottom: 0 }}>
               <Space>
                 <Tag>{selectedComponent.type}</Tag>
@@ -209,7 +211,7 @@ export const PropertyPanel: React.FC<PropertyPanelProps> = ({
         </Form>
       ) : (
         // 未选中状态
-        <div style={{ textAlign: 'center', color: '#999', marginTop: 50 }}>请选择一个组件</div>
+        <div style={{ textAlign: 'center', color: isDark ? '#737373' : '#999', marginTop: 50 }}>请选择一个组件</div>
       )}
     </div>
   );

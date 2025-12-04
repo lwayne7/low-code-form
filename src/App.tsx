@@ -941,14 +941,14 @@ function App() {
             }}
             placement="bottomRight"
           >
-            <Button icon={<FileAddOutlined />}>
+            <Button icon={<FileAddOutlined />} style={isDark ? { color: '#e6e6e6', borderColor: '#404040' } : undefined}>
               <span className="btn-text">模板</span>
             </Button>
           </Dropdown>
-          <Button icon={<CodeOutlined />} onClick={handleShowJson}>
+          <Button icon={<CodeOutlined />} onClick={handleShowJson} style={isDark ? { color: '#e6e6e6', borderColor: '#404040' } : undefined}>
             <span className="btn-text">JSON</span>
           </Button>
-          <Button icon={<ExportOutlined />} onClick={handleExportCode}>
+          <Button icon={<ExportOutlined />} onClick={handleExportCode} style={isDark ? { color: '#e6e6e6', borderColor: '#404040' } : undefined}>
             <span className="btn-text">导出</span>
           </Button>
           <Button type="primary" icon={<EyeOutlined />} onClick={() => setIsPreviewOpen(true)}>
@@ -1004,7 +1004,7 @@ function App() {
                   item.label.toLowerCase().includes(componentSearch.toLowerCase()) ||
                   item.type.toLowerCase().includes(componentSearch.toLowerCase())
                 ).length === 0 && (
-                  <div style={{ gridColumn: '1 / -1', textAlign: 'center', color: '#999', padding: 16 }}>
+                  <div style={{ gridColumn: '1 / -1', textAlign: 'center', color: isDark ? '#737373' : '#999', padding: 16 }}>
                     未找到匹配的组件
                   </div>
                 )}
@@ -1072,13 +1072,14 @@ function App() {
           </Content>
 
           {/* 右侧属性面板 */}
-          <Sider className="sidebar-right" width={320} theme="light" style={{ borderLeft: '1px solid #f0f0f0', overflowY: 'auto' }}>
+          <Sider className="sidebar-right" width={320} theme="light" style={{ borderLeft: `1px solid ${isDark ? '#303030' : '#f0f0f0'}`, overflowY: 'auto', background: isDark ? '#1f1f1f' : '#fff' }}>
             <PropertyPanel
               selectedIds={selectedIds}
               selectedComponent={selectedComponent}
               components={components}
               updateComponentProps={updateComponentProps}
               deleteComponent={deleteComponent}
+              isDark={isDark}
             />
           </Sider>
         </Layout>
@@ -1092,10 +1093,11 @@ function App() {
               <div
                 style={{
                   padding: 16,
-                  background: 'white',
-                  border: '1px solid #1677ff',
+                  background: isDark ? '#262626' : 'white',
+                  border: `1px solid ${isDark ? '#4096ff' : '#1677ff'}`,
                   borderRadius: 4,
                   opacity: 0.8,
+                  color: isDark ? '#e6e6e6' : undefined,
                 }}
               >
                 正在移动...

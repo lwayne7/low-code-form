@@ -916,6 +916,27 @@
   border-color: var(--border-color, #303030);
 }
 
+[data-theme="dark"] .component-card:hover {
+  background: #262626;
+  border-color: #4096ff;
+}
+
+[data-theme="dark"] .component-card .anticon {
+  color: #a3a3a3;
+}
+
+[data-theme="dark"] .component-card:hover .anticon {
+  color: #4096ff;
+}
+
+[data-theme="dark"] .component-card-label {
+  color: #a3a3a3;
+}
+
+[data-theme="dark"] .component-card:hover .component-card-label {
+  color: #e6e6e6;
+}
+
 [data-theme="dark"] .container-component {
   background: linear-gradient(145deg, #1a1a1a 0%, #262626 100%);
   border-color: var(--border-color, #303030);
@@ -972,6 +993,19 @@
   background-clip: text;
 }
 
+/* 🆕 深色模式下 Header 普通按钮 (default 类型) */
+[data-theme="dark"] .ant-layout-header .ant-btn-default {
+  color: #e6e6e6 !important;
+  border-color: #404040 !important;
+  background: transparent !important;
+}
+
+[data-theme="dark"] .ant-layout-header .ant-btn-default:hover {
+  color: #4096ff !important;
+  border-color: #4096ff !important;
+  background: rgba(64, 150, 255, 0.1) !important;
+}
+
 [data-theme="dark"] .ant-layout-sider {
   background: var(--component-background, #1f1f1f) !important;
   border-right-color: var(--border-color, #303030);
@@ -1004,6 +1038,27 @@
   [data-theme="auto"] .component-card {
     background: var(--component-background, #1f1f1f);
     border-color: var(--border-color, #303030);
+  }
+  
+  [data-theme="auto"] .component-card:hover {
+    background: #262626;
+    border-color: #4096ff;
+  }
+  
+  [data-theme="auto"] .component-card .anticon {
+    color: #a3a3a3;
+  }
+  
+  [data-theme="auto"] .component-card:hover .anticon {
+    color: #4096ff;
+  }
+  
+  [data-theme="auto"] .component-card-label {
+    color: #a3a3a3;
+  }
+  
+  [data-theme="auto"] .component-card:hover .component-card-label {
+    color: #e6e6e6;
   }
   
   [data-theme="auto"] .container-component {
@@ -1055,6 +1110,19 @@
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+  }
+  
+  /* 🆕 自动模式下 Header 普通按钮 */
+  [data-theme="auto"] .ant-layout-header .ant-btn-default {
+    color: #e6e6e6 !important;
+    border-color: #404040 !important;
+    background: transparent !important;
+  }
+  
+  [data-theme="auto"] .ant-layout-header .ant-btn-default:hover {
+    color: #4096ff !important;
+    border-color: #4096ff !important;
+    background: rgba(64, 150, 255, 0.1) !important;
   }
   
   [data-theme="auto"] .ant-layout-sider {
