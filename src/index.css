@@ -1,11 +1,55 @@
+/* ============================================
+   LowCode Form - 设计系统变量
+   ============================================ */
+
 :root {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  /* 主题色 */
+  --primary-color: #1677ff;
+  --primary-color-hover: #4096ff;
+  --primary-color-active: #0958d9;
+  --primary-color-bg: #e6f4ff;
+  --primary-color-bg-hover: #bae0ff;
+  
+  /* 成功/警告/错误 */
+  --success-color: #52c41a;
+  --warning-color: #faad14;
+  --error-color: #ff4d4f;
+  
+  /* 中性色 */
+  --text-color: #1f1f1f;
+  --text-color-secondary: #666666;
+  --text-color-tertiary: #999999;
+  --border-color: #e8e8e8;
+  --border-color-light: #f0f0f0;
+  --background-color: #f5f7fa;
+  --background-color-light: #fafafa;
+  --component-background: #ffffff;
+  
+  /* 阴影 */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.03), 0 1px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px 0 rgba(0, 0, 0, 0.02);
+  --shadow-md: 0 3px 6px -4px rgba(0, 0, 0, 0.06), 0 6px 16px 0 rgba(0, 0, 0, 0.05), 0 9px 28px 8px rgba(0, 0, 0, 0.03);
+  --shadow-lg: 0 6px 16px -8px rgba(0, 0, 0, 0.08), 0 9px 28px 0 rgba(0, 0, 0, 0.05), 0 12px 48px 16px rgba(0, 0, 0, 0.03);
+  --shadow-primary: 0 2px 8px -2px rgba(22, 119, 255, 0.2), 0 4px 16px 0 rgba(22, 119, 255, 0.1);
+  
+  /* 圆角 */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  
+  /* 过渡 */
+  --transition-fast: 0.15s ease;
+  --transition-normal: 0.25s ease;
+  --transition-slow: 0.35s ease;
+  
+  /* 字体 */
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif;
   line-height: 1.5;
   font-weight: 400;
 
-  color-scheme: light dark;
-  color: rgba(0, 0, 0, 0.85);
-  background-color: #fff;
+  color-scheme: light;
+  color: var(--text-color);
+  background-color: var(--component-background);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -13,12 +57,32 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* 深色模式变量 */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --text-color: #e6e6e6;
+    --text-color-secondary: #a3a3a3;
+    --text-color-tertiary: #737373;
+    --border-color: #303030;
+    --border-color-light: #262626;
+    --background-color: #141414;
+    --background-color-light: #1f1f1f;
+    --component-background: #1f1f1f;
+    
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.2);
+    --shadow-md: 0 3px 6px -4px rgba(0, 0, 0, 0.3), 0 6px 16px 0 rgba(0, 0, 0, 0.25);
+    --shadow-lg: 0 6px 16px -8px rgba(0, 0, 0, 0.4), 0 9px 28px 0 rgba(0, 0, 0, 0.3);
+    
+    color-scheme: dark;
+  }
+}
+
 body {
   margin: 0;
   padding: 0;
   min-height: 100vh;
   width: 100vw;
-  overflow: hidden; /* 防止双滚动条 */
+  overflow: hidden;
 }
 
 #root {
@@ -26,7 +90,17 @@ body {
   width: 100%;
 }
 
-/* 覆盖 antd 默认的 reset 样式中可能存在的冲突 */
 *, *::before, *::after {
   box-sizing: border-box;
+}
+
+/* 平滑滚动 */
+html {
+  scroll-behavior: smooth;
+}
+
+/* 选中文本颜色 */
+::selection {
+  background: var(--primary-color-bg);
+  color: var(--primary-color);
 }
