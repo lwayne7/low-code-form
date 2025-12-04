@@ -16,6 +16,7 @@ interface SortableItemProps {
   isLast?: boolean;   // 是否是列表最后一项
   isLocked?: boolean; // 🆕 是否锁定
   depth?: number;     // 🆕 组件深度，用于碰撞检测
+  isNestTarget?: boolean; // 🆕 是否是嵌套目标（放入容器内部），是则不移动位置
 }
 
 // ⚠️ 性能优化：使用 React.memo 包裹
@@ -45,8 +46,11 @@ export const SortableItem = React.memo(function SortableItem(props: SortableItem
     selectComponent 
   } = useStore();
 
+  // 🆕 如果是嵌套目标（放入容器内部），不移动位置，只有交换位置时才移动
+  const shouldDisableTransform = props.isNestTarget && !isDragging;
+  
   const style: React.CSSProperties = {
-    transform: CSS.Transform.toString(transform),
+    transform: shouldDisableTransform ? undefined : CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
     position: 'relative', 
@@ -185,6 +189,7 @@ export const SortableItem = React.memo(function SortableItem(props: SortableItem
     prevProps.isFirst === nextProps.isFirst &&
     prevProps.isLast === nextProps.isLast &&
     prevProps.isLocked === nextProps.isLocked &&
+    prevProps.isNestTarget === nextProps.isNestTarget &&
     prevProps.children === nextProps.children
   );
 });

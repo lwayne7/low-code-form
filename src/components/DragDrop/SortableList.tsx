@@ -288,6 +288,9 @@ const SortableListItem: React.FC<SortableListItemProps> = React.memo(({
   // 🆕 判断当前容器是否是放置目标（通过 dropTarget 状态判断）
   const isContainerDropTarget = isContainer && dropTarget?.targetId === component.id && dropTarget?.position === 'inside';
 
+  // 🆕 判断是否是嵌套目标 - 用于禁用目标容器的位移动画
+  const isNestTarget = !!(isContainerDropTarget && activeDragId && activeDragId !== component.id);
+
   // 🆕 使用 useMemo 缓存容器样式 - 增强视觉反馈
   const cardStyle = useMemo(() => ({
     background: getContainerBgColor(depth, isContainerDropTarget && !isDragging),
@@ -307,6 +310,7 @@ const SortableListItem: React.FC<SortableListItemProps> = React.memo(({
       isLast={isLast}
       isLocked={isLocked}
       depth={depth}
+      isNestTarget={isNestTarget}
     >
       {/* 🆕 放置位置指示器 */}
       {showDropIndicator === 'before' && <DropIndicator position="before" />}

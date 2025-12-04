@@ -773,6 +773,7 @@ function App() {
                 selectedKeys: [themeMode],
               }}
               placement="bottomRight"
+              trigger={['click']}
             >
               <Tooltip title={`主题: ${themeMode === 'light' ? '亮色' : themeMode === 'dark' ? '深色' : '跟随系统'}`}>
                 <Button
