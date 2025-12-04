@@ -26,21 +26,25 @@ export function useTheme() {
     return themeMode;
   }, [themeMode]);
 
-  // 应用主题到 DOM
+  // 应用主题到 DOM - 立即执行以避免闪烁
   useEffect(() => {
-    const root = document.documentElement;
-    
-    // 移除旧的主题类
-    root.classList.remove('theme-light', 'theme-dark');
-    
-    // 添加新的主题类
-    root.classList.add(`theme-${actualTheme}`);
-    
-    // 设置 color-scheme 以便浏览器原生组件（如滚动条）也能适配
-    root.style.colorScheme = actualTheme;
-    
-    // 设置 data 属性，方便 CSS 选择器使用
-    root.dataset.theme = actualTheme;
+    const applyTheme = (theme: 'light' | 'dark') => {
+      const root = document.documentElement;
+      
+      // 移除旧的主题类
+      root.classList.remove('theme-light', 'theme-dark');
+      
+      // 添加新的主题类
+      root.classList.add(`theme-${theme}`);
+      
+      // 设置 color-scheme 以便浏览器原生组件（如滚动条）也能适配
+      root.style.colorScheme = theme;
+      
+      // 设置 data 属性，方便 CSS 选择器使用
+      root.dataset.theme = theme;
+    };
+
+    applyTheme(actualTheme);
   }, [actualTheme]);
 
   // 监听系统主题变化（仅在 system 模式下有效）

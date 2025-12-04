@@ -64,6 +64,22 @@
    深色模式变量 - 通过类名控制
    ============================================ */
 
+/* 浅色模式 - 显式定义（作为默认值的备份） */
+:root.theme-light {
+  --text-color: #1f1f1f;
+  --text-color-secondary: #666666;
+  --text-color-tertiary: #999999;
+  --border-color: #e8e8e8;
+  --border-color-light: #f0f0f0;
+  --background-color: #f5f7fa;
+  --background-color-light: #fafafa;
+  --component-background: #ffffff;
+  --canvas-dot-color: #d4d4d8;
+  
+  color-scheme: light;
+}
+
+/* 深色模式 */
 :root.theme-dark {
   --text-color: #e6e6e6;
   --text-color-secondary: #a3a3a3;

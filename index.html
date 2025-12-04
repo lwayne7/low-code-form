@@ -1,10 +1,28 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="theme-light">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>low-code-form</title>
+    <script>
+      // 在 React 加载前应用主题，避免闪烁
+      (function() {
+        try {
+          const stored = localStorage.getItem('lowcode-storage');
+          if (stored) {
+            const data = JSON.parse(stored);
+            const mode = data.state?.themeMode || 'system';
+            let theme = mode;
+            if (mode === 'system') {
+              theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            }
+            document.documentElement.className = 'theme-' + theme;
+            document.documentElement.style.colorScheme = theme;
+          }
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
