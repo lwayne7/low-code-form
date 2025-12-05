@@ -199,7 +199,6 @@ function App() {
     // 🆕 获取修饰键状态
     const nativeEvent = (event.activatorEvent as MouseEvent | TouchEvent);
     const isShiftHeld = nativeEvent && 'shiftKey' in nativeEvent && nativeEvent.shiftKey;
-    const isAltHeld = nativeEvent && 'altKey' in nativeEvent && nativeEvent.altKey;
     
     if (!over) {
       // 清理防抖计时器
@@ -283,7 +282,9 @@ function App() {
     const hysteresisRatio = HYSTERESIS_RATIO * 1.5; // 增加滞后区
 
     if (targetComponent.type === 'Container' && activeId !== overId) {
-      // === 容器组件：三区域判断 (before / inside / after) ===
+      // === 容器组件 ===
+      // 🔧 优化：由于碰撞检测已经区分了 container-xxx（inside）和 sortable item（排序）
+      // 这里只需要处理 before/after 的情况（因为如果是 inside，碰撞检测会返回 container-xxx）
       
       // 防止拖入自身后代
       if (!activeId.startsWith('new-') && isDescendant(components, activeId, overId)) {
@@ -293,54 +294,43 @@ function App() {
       
       // 🆕 修饰键优先判断
       // Shift: 强制嵌套模式（放入容器内部）
-      // Alt/Option: 强制移动模式（在容器前后放置）
       if (isShiftHeld) {
         safeSetDropTarget({ targetId: overId, position: 'inside' }, true);
         return;
       }
       
-      if (isAltHeld) {
-        // Alt 模式下使用中点判断 before/after
-        const midPoint = overRect.top + overRect.height / 2;
-        const newPosition = currentY < midPoint ? 'before' : 'after';
-        safeSetDropTarget({ targetId: overId, position: newPosition }, true);
-        return;
-      }
-      
+      // 由于碰撞检测返回的是容器的 sortable item，说明鼠标在边缘区域
+      // 需要判断是 before 还是 after
       const topEdge = overRect.top + overRect.height * containerEdgeRatio;
       const bottomEdge = overRect.top + overRect.height * (1 - containerEdgeRatio);
       
-      // 计算当前应该的位置
-      let newPosition: 'before' | 'after' | 'inside';
+      // 简化判断：上半部分（含中间偏上）= before，下半部分 = after
+      // 如果 currentY 在中间 60% 区域，使用中点判断
+      let newPosition: 'before' | 'after';
       if (currentY < topEdge) {
         newPosition = 'before';
       } else if (currentY > bottomEdge) {
         newPosition = 'after';
       } else {
-        newPosition = 'inside';
+        // 中间区域：使用中点判断 before/after
+        // 理论上碰撞检测会返回 container-xxx，但如果走到这里，可能是边界情况
+        const midPoint = overRect.top + overRect.height / 2;
+        newPosition = currentY < midPoint ? 'before' : 'after';
       }
       
-      // 滞后区检测：如果在边界附近且之前有状态，保持原状态
+      // 滞后区检测
       if (lastDropTargetRef.current?.targetId === overId) {
         const hysteresis = overRect.height * hysteresisRatio;
         const lastPos = lastDropTargetRef.current.position;
+        const midPoint = overRect.top + overRect.height / 2;
         
-        if (lastPos === 'inside') {
-          // 从 inside 切换出去需要更明确的移动
-          const expandedTop = overRect.top + overRect.height * (containerEdgeRatio - hysteresisRatio);
-          const expandedBottom = overRect.top + overRect.height * (1 - containerEdgeRatio + hysteresisRatio);
-          if (currentY >= expandedTop && currentY <= expandedBottom) {
-            return; // 保持 inside
-          }
-        } else if (lastPos === 'before') {
-          if (currentY < topEdge + hysteresis) {
-            return; // 保持 before
-          }
-        } else if (lastPos === 'after') {
-          if (currentY > bottomEdge - hysteresis) {
-            return; // 保持 after
-          }
+        if (lastPos === 'before' && currentY < midPoint + hysteresis) {
+          return; // 保持 before
         }
+        if (lastPos === 'after' && currentY > midPoint - hysteresis) {
+          return; // 保持 after
+        }
+        // 不再检测 inside 的滞后，因为碰撞检测会处理
       }
       
       safeSetDropTarget({ targetId: overId, position: newPosition });

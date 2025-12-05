@@ -8,7 +8,11 @@ import {
 } from '@dnd-kit/core';
 
 // ============ 常量定义 ============
-/** 容器边缘区域比例（上下各20%为边缘区域，中间60%为放入区域） */
+/** 
+ * 容器边缘区域比例
+ * 与 App.tsx 中的 CONTAINER_EDGE_RATIO 保持一致
+ * 上下各 20% 为边缘区域（用于排序），中间 60% 为放入区域
+ */
 const EDGE_ZONE_RATIO = 0.2;
 
 // ============ 辅助函数 ============
@@ -38,37 +42,36 @@ const sortByDepthDesc = (containers: DroppableContainer[], collisions: Collision
 };
 
 /**
- * 自定义碰撞检测：智能处理容器内外的拖拽
+ * 🔧 改进的自定义碰撞检测
  * 
  * 核心策略：
- * 1. 非容器组件优先 - 用于精确插入位置
- * 2. 容器处理：根据鼠标位置判断是放入容器内还是排序
- * 3. 画布最低优先级
+ * 1. 优先使用 pointerWithin 进行精确检测
+ * 2. 对于容器组件，根据鼠标在容器中的位置决定返回哪个 droppable:
+ *    - 边缘区域（上下各20%）: 返回容器的 sortable item，用于排序
+ *    - 中心区域（中间60%）: 返回 container-xxx，用于放入容器内
+ * 3. 深度优先：优先返回层级更深的容器
  */
 export const customCollisionDetection: CollisionDetection = (args) => {
   const { droppableContainers, active, pointerCoordinates } = args;
   const activeId = String(active.id);
 
-  // 过滤掉被拖拽的组件自身
+  // 过滤掉被拖拽的组件自身及其对应的容器 droppable
   const filteredContainers = droppableContainers.filter((container) => {
     const containerId = String(container.id);
-    // 排除被拖拽的组件自身（作为 sortable）
     if (containerId === activeId) return false;
-    // 排除被拖拽组件对应的容器 droppable（如果它是容器的话）
     if (containerId === `container-${activeId}`) return false;
     return true;
   });
 
-  // 使用过滤后的容器进行碰撞检测
   const filteredArgs = { ...args, droppableContainers: filteredContainers };
 
   // 使用 pointerWithin 进行精确检测
-  const pointerCollisions = pointerWithin(filteredArgs);
+  let collisions: Collision[] = pointerWithin(filteredArgs);
   
   // 如果没有 pointer 碰撞，尝试 rectIntersection
-  const collisions: Collision[] = pointerCollisions.length > 0 
-    ? pointerCollisions 
-    : rectIntersection(filteredArgs);
+  if (collisions.length === 0) {
+    collisions = rectIntersection(filteredArgs);
+  }
 
   // 如果仍然没有结果，使用 closestCenter
   if (collisions.length === 0) {
@@ -89,7 +92,7 @@ export const customCollisionDetection: CollisionDetection = (args) => {
     (c) => String(c.id) === 'canvas-droppable'
   );
 
-  // 判断一个 item 是否是容器（通过检查是否有对应的 container-xxx droppable）
+  // 判断一个 item 是否是容器组件
   const isContainerItem = (itemId: string): boolean => {
     return filteredContainers.some(c => String(c.id) === `container-${itemId}`);
   };
@@ -98,58 +101,57 @@ export const customCollisionDetection: CollisionDetection = (args) => {
   const nonContainerItems = itemCollisions.filter(c => !isContainerItem(String(c.id)));
   const containerItems = itemCollisions.filter(c => isContainerItem(String(c.id)));
 
-  // 1. 优先返回非容器组件（用于精确插入）
+  // === 1. 优先返回非容器组件（用于精确插入位置）===
   if (nonContainerItems.length > 0) {
     return [sortByDepthDesc(filteredContainers, nonContainerItems)[0]];
   }
 
-  // 2. 处理容器：如果同时有容器 sortable 和 container-xxx droppable
-  if (containerItems.length > 0 && containerDroppables.length > 0) {
-    // 找到最深层的容器 sortable
-    const targetContainerItem = sortByDepthDesc(filteredContainers, containerItems)[0];
-    const targetContainerId = String(targetContainerItem.id);
+  // === 2. 处理容器组件的精确位置判断 ===
+  if (containerItems.length > 0 && pointerCoordinates) {
+    // 找到最深层的容器
+    const sortedContainerItems = sortByDepthDesc(filteredContainers, containerItems);
     
-    // 检查是否有对应的 container-xxx droppable
-    const correspondingDroppable = containerDroppables.find(
-      c => String(c.id) === `container-${targetContainerId}`
-    );
-    
-    if (correspondingDroppable && pointerCoordinates) {
-      // 获取容器 sortable 的矩形
+    for (const targetContainerItem of sortedContainerItems) {
+      const targetContainerId = String(targetContainerItem.id);
       const containerRect = getRect(filteredContainers, targetContainerId);
-      if (containerRect) {
-        const { top, height } = containerRect;
-        const pointerY = pointerCoordinates.y;
-        
-        // 边缘区域判断：上下各 EDGE_ZONE_RATIO 为边缘，中间为放入区域
-        const topEdge = top + height * EDGE_ZONE_RATIO;
-        const bottomEdge = top + height * (1 - EDGE_ZONE_RATIO);
-        
-        if (pointerY < topEdge || pointerY > bottomEdge) {
-          // 边缘区域：返回容器 sortable 用于排序
-          return [targetContainerItem];
-        } else {
-          // 中心区域：返回 container-xxx 用于放入容器
+      
+      if (!containerRect) continue;
+      
+      const { top, height } = containerRect;
+      const pointerY = pointerCoordinates.y;
+      
+      // 边缘区域判断
+      const topEdge = top + height * EDGE_ZONE_RATIO;
+      const bottomEdge = top + height * (1 - EDGE_ZONE_RATIO);
+      
+      // 检查是否有对应的 container-xxx droppable
+      const correspondingDroppable = containerDroppables.find(
+        c => String(c.id) === `container-${targetContainerId}`
+      );
+      
+      if (pointerY >= topEdge && pointerY <= bottomEdge) {
+        // 🎯 中心区域：返回 container-xxx 用于放入容器内
+        if (correspondingDroppable) {
           return [correspondingDroppable];
         }
       }
+      
+      // 🎯 边缘区域：返回容器 sortable item 用于排序
+      return [targetContainerItem];
     }
-    
-    // 默认返回 container-xxx droppable
-    return [correspondingDroppable || targetContainerItem];
   }
 
-  // 3. 如果只有 container-xxx droppable
+  // === 3. 只有 container-xxx droppable（可能是空容器或鼠标在内容区）===
   if (containerDroppables.length > 0) {
     return [sortByDepthDesc(filteredContainers, containerDroppables)[0]];
   }
 
-  // 4. 如果只有容器 sortable items
+  // === 4. 只有容器 sortable items ===
   if (containerItems.length > 0) {
     return [sortByDepthDesc(filteredContainers, containerItems)[0]];
   }
 
-  // 5. 返回画布
+  // === 5. 返回画布 ===
   if (canvasCollision) {
     return [canvasCollision];
   }
