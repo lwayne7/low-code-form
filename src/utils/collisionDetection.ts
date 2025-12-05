@@ -11,9 +11,16 @@ import {
 /** 
  * 容器边缘区域比例
  * 与 App.tsx 中的 CONTAINER_EDGE_RATIO 保持一致
- * 上下各 20% 为边缘区域（用于排序），中间 60% 为放入区域
+ * 上下各 25% 为边缘区域（用于排序），中间 50% 为放入区域
+ * 🔧 增大边缘区域，让排序更容易触发
  */
-const EDGE_ZONE_RATIO = 0.2;
+const EDGE_ZONE_RATIO = 0.25;
+
+/**
+ * 最小边缘高度（像素）
+ * 确保即使容器很小，边缘区域也有足够的高度
+ */
+const MIN_EDGE_HEIGHT = 20;
 
 // ============ 辅助函数 ============
 
@@ -42,14 +49,27 @@ const sortByDepthDesc = (containers: DroppableContainer[], collisions: Collision
 };
 
 /**
+ * 计算点到矩形中心的距离
+ */
+const getDistanceToCenter = (
+  rect: { top: number; left: number; width: number; height: number },
+  point: { x: number; y: number }
+): number => {
+  const centerX = rect.left + rect.width / 2;
+  const centerY = rect.top + rect.height / 2;
+  return Math.sqrt(Math.pow(point.x - centerX, 2) + Math.pow(point.y - centerY, 2));
+};
+
+/**
  * 🔧 改进的自定义碰撞检测
  * 
  * 核心策略：
  * 1. 优先使用 pointerWithin 进行精确检测
- * 2. 对于容器组件，根据鼠标在容器中的位置决定返回哪个 droppable:
- *    - 边缘区域（上下各20%）: 返回容器的 sortable item，用于排序
- *    - 中心区域（中间60%）: 返回 container-xxx，用于放入容器内
- * 3. 深度优先：优先返回层级更深的容器
+ * 2. 优先返回最近的非容器组件（精确插入）
+ * 3. 对于容器组件，根据鼠标在容器中的位置决定返回哪个 droppable:
+ *    - 边缘区域（上下各25%）: 返回容器的 sortable item，用于排序
+ *    - 中心区域（中间50%）: 返回 container-xxx，用于放入容器内
+ * 4. 深度优先 + 距离优先：优先返回层级更深且距离更近的容器
  */
 export const customCollisionDetection: CollisionDetection = (args) => {
   const { droppableContainers, active, pointerCoordinates } = args;
@@ -102,16 +122,45 @@ export const customCollisionDetection: CollisionDetection = (args) => {
   const containerItems = itemCollisions.filter(c => isContainerItem(String(c.id)));
 
   // === 1. 优先返回非容器组件（用于精确插入位置）===
-  if (nonContainerItems.length > 0) {
-    return [sortByDepthDesc(filteredContainers, nonContainerItems)[0]];
+  if (nonContainerItems.length > 0 && pointerCoordinates) {
+    // 如果有多个非容器组件，返回距离最近的
+    const sortedByDistance = [...nonContainerItems].sort((a, b) => {
+      const rectA = getRect(filteredContainers, String(a.id));
+      const rectB = getRect(filteredContainers, String(b.id));
+      if (!rectA || !rectB) return 0;
+      const distA = getDistanceToCenter(rectA, pointerCoordinates);
+      const distB = getDistanceToCenter(rectB, pointerCoordinates);
+      return distA - distB;
+    });
+    
+    // 优先按深度排序，同深度按距离排序
+    const sorted = sortByDepthDesc(filteredContainers, sortedByDistance);
+    return [sorted[0]];
   }
 
   // === 2. 处理容器组件的精确位置判断 ===
   if (containerItems.length > 0 && pointerCoordinates) {
-    // 找到最深层的容器
+    // 按深度排序，优先处理最深层的容器
     const sortedContainerItems = sortByDepthDesc(filteredContainers, containerItems);
     
-    for (const targetContainerItem of sortedContainerItems) {
+    // 🔧 同时按距离排序，避免多个同深度容器时的抖动
+    const sortedByDepthAndDistance = [...sortedContainerItems].sort((a, b) => {
+      const depthA = getDepth(filteredContainers, String(a.id));
+      const depthB = getDepth(filteredContainers, String(b.id));
+      
+      // 深度不同，深度大的优先
+      if (depthB !== depthA) return depthB - depthA;
+      
+      // 深度相同，距离近的优先
+      const rectA = getRect(filteredContainers, String(a.id));
+      const rectB = getRect(filteredContainers, String(b.id));
+      if (!rectA || !rectB) return 0;
+      const distA = getDistanceToCenter(rectA, pointerCoordinates);
+      const distB = getDistanceToCenter(rectB, pointerCoordinates);
+      return distA - distB;
+    });
+    
+    for (const targetContainerItem of sortedByDepthAndDistance) {
       const targetContainerId = String(targetContainerItem.id);
       const containerRect = getRect(filteredContainers, targetContainerId);
       
@@ -120,20 +169,22 @@ export const customCollisionDetection: CollisionDetection = (args) => {
       const { top, height } = containerRect;
       const pointerY = pointerCoordinates.y;
       
-      // 边缘区域判断
-      const topEdge = top + height * EDGE_ZONE_RATIO;
-      const bottomEdge = top + height * (1 - EDGE_ZONE_RATIO);
+      // 🔧 动态计算边缘高度：取比例和最小值中的较大者
+      const edgeHeight = Math.max(height * EDGE_ZONE_RATIO, MIN_EDGE_HEIGHT);
+      const topEdge = top + edgeHeight;
+      const bottomEdge = top + height - edgeHeight;
       
       // 检查是否有对应的 container-xxx droppable
       const correspondingDroppable = containerDroppables.find(
         c => String(c.id) === `container-${targetContainerId}`
       );
       
-      if (pointerY >= topEdge && pointerY <= bottomEdge) {
+      // 判断是在边缘还是中心
+      const isInEdgeZone = pointerY < topEdge || pointerY > bottomEdge;
+      
+      if (!isInEdgeZone && correspondingDroppable) {
         // 🎯 中心区域：返回 container-xxx 用于放入容器内
-        if (correspondingDroppable) {
-          return [correspondingDroppable];
-        }
+        return [correspondingDroppable];
       }
       
       // 🎯 边缘区域：返回容器 sortable item 用于排序

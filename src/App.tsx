@@ -64,8 +64,15 @@ const { Header, Sider, Content } = Layout;
 const { Title } = Typography;
 
 // ============ 常量定义 ============
-/** 容器边缘区域比例（用于判断 before/after/inside） */
-const CONTAINER_EDGE_RATIO = 0.2;
+/** 
+ * 容器边缘区域比例（用于判断 before/after/inside）
+ * 与 collisionDetection.ts 中的 EDGE_ZONE_RATIO 保持一致
+ * 上下各 25% 为边缘区域，中间 50% 为嵌套区域
+ */
+const CONTAINER_EDGE_RATIO = 0.25;
+
+/** 最小边缘高度（像素），确保小容器也有足够的边缘区域 */
+const MIN_EDGE_HEIGHT = 20;
 /** 滞后区比例（用于防止抖动） */
 const HYSTERESIS_RATIO = 0.05;
 /** 非容器组件的滞后区比例 */
@@ -277,8 +284,8 @@ function App() {
     const overRect = over.rect;
     const currentY = getPointerY(event);
 
-    // 计算边界区域
-    const containerEdgeRatio = CONTAINER_EDGE_RATIO;
+    // 🔧 动态计算边缘高度：取比例和最小值中的较大者
+    const edgeHeight = Math.max(overRect.height * CONTAINER_EDGE_RATIO, MIN_EDGE_HEIGHT);
     const hysteresisRatio = HYSTERESIS_RATIO * 1.5; // 增加滞后区
 
     if (targetComponent.type === 'Container' && activeId !== overId) {
@@ -301,11 +308,10 @@ function App() {
       
       // 由于碰撞检测返回的是容器的 sortable item，说明鼠标在边缘区域
       // 需要判断是 before 还是 after
-      const topEdge = overRect.top + overRect.height * containerEdgeRatio;
-      const bottomEdge = overRect.top + overRect.height * (1 - containerEdgeRatio);
+      const topEdge = overRect.top + edgeHeight;
+      const bottomEdge = overRect.top + overRect.height - edgeHeight;
       
-      // 简化判断：上半部分（含中间偏上）= before，下半部分 = after
-      // 如果 currentY 在中间 60% 区域，使用中点判断
+      // 简化判断：上半部分 = before，下半部分 = after
       let newPosition: 'before' | 'after';
       if (currentY < topEdge) {
         newPosition = 'before';
@@ -313,7 +319,6 @@ function App() {
         newPosition = 'after';
       } else {
         // 中间区域：使用中点判断 before/after
-        // 理论上碰撞检测会返回 container-xxx，但如果走到这里，可能是边界情况
         const midPoint = overRect.top + overRect.height / 2;
         newPosition = currentY < midPoint ? 'before' : 'after';
       }
