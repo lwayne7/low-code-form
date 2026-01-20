@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Drawer, Typography, Space, Tag, Progress, Divider, Button, Tooltip, Badge, Switch, Card, Statistic, Row, Col, message, Collapse } from 'antd';
-import { DashboardOutlined, ThunderboltOutlined, ClockCircleOutlined, ReloadOutlined, ExperimentOutlined, DownloadOutlined, RocketOutlined } from '@ant-design/icons';
+import { DashboardOutlined, ClockCircleOutlined, ReloadOutlined, ExperimentOutlined, DownloadOutlined, RocketOutlined } from '@ant-design/icons';
 import { useStore } from '../../store';
 
 const { Text, Title } = Typography;
-const { Panel } = Collapse;
 
 /**
  * 性能监控面板
@@ -161,7 +160,7 @@ export const PerformancePanel: React.FC<PerformancePanelProps> = ({ open, onClos
   // 性能测试快捷操作
   const runPerformanceTest = useCallback(async (testType: 'small' | 'medium' | 'large') => {
     setIsRunningTest(true);
-    const { addComponent, components } = useStore.getState();
+    const { addComponent } = useStore.getState();
     
     try {
       const counts = { small: 100, medium: 500, large: 1000 };
