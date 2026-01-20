@@ -22,3 +22,15 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Test coverage
+coverage
+
+# Playwright
+playwright-report/
+test-results/
+/playwright/.cache/
+
+# Lighthouse
+.lighthouseci/
+lighthouse-report/
