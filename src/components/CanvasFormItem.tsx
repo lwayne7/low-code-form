@@ -3,22 +3,11 @@ import { Form, Input, Select, Radio, Checkbox, Switch, DatePicker, TimePicker, I
 import type { Dayjs } from 'dayjs';
 import type { ComponentSchema } from '../types';
 import { useStore } from '../store';
+import { evaluateConditionSafe } from '../utils/expression';
 
 interface CanvasFormItemProps {
   component: ComponentSchema;
 }
-
-// 条件表达式求值
-const evaluateCondition = (condition: string, values: Record<string, unknown>): boolean => {
-  try {
-    // 使用 Function 构造器动态求值
-    const func = new Function('values', `try { return ${condition}; } catch(e) { return false; }`);
-    return func(values);
-  } catch (error) {
-    console.warn('Condition evaluation failed:', error);
-    return true; // 默认显示
-  }
-};
 
 const isDayjs = (value: unknown): value is Dayjs =>
   typeof value === 'object' &&
@@ -44,7 +33,7 @@ export const CanvasFormItem: React.FC<CanvasFormItemProps> = React.memo(({ compo
   // 处理 visibleOn 条件
   const shouldShow = useMemo(() => {
     if (!component.props.visibleOn) return true;
-    return evaluateCondition(component.props.visibleOn, formValues);
+    return evaluateConditionSafe(component.props.visibleOn, formValues);
   }, [component.props.visibleOn, formValues]);
 
   // 🆕 使用 useCallback 缓存事件处理函数

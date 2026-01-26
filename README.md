@@ -33,9 +33,13 @@
 - ✅ **虚拟滚动类型修复**：适配 `react-window@2` 的 `List` API，去掉 `@ts-nocheck` 并重新启用导出（`src/components/DragDrop/VirtualizedSortableList.tsx`）
 - ✅ **工程化与类型安全**：分离 `trackRender` 以兼容 Fast Refresh；`formValues` 从 `any` 收紧到 `unknown`；worker 中 `switch/case` 声明块修复 lint（`src/components/common/performanceTracking.ts`、`src/store.ts`、`src/workers/codeGenerator.worker.ts`）
 - ✅ **性能基准与控制台工具**：新增 `vitest bench` 基准（`src/test/performance.bench.ts`）与开发环境控制台 `window.performanceTest`（`src/utils/performanceTester.ts`、`src/main.tsx`、`src/global.d.ts`）
+- ✅ **Undo/Redo Patch 历史**：用“补丁记录 + 结构共享”替代整树快照，显著降低内存与 GC；示例（100 次添加）历史数据序列化大小 `~373KB → ~18KB`（约 **-95%**）（`src/store.ts`、`src/utils/componentTreeOps.ts`、`src/components/common/HistoryPanel.tsx`）
+- ✅ **组件注册表 + schema 属性面板**：新增 `src/registry/componentRegistry.tsx` 统一维护组件默认配置/物料/属性面板 schema，新增组件基本只改声明（`src/utils/componentFactory.ts`、`src/constants/materials.tsx`、`src/components/PropertyPanel/index.tsx`）
+- ✅ **表达式安全**：`visibleOn` 从 `new Function` 改为 AST 白名单解析 + 安全执行，并在属性面板实时校验，避免注入与运行时崩溃（`src/utils/expression.ts`、`src/components/CanvasFormItem.tsx`、`src/components/FormRenderer.tsx`、`src/components/PropertyPanel/LinkageConfig.tsx`）
+- ✅ **Tracing + CI 性能预算**：拖拽/导出代码打点并在性能面板展示；新增 CI 工作流运行 lint/test/build，加入性能预算用例防回归（`src/utils/tracing.ts`、`src/hooks/useDragHandlers.ts`、`src/features/Header/AppHeader.tsx`、`src/components/common/PerformancePanel.tsx`、`.github/workflows/ci.yml`、`src/test/perfBudget.test.ts`）
 
 ### 🧪 完整测试体系
-- ✅ **57个单元测试**：覆盖核心业务逻辑（Vitest）
+- ✅ **65个单元测试**：覆盖核心业务逻辑（Vitest）
 - ✅ **21个E2E测试**：Playwright端到端测试
 - ✅ **10+性能基准测试**：量化性能指标
 - ✅ **Lighthouse CI**：自动化性能评分
@@ -51,7 +55,7 @@
 - 🔐 组件锁定功能
 - ⌨️ 完整的快捷键支持
 - 📤 代码导出（React/JSON Schema）
-- ⏱️ 撤销/重做（50步历史）
+- ⏱️ 撤销/重做（Patch 历史，50步）
 
 ## 📊 性能数据
 
@@ -204,7 +208,7 @@ const handleClick = useCallback((e) => {
       ┌──────────┐
      ┌────────────┐
 	    └──────────────┘
-	     单元测试 (57)    ← Vitest
+	     单元测试 (65)    ← Vitest
      
 性能基准 (10+)       ← Vitest Bench
 Lighthouse CI        ← 自动化
@@ -294,5 +298,5 @@ MIT License
 
 **最后更新**: 2026-01-26  
 **当前版本**: v2.7.0  
-**自动化测试**: 单元 57 + E2E 21  
+**自动化测试**: 单元 65 + E2E 21  
 **性能基准**: 10+（Vitest Bench）

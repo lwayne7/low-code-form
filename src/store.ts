@@ -2,23 +2,68 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { nanoid } from 'nanoid';
 import type { ComponentSchema, ComponentType } from './types';
-import { arrayMove } from '@dnd-kit/sortable';
 
 // 导入辅助函数
 import { 
   findComponentById, 
-  flattenComponents 
+  flattenComponents,
+  findParentInfo,
 } from './utils/componentHelpers';
 import { validateValue } from './utils/validation';
 import { createComponent, cloneComponentWithNewId } from './utils/componentFactory';
+import type { ComponentInsert, ComponentLocation } from './utils/componentTreeOps';
+import {
+  insertComponent,
+  moveComponent as moveComponentInTree,
+  removeComponentsByIds,
+  replaceComponentProps,
+  updateComponentProps as updateComponentPropsInTree,
+} from './utils/componentTreeOps';
 
 interface HistoryState {
-  past: ComponentSchema[][];
-  future: ComponentSchema[][];
+  past: HistoryEntry[];
+  future: HistoryEntry[];
 }
 
 /** 历史记录最大条数 */
 const MAX_HISTORY_LENGTH = 50;
+
+export type HistoryEntry =
+  | {
+      kind: 'insert';
+      label: string;
+      timestamp: number;
+      inserts: ComponentInsert[];
+    }
+  | {
+      kind: 'delete';
+      label: string;
+      timestamp: number;
+      removes: ComponentInsert[];
+    }
+  | {
+      kind: 'updateProps';
+      label: string;
+      timestamp: number;
+      targetId: string;
+      prevProps: ComponentSchema['props'];
+      nextProps: ComponentSchema['props'];
+    }
+  | {
+      kind: 'move';
+      label: string;
+      timestamp: number;
+      targetId: string;
+      from: ComponentLocation;
+      to: ComponentLocation;
+    }
+  | {
+      kind: 'replaceAll';
+      label: string;
+      timestamp: number;
+      removes: ComponentInsert[];
+      inserts: ComponentInsert[];
+    };
 
 // 🆕 校验错误类型
 interface ValidationError {
@@ -80,81 +125,73 @@ interface State {
   redo: () => void;
 }
 
-// 辅助函数：递归查找父组件并插入子组件
-const addComponentToParent = (components: ComponentSchema[], parentId: string, newComponent: ComponentSchema, index?: number): ComponentSchema[] => {
-  return components.map((c) => {
-    if (c.id === parentId) {
-      if (c.type === 'Container') {
-        const children = c.children || [];
-        const newChildren = [...children];
-        if (typeof index === 'number' && index >= 0) {
-          newChildren.splice(index, 0, newComponent);
-        } else {
-          newChildren.push(newComponent);
-        }
-        return { ...c, children: newChildren };
-      }
-      return c;
-    }
-    if (c.children) {
-      return { ...c, children: addComponentToParent(c.children, parentId, newComponent, index) };
-    }
-    return c;
-  });
-};
+function pushHistory(past: HistoryEntry[], entry: HistoryEntry): HistoryEntry[] {
+  const next = [...past, entry];
+  if (next.length > MAX_HISTORY_LENGTH) return next.slice(-MAX_HISTORY_LENGTH);
+  return next;
+}
 
-// ... (removeComponents, updateComponentInTree, reorderInList remain same)
-const removeComponents = (components: ComponentSchema[], idsToDelete: string[]): ComponentSchema[] => {
-  return components
-    .filter(c => !idsToDelete.includes(c.id))
-    .map(c => ({
-      ...c,
-      children: c.children ? removeComponents(c.children, idsToDelete) : undefined
-    }));
-};
+function buildReplaceRecords(components: ComponentSchema[]): ComponentInsert[] {
+  return components.map((component, index) => ({
+    component,
+    location: { parentId: null, index },
+  }));
+}
 
-const updateComponentInTree = (components: ComponentSchema[], id: string, newProps: Partial<ComponentSchema['props']>): ComponentSchema[] => {
-  return components.map((c) => {
-    if (c.id === id) {
-      return { ...c, props: { ...c.props, ...newProps } } as ComponentSchema;
-    }
-    if (c.children) {
-      return { ...c, children: updateComponentInTree(c.children, id, newProps) };
-    }
-    return c;
-  });
-};
+function sortByLocation(a: ComponentInsert, b: ComponentInsert) {
+  const parentA = a.location.parentId ?? '';
+  const parentB = b.location.parentId ?? '';
+  if (parentA !== parentB) return parentA.localeCompare(parentB);
+  return a.location.index - b.location.index;
+}
 
-const reorderInList = (list: ComponentSchema[], activeId: string, overId: string): ComponentSchema[] => {
-  const oldIndex = list.findIndex((c) => c.id === activeId);
-  const newIndex = list.findIndex((c) => c.id === overId);
-  
-  if (oldIndex !== -1 && newIndex !== -1) {
-    return arrayMove(list, oldIndex, newIndex);
+function applyInsertRecords(components: ComponentSchema[], inserts: ComponentInsert[]) {
+  let next = components;
+  for (const record of inserts.slice().sort(sortByLocation)) {
+    next = insertComponent(next, record.component, record.location).components;
   }
+  return next;
+}
 
-  return list.map(c => {
-    if (c.children) {
-      return { ...c, children: reorderInList(c.children, activeId, overId) };
+function applyHistoryEntry(components: ComponentSchema[], entry: HistoryEntry): ComponentSchema[] {
+  switch (entry.kind) {
+    case 'insert':
+      return applyInsertRecords(components, entry.inserts);
+    case 'delete': {
+      const ids = new Set(entry.removes.map((r) => r.component.id));
+      return removeComponentsByIds(components, ids).components;
     }
-    return c;
-  });
-};
-
-/**
- * 创建新的历史记录（限制最大长度）
- * @param pastHistory 现有历史记录
- * @param currentState 当前状态
- * @returns 新的历史记录
- */
-const createNewPast = (pastHistory: ComponentSchema[][], currentState: ComponentSchema[]): ComponentSchema[][] => {
-  const newPast = [...pastHistory, currentState];
-  // 限制历史记录长度，防止内存溢出
-  if (newPast.length > MAX_HISTORY_LENGTH) {
-    return newPast.slice(-MAX_HISTORY_LENGTH);
+    case 'updateProps':
+      return replaceComponentProps(components, entry.targetId, entry.nextProps).components;
+    case 'move':
+      return moveComponentInTree(components, entry.targetId, entry.to).components;
+    case 'replaceAll':
+      return entry.inserts
+        .slice()
+        .sort((a, b) => a.location.index - b.location.index)
+        .map((r) => r.component);
   }
-  return newPast;
-};
+}
+
+function invertHistoryEntry(components: ComponentSchema[], entry: HistoryEntry): ComponentSchema[] {
+  switch (entry.kind) {
+    case 'insert': {
+      const ids = new Set(entry.inserts.map((r) => r.component.id));
+      return removeComponentsByIds(components, ids).components;
+    }
+    case 'delete':
+      return applyInsertRecords(components, entry.removes);
+    case 'updateProps':
+      return replaceComponentProps(components, entry.targetId, entry.prevProps).components;
+    case 'move':
+      return moveComponentInTree(components, entry.targetId, entry.from).components;
+    case 'replaceAll':
+      return entry.removes
+        .slice()
+        .sort((a, b) => a.location.index - b.location.index)
+        .map((r) => r.component);
+  }
+}
 
 // 🆕 使用工厂函数创建组件（从 componentFactory.ts 导入）
 // createComponent 和 cloneComponentWithNewId 已从 utils/componentFactory.ts 导入
@@ -169,35 +206,54 @@ export const useStore = create<State>()(
       clipboard: [] as ComponentSchema[], // 🆕 剪贴板
       customTemplates: [] as CustomTemplate[], // 🆕 自定义模板
       history: {
-        past: [] as ComponentSchema[][],
-        future: [] as ComponentSchema[][],
+        past: [] as HistoryEntry[],
+        future: [] as HistoryEntry[],
       },
 
       // ⚠️ 修改签名：增加 index 参数
       addComponent: (type, parentId, index) => set((state) => {
         const newComponent = createComponent(type);
         if (!newComponent) return state;
-        
-        const newPast = createNewPast(state.history.past, state.components);
 
-        let newComponents = [];
-        if (parentId) {
-          newComponents = addComponentToParent(state.components, parentId, newComponent, index);
-        } else {
-          // ⚠️ 顶层插入逻辑
-          newComponents = [...state.components];
-          if (typeof index === 'number' && index >= 0) {
-            newComponents.splice(index, 0, newComponent);
-          } else {
-            newComponents.push(newComponent);
-          }
+        const targetParentId = parentId ?? null;
+        const defaultIndex =
+          targetParentId === null
+            ? state.components.length
+            : (findComponentById(state.components, targetParentId)?.children?.length ?? 0);
+        const targetIndex = typeof index === 'number' && index >= 0 ? index : defaultIndex;
+
+        let insertResult = insertComponent(state.components, newComponent, {
+          parentId: targetParentId,
+          index: targetIndex,
+        });
+
+        // If container insertion failed, fall back to appending at root.
+        if (targetParentId !== null && insertResult.insertedIndex === -1) {
+          insertResult = insertComponent(state.components, newComponent, {
+            parentId: null,
+            index: state.components.length,
+          });
         }
 
+        if (insertResult.insertedIndex === -1) return state;
+
+        const entry: HistoryEntry = {
+          kind: 'insert',
+          label: `添加 ${type}`,
+          timestamp: Date.now(),
+          inserts: [
+            {
+              component: newComponent,
+              location: { parentId: targetParentId, index: insertResult.insertedIndex },
+            },
+          ],
+        };
+
         return { 
-          components: newComponents,
+          components: insertResult.components,
           selectedIds: [newComponent.id],
           history: {
-            past: newPast,
+            past: pushHistory(state.history.past, entry),
             future: []
           }
         };
@@ -223,11 +279,34 @@ export const useStore = create<State>()(
       })),
 
       updateComponentProps: (id, newProps) => set((state) => {
-        const newPast = createNewPast(state.history.past, state.components);
+        const current = findComponentById(state.components, id);
+        if (!current) return {};
+
+        const patchEntries = Object.entries(newProps as Record<string, unknown>);
+        if (patchEntries.length === 0) return {};
+
+        const hasActualChange = patchEntries.some(([key, value]) => {
+          const currentProps = current.props as Record<string, unknown>;
+          return currentProps[key] !== value;
+        });
+        if (!hasActualChange) return {};
+
+        const result = updateComponentPropsInTree(state.components, id, newProps);
+        if (!result.prevProps || !result.nextProps) return {};
+
+        const entry: HistoryEntry = {
+          kind: 'updateProps',
+          label: '修改组件属性',
+          timestamp: Date.now(),
+          targetId: id,
+          prevProps: result.prevProps,
+          nextProps: result.nextProps,
+        };
+
         return {
-          components: updateComponentInTree(state.components, id, newProps),
+          components: result.components,
           history: {
-            past: newPast,
+            past: pushHistory(state.history.past, entry),
             future: []
           }
         };
@@ -237,78 +316,83 @@ export const useStore = create<State>()(
         const idsToDelete = Array.isArray(ids) ? ids : [ids];
         if (idsToDelete.length === 0) return {};
 
-        const newPast = createNewPast(state.history.past, state.components);
+        const removeResult = removeComponentsByIds(state.components, new Set(idsToDelete));
+        if (removeResult.removed.length === 0) return {};
+
+        const entry: HistoryEntry = {
+          kind: 'delete',
+          label: idsToDelete.length > 1 ? `删除 ${idsToDelete.length} 个组件` : '删除组件',
+          timestamp: Date.now(),
+          removes: removeResult.removed,
+        };
+
         return {
-          components: removeComponents(state.components, idsToDelete),
+          components: removeResult.components,
           selectedIds: state.selectedIds.filter(sid => !idsToDelete.includes(sid)),
           history: {
-            past: newPast,
+            past: pushHistory(state.history.past, entry),
             future: []
           }
         };
       }),
 
       reorderComponents: (activeId, overId) => set((state) => {
-        const newPast = createNewPast(state.history.past, state.components);
+        const from = findParentInfo(state.components, activeId);
+        const to = findParentInfo(state.components, overId);
+        if (from.index === -1 || to.index === -1) return {};
+        if (from.parentId !== to.parentId) return {};
+        if (from.index === to.index) return {};
+
+        const moved = moveComponentInTree(state.components, activeId, {
+          parentId: to.parentId,
+          index: to.index,
+        });
+        if (!moved.moved) return {};
+
+        const entry: HistoryEntry = {
+          kind: 'move',
+          label: '调整组件顺序',
+          timestamp: Date.now(),
+          targetId: activeId,
+          from: { parentId: from.parentId, index: from.index },
+          to: moved.moved.to,
+        };
+
         return {
-          components: reorderInList(state.components, activeId, overId),
-          history: {
-            past: newPast,
-            future: []
-          }
+          components: moved.components,
+          history: { past: pushHistory(state.history.past, entry), future: [] },
         };
       }),
 
       // 移动组件到容器内（支持跨容器移动）
       moveComponent: (activeId, targetContainerId, index) => set((state) => {
-        const newPast = createNewPast(state.history.past, state.components);
-        
-        // 1. 找到要移动的组件
-        const findAndRemove = (list: ComponentSchema[], id: string): { removed: ComponentSchema | null, rest: ComponentSchema[] } => {
-          let removed: ComponentSchema | null = null;
-          const rest = list.filter(c => {
-            if (c.id === id) {
-              removed = c;
-              return false;
-            }
-            return true;
-          }).map(c => {
-            if (c.children && !removed) {
-              const result = findAndRemove(c.children, id);
-              if (result.removed) {
-                removed = result.removed;
-                return { ...c, children: result.rest };
-              }
-            }
-            return c;
-          });
-          return { removed, rest };
+        if (!findComponentById(state.components, activeId)) return {};
+
+        const targetParentId = targetContainerId;
+        const defaultIndex =
+          targetParentId === null
+            ? state.components.length
+            : (findComponentById(state.components, targetParentId)?.children?.length ?? 0);
+        const targetIndex = typeof index === 'number' && index >= 0 ? index : defaultIndex;
+
+        const moved = moveComponentInTree(state.components, activeId, {
+          parentId: targetParentId,
+          index: targetIndex,
+        });
+        if (!moved.moved) return {};
+
+        const entry: HistoryEntry = {
+          kind: 'move',
+          label: '移动组件',
+          timestamp: Date.now(),
+          targetId: activeId,
+          from: moved.moved.from,
+          to: moved.moved.to,
         };
 
-        const { removed, rest } = findAndRemove(state.components, activeId);
-        if (!removed) return {};
-
-        // 2. 插入到目标位置
-        let newComponents: ComponentSchema[];
-        if (targetContainerId === null) {
-          // 插入到顶层
-          newComponents = [...rest];
-          if (typeof index === 'number') {
-            newComponents.splice(index, 0, removed);
-          } else {
-            newComponents.push(removed);
-          }
-        } else {
-          // 插入到容器内
-          newComponents = addComponentToParent(rest, targetContainerId, removed, index);
-        }
-
         return {
-          components: newComponents,
-          history: {
-            past: newPast,
-            future: []
-          }
+          components: moved.components,
+          history: { past: pushHistory(state.history.past, entry), future: [] },
         };
       }),
 
@@ -322,11 +406,25 @@ export const useStore = create<State>()(
 
       // 🆕 批量添加组件
       addComponents: (newComponents: ComponentSchema[]) => set((state) => {
-        const newPast = createNewPast(state.history.past, state.components);
+        if (newComponents.length === 0) return {};
+
+        const baseIndex = state.components.length;
+        const inserts: ComponentInsert[] = newComponents.map((component, offset) => ({
+          component,
+          location: { parentId: null, index: baseIndex + offset },
+        }));
+
+        const entry: HistoryEntry = {
+          kind: 'insert',
+          label: `批量添加 ${newComponents.length} 个组件`,
+          timestamp: Date.now(),
+          inserts,
+        };
+
         return {
           components: [...state.components, ...newComponents],
           selectedIds: newComponents.map(c => c.id),
-          history: { past: newPast, future: [] }
+          history: { past: pushHistory(state.history.past, entry), future: [] }
         };
       }),
 
@@ -342,13 +440,23 @@ export const useStore = create<State>()(
       pasteComponents: () => set((state) => {
         if (state.clipboard.length === 0) return {};
         
-        const newPast = createNewPast(state.history.past, state.components);
         const clonedComponents = state.clipboard.map(cloneComponentWithNewId);
+
+        const baseIndex = state.components.length;
+        const entry: HistoryEntry = {
+          kind: 'insert',
+          label: `粘贴 ${clonedComponents.length} 个组件`,
+          timestamp: Date.now(),
+          inserts: clonedComponents.map((component, offset) => ({
+            component,
+            location: { parentId: null, index: baseIndex + offset },
+          })),
+        };
         
         return {
           components: [...state.components, ...clonedComponents],
           selectedIds: clonedComponents.map(c => c.id),
-          history: { past: newPast, future: [] }
+          history: { past: pushHistory(state.history.past, entry), future: [] }
         };
       }),
 
@@ -356,17 +464,27 @@ export const useStore = create<State>()(
       duplicateComponents: () => set((state) => {
         if (state.selectedIds.length === 0) return {};
         
-        const newPast = createNewPast(state.history.past, state.components);
         const componentsToDuplicate = state.selectedIds
           .map(id => findComponentById(state.components, id))
           .filter((c): c is ComponentSchema => c !== null);
         
         const clonedComponents = componentsToDuplicate.map(cloneComponentWithNewId);
+
+        const baseIndex = state.components.length;
+        const entry: HistoryEntry = {
+          kind: 'insert',
+          label: `复制 ${clonedComponents.length} 个组件`,
+          timestamp: Date.now(),
+          inserts: clonedComponents.map((component, offset) => ({
+            component,
+            location: { parentId: null, index: baseIndex + offset },
+          })),
+        };
         
         return {
           components: [...state.components, ...clonedComponents],
           selectedIds: clonedComponents.map(c => c.id),
-          history: { past: newPast, future: [] }
+          history: { past: pushHistory(state.history.past, entry), future: [] }
         };
       }),
 
@@ -374,63 +492,76 @@ export const useStore = create<State>()(
       cutComponents: () => set((state) => {
         if (state.selectedIds.length === 0) return {};
         
-        const newPast = createNewPast(state.history.past, state.components);
         const componentsToCut = state.selectedIds
           .map(id => findComponentById(state.components, id))
           .filter((c): c is ComponentSchema => c !== null);
         
         const clonedForClipboard = componentsToCut.map(cloneComponentWithNewId);
-        const newComponents = removeComponents(state.components, state.selectedIds);
+        const removeResult = removeComponentsByIds(state.components, new Set(state.selectedIds));
+        if (removeResult.removed.length === 0) return {};
+
+        const entry: HistoryEntry = {
+          kind: 'delete',
+          label: `剪切 ${removeResult.removed.length} 个组件`,
+          timestamp: Date.now(),
+          removes: removeResult.removed,
+        };
         
         return {
-          components: newComponents,
+          components: removeResult.components,
           clipboard: clonedForClipboard,
           selectedIds: [],
-          history: { past: newPast, future: [] }
+          history: { past: pushHistory(state.history.past, entry), future: [] }
         };
       }),
 
       // 🆕 在列表内移动组件（上/下/顶/底）
       moveComponentInList: (id: string, direction: 'up' | 'down' | 'top' | 'bottom') => set((state) => {
-        const newPast = createNewPast(state.history.past, state.components);
-        
-        // 递归在组件树中移动
-        const moveInList = (components: ComponentSchema[]): ComponentSchema[] => {
-          const index = components.findIndex(c => c.id === id);
-          
-          if (index !== -1) {
-            const newList = [...components];
-            const [item] = newList.splice(index, 1);
-            
-            switch (direction) {
-              case 'up':
-                if (index > 0) newList.splice(index - 1, 0, item);
-                else newList.splice(index, 0, item);
-                break;
-              case 'down':
-                if (index < components.length - 1) newList.splice(index + 1, 0, item);
-                else newList.splice(index, 0, item);
-                break;
-              case 'top':
-                newList.unshift(item);
-                break;
-              case 'bottom':
-                newList.push(item);
-                break;
-            }
-            return newList;
-          }
-          
-          // 递归处理子组件
-          return components.map(c => ({
-            ...c,
-            children: c.children ? moveInList(c.children) : undefined
-          }));
+        const from = findParentInfo(state.components, id);
+        if (from.index === -1) return {};
+
+        const siblings =
+          from.parentId === null
+            ? state.components
+            : (findComponentById(state.components, from.parentId)?.children ?? []);
+        const lastIndex = Math.max(0, siblings.length - 1);
+
+        let toIndex = from.index;
+        switch (direction) {
+          case 'up':
+            toIndex = Math.max(0, from.index - 1);
+            break;
+          case 'down':
+            toIndex = Math.min(lastIndex, from.index + 1);
+            break;
+          case 'top':
+            toIndex = 0;
+            break;
+          case 'bottom':
+            toIndex = lastIndex;
+            break;
+        }
+
+        if (toIndex === from.index) return {};
+
+        const moved = moveComponentInTree(state.components, id, {
+          parentId: from.parentId,
+          index: toIndex,
+        });
+        if (!moved.moved) return {};
+
+        const entry: HistoryEntry = {
+          kind: 'move',
+          label: '移动组件位置',
+          timestamp: Date.now(),
+          targetId: id,
+          from: moved.moved.from,
+          to: moved.moved.to,
         };
-        
+
         return {
-          components: moveInList(state.components),
-          history: { past: newPast, future: [] }
+          components: moved.components,
+          history: { past: pushHistory(state.history.past, entry), future: [] },
         };
       }),
 
@@ -496,87 +627,113 @@ export const useStore = create<State>()(
 
       undo: () => set((state) => {
         if (state.history.past.length === 0) return {};
-        const previous = state.history.past[state.history.past.length - 1];
+        const entry = state.history.past[state.history.past.length - 1];
         const newPast = state.history.past.slice(0, -1);
+        const newComponents = invertHistoryEntry(state.components, entry);
+
         return {
-          components: previous,
-          selectedIds: [], 
+          components: newComponents,
+          selectedIds: [],
           history: {
             past: newPast,
-            future: [state.components, ...state.history.future]
-          }
+            future: [entry, ...state.history.future],
+          },
         };
       }),
 
       redo: () => set((state) => {
         if (state.history.future.length === 0) return {};
-        const next = state.history.future[0];
-        const newFuture = state.history.future.slice(1);
+        const [entry, ...restFuture] = state.history.future;
+        const newComponents = applyHistoryEntry(state.components, entry);
+
         return {
-          components: next,
+          components: newComponents,
           selectedIds: [],
           history: {
-            past: [...state.history.past, state.components],
-            future: newFuture
-          }
+            past: pushHistory(state.history.past, entry),
+            future: restFuture,
+          },
         };
       }),
 
       // 🆕 重置画布
       resetCanvas: () => set((state) => {
-        const newPast = state.components.length > 0 
-          ? [...state.history.past, state.components] 
-          : state.history.past;
+        if (state.components.length === 0) {
+          return {
+            components: [],
+            selectedIds: [],
+            formValues: {},
+            validationErrors: {},
+          };
+        }
+
+        const entry: HistoryEntry = {
+          kind: 'replaceAll',
+          label: '清空画布',
+          timestamp: Date.now(),
+          removes: buildReplaceRecords(state.components),
+          inserts: [],
+        };
+
         return {
           components: [],
           selectedIds: [],
           formValues: {},
           validationErrors: {},
           history: {
-            past: newPast,
-            future: []
-          }
+            past: pushHistory(state.history.past, entry),
+            future: [],
+          },
         };
       }),
 
       // 🆕 导入组件（替换当前画布）
       importComponents: (importedComponents: ComponentSchema[]) => set((state) => {
-        const newPast = state.components.length > 0 
-          ? [...state.history.past, state.components] 
-          : state.history.past;
-        
-        // 为导入的组件生成新 ID，避免冲突
         const clonedComponents = importedComponents.map(cloneComponentWithNewId);
-        
+
+        const entry: HistoryEntry = {
+          kind: 'replaceAll',
+          label: '导入组件',
+          timestamp: Date.now(),
+          removes: buildReplaceRecords(state.components),
+          inserts: buildReplaceRecords(clonedComponents),
+        };
+
         return {
           components: clonedComponents,
           selectedIds: [],
           formValues: {},
           validationErrors: {},
           history: {
-            past: newPast,
-            future: []
-          }
+            past: pushHistory(state.history.past, entry),
+            future: [],
+          },
         };
       }),
 
       // 🆕 切换组件锁定状态
       toggleLock: (id: string) => set((state) => {
-        const updateLock = (components: ComponentSchema[]): ComponentSchema[] => {
-          return components.map(c => {
-            if (c.id === id) {
-              return { 
-                ...c, 
-                props: { ...c.props, locked: !c.props.locked } 
-              } as typeof c;
-            }
-            if (c.children) {
-              return { ...c, children: updateLock(c.children) } as typeof c;
-            }
-            return c;
-          });
+        const current = findComponentById(state.components, id);
+        if (!current) return {};
+
+        const prevProps = current.props;
+        const nextProps = { ...current.props, locked: !current.props.locked } as ComponentSchema['props'];
+        const replaced = replaceComponentProps(state.components, id, nextProps);
+        if (!replaced.replaced) return {};
+
+        const entry: HistoryEntry = {
+          kind: 'updateProps',
+          label: '切换锁定',
+          timestamp: Date.now(),
+          targetId: id,
+          prevProps,
+          nextProps,
         };
-        return { components: updateLock(state.components) };
+
+        return {
+          components: replaced.components,
+          history: { past: pushHistory(state.history.past, entry), future: [] },
+        };
       }),
 
       // 🆕 保存为自定义模板

@@ -11,6 +11,7 @@ import { useStore } from '../store';
 import { findComponentById, findParentInfo, isDescendant } from '../utils/componentHelpers';
 import type { ComponentType } from '../types';
 import { CONTAINER_EDGE_RATIO, MIN_EDGE_HEIGHT } from '../constants/dnd';
+import { startTrace } from '../utils/tracing';
 
 // ============ 常量定义 ============
 /** 滞后区比例（用于防止抖动） */
@@ -65,11 +66,16 @@ export function useDragHandlers(): UseDragHandlersResult {
     const lastDropTargetRef = useRef<DropTarget | null>(null);
     // 🆕 防抖计时器
     const dropTargetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const stopDragTraceRef = useRef<ReturnType<typeof startTrace> | null>(null);
 
     // 拖拽开始
     const handleDragStart = useCallback((event: DragStartEvent) => {
         const id = String(event.active.id);
         setActiveDragId(id);
+        stopDragTraceRef.current = startTrace('dnd.drag', {
+            activeId: id,
+            source: id.startsWith('new-') ? 'library' : 'canvas',
+        });
         if (id.startsWith('new-')) {
             setActiveDragType(id.replace('new-', '') as ComponentType);
         }
@@ -249,6 +255,13 @@ export function useDragHandlers(): UseDragHandlersResult {
     const handleDragEnd = useCallback((event: DragEndEvent) => {
         const { active, over } = event;
         const currentDropTarget = dropTarget; // 保存当前的 dropTarget
+
+        stopDragTraceRef.current?.({
+            overId: over ? String(over.id) : null,
+            position: currentDropTarget?.position ?? null,
+            targetId: currentDropTarget?.targetId ?? null,
+        });
+        stopDragTraceRef.current = null;
 
         setActiveDragId(null);
         setActiveDragType(null);
