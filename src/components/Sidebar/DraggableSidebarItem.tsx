@@ -1,6 +1,5 @@
 import React from 'react';
 import { useDraggable } from '@dnd-kit/core';
-import { CSS } from '@dnd-kit/utilities';
 
 interface DraggableSidebarItemProps {
   id: string;
@@ -9,15 +8,17 @@ interface DraggableSidebarItemProps {
 }
 
 export function DraggableSidebarItem({ id, children, onClick }: DraggableSidebarItemProps) {
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: id,
   });
 
-  const style = {
-    transform: CSS.Translate.toString(transform),
-    opacity: isDragging ? 0.5 : 1,
-    cursor: 'grab',
-    zIndex: isDragging ? 1000 : undefined,
+  // 侧边栏物料区建议使用 DragOverlay 展示拖拽预览，
+  // 避免把原始卡片本体 translate 出侧边栏导致“组件库跟着跑/位移”的观感。
+  const style: React.CSSProperties = {
+    opacity: isDragging ? 0.6 : 1,
+    cursor: isDragging ? 'grabbing' : 'grab',
+    userSelect: 'none',
+    touchAction: 'none',
   };
 
   return (
@@ -33,4 +34,3 @@ export function DraggableSidebarItem({ id, children, onClick }: DraggableSidebar
     </div>
   );
 }
-
