@@ -247,7 +247,7 @@ function App() {
       >
         <Layout>
           {/* 左侧组件库 */}
-          <Sider className="sidebar-left" width={280} theme="light" style={{ borderRight: `1px solid ${isDark ? '#303030' : '#f0f0f0'}`, overflowY: 'auto', background: isDark ? '#1f1f1f' : '#fff' }}>
+          <Sider className="sidebar-left" width={280} theme="light" style={{ borderRight: `1px solid ${isDark ? '#303030' : '#f0f0f0'}`, overflow: 'hidden auto', background: isDark ? '#1f1f1f' : '#fff' }}>
             <ComponentLibrary
               isDark={isDark}
               componentSearch={componentSearch}
@@ -316,7 +316,7 @@ function App() {
           </Content>
 
           {/* 右侧属性面板 */}
-          <Sider className="sidebar-right" width={320} theme="light" style={{ borderLeft: `1px solid ${isDark ? '#303030' : '#f0f0f0'}`, overflowY: 'auto', background: isDark ? '#1f1f1f' : '#fff' }}>
+          <Sider className="sidebar-right" width={320} theme="light" style={{ borderLeft: `1px solid ${isDark ? '#303030' : '#f0f0f0'}`, overflow: 'hidden auto', background: isDark ? '#1f1f1f' : '#fff' }}>
             <PropertyPanel
               selectedIds={selectedIds}
               selectedComponent={selectedComponent}

@@ -156,11 +156,11 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                 borderBottom: `1px solid ${isDark ? '#303030' : '#f0f0f0'}`,
                 height: 64,
                 zIndex: 10,
-                flexWrap: 'wrap',
-                gap: 8,
+                flexWrap: 'nowrap',
+                gap: 12,
             }}
         >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0, flex: '1 1 auto' }}>
                 <div
                     style={{
                         width: 32,
@@ -180,7 +180,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                     LowCode Form
                 </Title>
                 <Divider type="vertical" className="header-divider" style={{ height: 24, margin: '0 8px' }} />
-                <Space size="small" wrap>
+                <Space size="small">
                     <Tooltip title="撤销 (Cmd/Ctrl + Z)">
                         <Button
                             icon={<UndoOutlined />}
@@ -280,7 +280,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                     </Dropdown>
                 </Space>
             </div>
-            <Space wrap size="small">
+            <Space size="small" style={{ flexShrink: 0 }}>
                 <Dropdown
                     menu={{
                         items: [
