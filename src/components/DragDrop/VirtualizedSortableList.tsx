@@ -60,6 +60,7 @@ interface VirtualRowData {
   selectedIds: string[];
   onSelect: (id: string, multi: boolean) => void;
   activeDragId?: string | null;
+  parentId: string | null;
   depth: number;
   dropTarget?: DropTarget | null;
 }
@@ -73,6 +74,7 @@ const VirtualRow = ({
   selectedIds,
   onSelect,
   activeDragId,
+  parentId,
   depth,
   dropTarget,
 }: RowComponentProps<VirtualRowData>): React.ReactElement | null => {
@@ -81,6 +83,7 @@ const VirtualRow = ({
   const componentId = component?.id ?? '';
   const isSelected = component ? selectedIds.includes(componentId) : false;
   const isContainer = component?.type === 'Container';
+  const shouldUseHandle = isContainer && (component?.children?.length ?? 0) > 0;
   const isDragging = activeDragId === componentId;
   const isLocked = component?.props.locked === true;
 
@@ -123,12 +126,13 @@ const VirtualRow = ({
         id={component.id}
         isSelected={isSelected}
         onClick={handleClick}
-        useHandle={isContainer}
+        useHandle={shouldUseHandle}
         isFirst={index === 0}
         isLast={index === items.length - 1}
         isLocked={isLocked}
         depth={depth}
         isNestTarget={isNestTarget}
+        parentId={parentId}
       >
         {showDropIndicator === 'before' && <DropIndicator position="before" />}
         {showDropIndicator === 'after' && <DropIndicator position="after" />}
@@ -331,9 +335,10 @@ export const VirtualizedSortableList: React.FC<VirtualizedSortableListProps> = R
     selectedIds,
     onSelect,
     activeDragId,
+    parentId: parentId ?? null,
     depth,
     dropTarget,
-  }), [items, selectedIds, onSelect, activeDragId, depth, dropTarget]);
+  }), [items, selectedIds, onSelect, activeDragId, parentId, depth, dropTarget]);
 
   // 滚动到选中的组件
   useEffect(() => {

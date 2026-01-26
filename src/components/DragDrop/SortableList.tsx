@@ -197,6 +197,7 @@ export const SortableList: React.FC<SortableListProps> = React.memo(({
           <SortableListItem
             key={component.id}
             component={component}
+            parentId={parentId ?? null}
             selectedIds={selectedIds}
             onSelect={onSelect}
             activeDragId={activeDragId}
@@ -263,6 +264,7 @@ export const SortableList: React.FC<SortableListProps> = React.memo(({
 // 🆕 提取单个列表项为独立组件，便于 memo 优化
 interface SortableListItemProps {
   component: ComponentSchema;
+  parentId: string | null;
   selectedIds: string[];
   onSelect: (id: string, multi: boolean) => void;
   activeDragId?: string | null;
@@ -274,6 +276,7 @@ interface SortableListItemProps {
 
 const SortableListItem: React.FC<SortableListItemProps> = React.memo(({
   component,
+  parentId,
   selectedIds,
   onSelect,
   activeDragId,
@@ -328,12 +331,13 @@ const SortableListItem: React.FC<SortableListItemProps> = React.memo(({
       id={component.id}
       isSelected={isSelected}
       onClick={handleClick}
-      useHandle={isContainer}
+      useHandle={isContainer && (component.children?.length ?? 0) > 0}
       isFirst={isFirst}
       isLast={isLast}
       isLocked={isLocked}
       depth={depth}
       isNestTarget={isNestTarget}
+      parentId={parentId}
     >
       {/* 🆕 放置位置指示器 */}
       {showDropIndicator === 'before' && <DropIndicator position="before" />}
