@@ -10,12 +10,11 @@ import type { DragEndEvent, DragStartEvent, DragOverEvent } from '@dnd-kit/core'
 import { useStore } from '../store';
 import { findComponentById, findParentInfo, isDescendant } from '../utils/componentHelpers';
 import type { ComponentType } from '../types';
-import { CONTAINER_EDGE_RATIO, MIN_EDGE_HEIGHT } from '../constants/dnd';
+import { CONTAINER_EDGE_RATIO, MAX_EDGE_HEIGHT, MIN_EDGE_HEIGHT } from '../constants/dnd';
 import { startTrace } from '../utils/tracing';
 
 // ============ 常量定义 ============
 /** 滞后区比例（用于防止抖动） */
-const HYSTERESIS_RATIO = 0.05;
 /** 非容器组件的滞后区比例 */
 const ITEM_HYSTERESIS_RATIO = 0.15;
 
@@ -174,9 +173,12 @@ export function useDragHandlers(): UseDragHandlersResult {
         const overRect = over.rect;
         const currentY = getPointerY(event);
 
-        // 🔧 动态计算边缘高度：取比例和最小值中的较大者
-        const edgeHeight = Math.max(overRect.height * CONTAINER_EDGE_RATIO, MIN_EDGE_HEIGHT);
-        const hysteresisRatio = HYSTERESIS_RATIO * 1.5; // 增加滞后区
+        // 🔧 动态计算边缘高度：取比例/最小值，并对大容器做上限
+        const edgeHeight = Math.min(
+            Math.max(overRect.height * CONTAINER_EDGE_RATIO, MIN_EDGE_HEIGHT),
+            MAX_EDGE_HEIGHT,
+            overRect.height / 2
+        );
 
         if (targetComponent.type === 'Container' && activeId !== overId) {
             // === 容器组件 ===
@@ -193,33 +195,35 @@ export function useDragHandlers(): UseDragHandlersResult {
                 return;
             }
 
-            // 需要判断是 before 还是 after
             const topEdge = overRect.top + edgeHeight;
             const bottomEdge = overRect.top + overRect.height - edgeHeight;
 
-            // 简化判断：上半部分 = before，下半部分 = after
-            let newPosition: 'before' | 'after';
+            let newPosition: 'before' | 'after' | 'inside';
             if (currentY < topEdge) {
                 newPosition = 'before';
             } else if (currentY > bottomEdge) {
                 newPosition = 'after';
             } else {
-                // 中间区域：使用中点判断 before/after
-                const midPoint = overRect.top + overRect.height / 2;
-                newPosition = currentY < midPoint ? 'before' : 'after';
+                newPosition = 'inside';
             }
 
-            // 滞后区检测
+            // 三段式滞后区（减少 inside/before/after 抖动）
             if (lastDropTargetRef.current?.targetId === overId) {
-                const hysteresis = overRect.height * hysteresisRatio;
+                const hysteresisPx = Math.max(6, Math.min(edgeHeight * 0.35, 16));
                 const lastPos = lastDropTargetRef.current.position;
-                const midPoint = overRect.top + overRect.height / 2;
 
-                if (lastPos === 'before' && currentY < midPoint + hysteresis) {
-                    return; // 保持 before
-                }
-                if (lastPos === 'after' && currentY > midPoint - hysteresis) {
-                    return; // 保持 after
+                if (lastPos === 'inside') {
+                    if (currentY < topEdge - hysteresisPx) newPosition = 'before';
+                    else if (currentY > bottomEdge + hysteresisPx) newPosition = 'after';
+                    else newPosition = 'inside';
+                } else if (lastPos === 'before') {
+                    if (currentY < topEdge + hysteresisPx) newPosition = 'before';
+                    else if (currentY > bottomEdge + hysteresisPx) newPosition = 'after';
+                    else newPosition = 'inside';
+                } else if (lastPos === 'after') {
+                    if (currentY > bottomEdge - hysteresisPx) newPosition = 'after';
+                    else if (currentY < topEdge - hysteresisPx) newPosition = 'before';
+                    else newPosition = 'inside';
                 }
             }
 

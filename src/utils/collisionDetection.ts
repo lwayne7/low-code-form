@@ -7,7 +7,7 @@ import {
   type DroppableContainer,
 } from '@dnd-kit/core';
 
-import { CONTAINER_EDGE_RATIO, MIN_EDGE_HEIGHT } from '../constants/dnd';
+import { CONTAINER_EDGE_RATIO, MAX_EDGE_HEIGHT, MIN_EDGE_HEIGHT } from '../constants/dnd';
 
 type Rect = { top: number; left: number; width: number; height: number };
 type Point = { x: number; y: number };
@@ -30,13 +30,21 @@ const getParentIdFromContainer = (container: DroppableContainer): string | null 
   return data?.parentId;
 };
 
+const getEdgeHeight = (height: number) => {
+  if (!Number.isFinite(height) || height <= 0) return 0;
+  const raw = Math.max(height * CONTAINER_EDGE_RATIO, MIN_EDGE_HEIGHT);
+  return Math.min(raw, MAX_EDGE_HEIGHT, height / 2);
+};
+
 const buildLookups = (containers: DroppableContainer[]) => {
   const depthById = new Map<string, number>();
   const rectById = new Map<string, Rect | undefined>();
   const parentById = new Map<string, string | null | undefined>();
+  const containerById = new Map<string, DroppableContainer>();
 
   for (const container of containers) {
     const id = String(container.id);
+    containerById.set(id, container);
     depthById.set(id, getDepthFromContainer(container));
     rectById.set(id, (container.rect.current as Rect | null) ?? undefined);
 
@@ -46,7 +54,7 @@ const buildLookups = (containers: DroppableContainer[]) => {
     }
   }
 
-  return { depthById, rectById, parentById };
+  return { depthById, rectById, parentById, containerById };
 };
 
 /**
@@ -196,68 +204,83 @@ export const customCollisionDetection: CollisionDetection = (args) => {
   const nonContainerItems = itemCollisions.filter(c => !isContainerItem(String(c.id)));
   const containerItems = itemCollisions.filter(c => isContainerItem(String(c.id)));
 
-  // === 1. 优先返回非容器组件（用于精确插入位置）===
+  // 构建 container-xxx 对应关系（基于当前 collisions，优先使用已有 collision descriptor）
+  const containerDroppableMap = new Map<string, Collision>();
+  for (const collision of containerDroppables) {
+    containerDroppableMap.set(String(collision.id), collision);
+  }
+
+  // === 1. 容器边缘优先（即使鼠标在子元素上，也允许命中父层“插入/排序”）===
+  if (pointerCoordinates && containerItems.length > 0) {
+    const sortedContainerItems = sortCollisions(containerItems, lookups, pointerCoordinates);
+    for (const targetContainerItem of sortedContainerItems) {
+      const targetContainerId = String(targetContainerItem.id);
+      const rect = lookups.rectById.get(targetContainerId);
+      if (!rect) continue;
+
+      const edgeHeight = getEdgeHeight(rect.height);
+      const topEdge = rect.top + edgeHeight;
+      const bottomEdge = rect.top + rect.height - edgeHeight;
+      const pointerY = pointerCoordinates.y;
+
+      const isInEdgeZone = pointerY < topEdge || pointerY > bottomEdge;
+      if (isInEdgeZone) return [targetContainerItem];
+    }
+  }
+
+  // === 2. 优先返回非容器组件（用于精确插入位置）===
   if (nonContainerItems.length > 0) {
-    // 优先按深度排序，同深度按距离排序
     const sorted = sortCollisions(nonContainerItems, lookups, pointerCoordinates ?? undefined);
     return [sorted[0]];
   }
 
-  // === 2. 处理容器组件的精确位置判断 ===
+  // === 3. 容器中心优先命中 container-xxx（提升“放入容器”稳定性）===
   if (containerItems.length > 0) {
-    // 按深度排序，优先处理最深层的容器
     const sortedContainerItems = sortCollisions(containerItems, lookups, pointerCoordinates ?? undefined);
-
-    // 没有指针坐标时，无法判断边缘/中心区域，直接返回最优容器
     if (!pointerCoordinates) return [sortedContainerItems[0]];
-
-    // 预构建 container-xxx 对应关系（仅基于当前 collisions）
-    const containerDroppableMap = new Map<string, Collision>();
-    for (const c of containerDroppables) {
-      containerDroppableMap.set(String(c.id), c);
-    }
 
     for (const targetContainerItem of sortedContainerItems) {
       const targetContainerId = String(targetContainerItem.id);
-      const containerRect = lookups.rectById.get(targetContainerId);
-      
-      if (!containerRect) continue;
-      
-      const { top, height } = containerRect;
+      const rect = lookups.rectById.get(targetContainerId);
+      if (!rect) continue;
+
+      const edgeHeight = getEdgeHeight(rect.height);
+      const topEdge = rect.top + edgeHeight;
+      const bottomEdge = rect.top + rect.height - edgeHeight;
       const pointerY = pointerCoordinates.y;
-      
-      // 🔧 动态计算边缘高度：取比例和最小值中的较大者
-      const edgeHeight = Math.max(height * CONTAINER_EDGE_RATIO, MIN_EDGE_HEIGHT);
-      const topEdge = top + edgeHeight;
-      const bottomEdge = top + height - edgeHeight;
-      
-      // 检查是否有对应的 container-xxx droppable
-      const correspondingDroppable = containerDroppableMap.get(`container-${targetContainerId}`);
-      
-      // 判断是在边缘还是中心
       const isInEdgeZone = pointerY < topEdge || pointerY > bottomEdge;
-      
-      if (!isInEdgeZone && correspondingDroppable) {
-        // 🎯 中心区域：返回 container-xxx 用于放入容器内
-        return [correspondingDroppable];
+
+      if (!isInEdgeZone) {
+        const droppableId = `container-${targetContainerId}`;
+        const existing = containerDroppableMap.get(droppableId);
+        if (existing) return [existing];
+
+        const droppableContainer = lookups.containerById.get(droppableId);
+        if (droppableContainer) {
+          return [
+            {
+              id: droppableContainer.id,
+              data: { droppableContainer, value: 0 },
+            },
+          ];
+        }
       }
-      
-      // 🎯 边缘区域：返回容器 sortable item 用于排序
+
       return [targetContainerItem];
     }
   }
 
-  // === 3. 只有 container-xxx droppable（可能是空容器或鼠标在内容区）===
+  // === 4. 只有 container-xxx droppable（可能是空容器或鼠标在内容区）===
   if (containerDroppables.length > 0) {
     return [sortCollisions(containerDroppables, lookups, pointerCoordinates ?? undefined)[0]];
   }
 
-  // === 4. 只有容器 sortable items ===
+  // === 5. 只有容器 sortable items ===
   if (containerItems.length > 0) {
     return [sortCollisions(containerItems, lookups, pointerCoordinates ?? undefined)[0]];
   }
 
-  // === 5. 返回画布 ===
+  // === 6. 返回画布 ===
   if (canvasCollision) {
     return [canvasCollision];
   }
