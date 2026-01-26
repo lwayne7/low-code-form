@@ -3,7 +3,7 @@ export { ErrorBoundary } from './ErrorBoundary';
 export { CanvasFormItem } from './CanvasFormItem';
 export { FormRenderer } from './FormRenderer';
 export { DraggableSidebarItem } from './Sidebar';
-export { SortableList, SortableItem } from './DragDrop';
+export { SortableList, SortableItem, VirtualizedSortableList } from './DragDrop';
 
 // Common components (不包含懒加载组件)
 export { Toolbar, ContextMenu, FormStats, PerformancePanel, trackRender } from './common';

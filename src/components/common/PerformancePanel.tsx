@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Drawer, Typography, Space, Tag, Progress, Divider, Button, Tooltip, Badge, Switch, Card, Statistic, Row, Col, message, Collapse } from 'antd';
 import { DashboardOutlined, ClockCircleOutlined, ReloadOutlined, ExperimentOutlined, DownloadOutlined, RocketOutlined } from '@ant-design/icons';
 import { useStore } from '../../store';
+import { getRenderTrackingSnapshot, resetRenderTracking } from './performanceTracking';
 
 const { Text, Title } = Typography;
 
@@ -29,19 +30,6 @@ interface PerformanceMetrics {
 interface PerformancePanelProps {
   open: boolean;
   onClose: () => void;
-}
-
-// 全局渲染计数器
-let globalRenderCount = 0;
-const componentRenderCounts = new Map<string, number>();
-
-// 导出给其他组件使用的渲染追踪函数
-export function trackRender(componentName: string) {
-  globalRenderCount++;
-  componentRenderCounts.set(
-    componentName,
-    (componentRenderCounts.get(componentName) || 0) + 1
-  );
 }
 
 export const PerformancePanel: React.FC<PerformancePanelProps> = ({ open, onClose }) => {
@@ -79,6 +67,7 @@ export const PerformancePanel: React.FC<PerformancePanelProps> = ({ open, onClos
       const memoryUsage = memory ? Math.round(memory.usedJSHeapSize / 1024 / 1024) : undefined;
 
       setMetrics(prev => {
+        const trackingSnapshot = getRenderTrackingSnapshot();
         const newFpsHistory = [...prev.fpsHistory, fps].slice(-60); // 保留最近60秒
         const newMemoryHistory = memoryUsage !== undefined 
           ? [...prev.memoryHistory, memoryUsage].slice(-60)
@@ -87,10 +76,10 @@ export const PerformancePanel: React.FC<PerformancePanelProps> = ({ open, onClos
         return {
           ...prev,
           fps,
-          renderCount: globalRenderCount,
+          renderCount: trackingSnapshot.renderCount,
           memoryUsage,
           longTasks: longTaskCountRef.current,
-          componentRenderTimes: new Map(componentRenderCounts),
+          componentRenderTimes: trackingSnapshot.componentRenderCounts,
           fpsHistory: newFpsHistory,
           memoryHistory: newMemoryHistory,
           timestamp: Date.now(),
@@ -141,8 +130,7 @@ export const PerformancePanel: React.FC<PerformancePanelProps> = ({ open, onClos
 
   // 重置统计
   const handleReset = () => {
-    globalRenderCount = 0;
-    componentRenderCounts.clear();
+    resetRenderTracking();
     longTaskCountRef.current = 0;
     setMetrics({
       fps: 60,

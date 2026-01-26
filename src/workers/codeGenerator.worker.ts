@@ -139,11 +139,12 @@ ${pad}</Form.Item>`;
 ${pad}  <Button type="${props.type || 'primary'}" htmlType="${props.htmlType || 'button'}">${props.content || '按钮'}</Button>
 ${pad}</Form.Item>`;
       
-      case 'Container':
+      case 'Container': {
         const childrenCode = comp.children?.map(child => renderComponent(child, indent + 2)).join('\n') || '';
         return `${visibleOnStart}${pad}<Card title="${props.label || '容器'}" style={{ marginBottom: 16 }}>
 ${childrenCode}
 ${pad}</Card>`;
+      }
       
       default:
         return '';
@@ -198,19 +199,22 @@ function generateJsonSchema(components: ComponentSchema[]): object {
         prop.type = 'number';
         break;
       case 'Select':
-      case 'Radio':
+      case 'Radio': {
         prop.type = 'string';
         const selectOptions = comp.props.options as Array<{ value: string }> | undefined;
         prop.enum = selectOptions?.map((o) => o.value);
         break;
+      }
       case 'Checkbox':
-        prop.type = 'array';
-        const checkOptions = comp.props.options as Array<{ value: string }> | undefined;
-        prop.items = { 
-          type: 'string', 
-          enum: checkOptions?.map((o) => o.value) 
-        };
-        break;
+        {
+          prop.type = 'array';
+          const checkOptions = comp.props.options as Array<{ value: string }> | undefined;
+          prop.items = { 
+            type: 'string', 
+            enum: checkOptions?.map((o) => o.value) 
+          };
+          break;
+        }
       case 'Switch':
         prop.type = 'boolean';
         break;

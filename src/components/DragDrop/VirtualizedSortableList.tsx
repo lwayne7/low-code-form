@@ -1,6 +1,5 @@
-// @ts-nocheck
 import React, { useMemo, useCallback, useRef, useEffect } from 'react';
-import { FixedSizeList } from 'react-window';
+import { List, type ListImperativeAPI, type RowComponentProps } from 'react-window';
 import { Card } from 'antd';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { useDroppable } from '@dnd-kit/core';
@@ -56,48 +55,55 @@ const getContainerBorderColor = (d: number, isDark = false) => {
   return colors[d % colors.length];
 };
 
-// 虚拟化列表项渲染组件
-const VirtualRow: React.FC<any & {
-  index: number;
-  style: React.CSSProperties;
-  data: {
+interface VirtualRowData {
   items: ComponentSchema[];
   selectedIds: string[];
   onSelect: (id: string, multi: boolean) => void;
   activeDragId?: string | null;
   depth: number;
   dropTarget?: DropTarget | null;
-  };
-}> = React.memo(({ index, style, data }) => {
-  const { items, selectedIds, onSelect, activeDragId, depth, dropTarget } = data;
-  const component = items[index];
-  
-  if (!component) return null;
+}
 
+// 虚拟化列表项渲染组件
+const VirtualRow = ({
+  ariaAttributes,
+  index,
+  style,
+  items,
+  selectedIds,
+  onSelect,
+  activeDragId,
+  depth,
+  dropTarget,
+}: RowComponentProps<VirtualRowData>): React.ReactElement | null => {
   const { isDark } = useTheme();
-  const isSelected = selectedIds.includes(component.id);
-  const isContainer = component.type === 'Container';
-  const isDragging = activeDragId === component.id;
-  const isLocked = component.props.locked === true;
+  const component = items[index];
+  const componentId = component?.id ?? '';
+  const isSelected = component ? selectedIds.includes(componentId) : false;
+  const isContainer = component?.type === 'Container';
+  const isDragging = activeDragId === componentId;
+  const isLocked = component?.props.locked === true;
 
   // 计算是否显示放置指示器
   const showDropIndicator = useMemo(() => {
+    if (!componentId) return null;
     if (!dropTarget || !activeDragId) return null;
     
-    if (dropTarget.targetId === component.id) {
+    if (dropTarget.targetId === componentId) {
       if (dropTarget.position === 'before') return 'before';
       if (dropTarget.position === 'after') return 'after';
     }
     
     return null;
-  }, [dropTarget, activeDragId, component.id]);
+  }, [dropTarget, activeDragId, componentId]);
 
   const handleClick = useCallback((e: React.MouseEvent) => {
-    onSelect(component.id, e.metaKey || e.ctrlKey);
-  }, [component.id, onSelect]);
+    if (!componentId) return;
+    onSelect(componentId, e.metaKey || e.ctrlKey);
+  }, [componentId, onSelect]);
 
-  const isContainerDropTarget = isContainer && dropTarget?.targetId === component.id && dropTarget?.position === 'inside';
-  const isNestTarget = !!(isContainerDropTarget && activeDragId && activeDragId !== component.id);
+  const isContainerDropTarget = isContainer && dropTarget?.targetId === componentId && dropTarget?.position === 'inside';
+  const isNestTarget = !!(isContainerDropTarget && activeDragId && activeDragId !== componentId);
 
   const cardStyle = useMemo(() => ({
     background: getContainerBgColor(depth, isContainerDropTarget && !isDragging, isDark),
@@ -109,15 +115,17 @@ const VirtualRow: React.FC<any & {
     opacity: isDragging ? 0.5 : 1,
   }), [depth, isContainerDropTarget, isDragging, isDark]);
 
+  if (!component) return null;
+
   return (
-    <div style={style}>
+    <div style={style} {...ariaAttributes}>
       <SortableItem
         id={component.id}
         isSelected={isSelected}
         onClick={handleClick}
         useHandle={isContainer}
         isFirst={index === 0}
-        isLast={index === data.items.length - 1}
+        isLast={index === items.length - 1}
         isLocked={isLocked}
         depth={depth}
         isNestTarget={isNestTarget}
@@ -172,7 +180,7 @@ const VirtualRow: React.FC<any & {
       </SortableItem>
     </div>
   );
-});
+};
 
 // 放置指示器组件
 const DropIndicator: React.FC<{ position: 'before' | 'after' }> = ({ position }) => (
@@ -290,7 +298,7 @@ export const VirtualizedSortableList: React.FC<VirtualizedSortableListProps> = R
 }) => {
   const { isDark } = useTheme();
   const droppableId = parentId ? `container-${parentId}` : 'canvas-droppable';
-  const listRef = useRef<any>(null);
+  const listRef = useRef<ListImperativeAPI | null>(null);
   
   const { setNodeRef, isOver, active } = useDroppable({
     id: droppableId,
@@ -317,8 +325,8 @@ export const VirtualizedSortableList: React.FC<VirtualizedSortableListProps> = R
     boxShadow: isDropTarget ? 'inset 0 0 8px rgba(22, 119, 255, 0.1)' : undefined,
   }), [isDropTarget, parentId, isDark]);
 
-  // 虚拟列表数据
-  const itemData = useMemo(() => ({
+  // 行渲染共享数据（List 会在 rowProps 变化时触发更新）
+  const rowProps = useMemo<VirtualRowData>(() => ({
     items,
     selectedIds,
     onSelect,
@@ -332,7 +340,7 @@ export const VirtualizedSortableList: React.FC<VirtualizedSortableListProps> = R
     if (listRef.current && selectedIds.length > 0) {
       const selectedIndex = items.findIndex(item => item.id === selectedIds[0]);
       if (selectedIndex !== -1) {
-        listRef.current.scrollToItem(selectedIndex, 'smart');
+        listRef.current.scrollToRow({ index: selectedIndex, align: 'smart' });
       }
     }
   }, [selectedIds, items]);
@@ -376,27 +384,29 @@ export const VirtualizedSortableList: React.FC<VirtualizedSortableListProps> = R
             }}>
               ⚡ 虚拟滚动已启用（{items.length} 个组件）
             </div>
-            <FixedSizeList
-              ref={listRef}
-              height={height}
-              itemCount={items.length}
-              itemSize={itemHeight}
-              itemData={itemData}
-              width="100%"
+            <List<VirtualRowData>
+              listRef={listRef}
+              rowCount={items.length}
+              rowHeight={itemHeight}
+              rowComponent={VirtualRow}
+              rowProps={rowProps}
               overscanCount={5} // 预渲染5个组件，提升滚动体验
-            >
-              {VirtualRow}
-            </FixedSizeList>
+              style={{ height, width: '100%' }}
+            />
           </div>
         ) : (
           // 非虚拟化渲染（组件数量较少时）
           items.map((component, index) => (
             <VirtualRow
               key={component.id}
+              ariaAttributes={{
+                role: 'listitem',
+                'aria-posinset': index + 1,
+                'aria-setsize': items.length,
+              }}
               index={index}
-              style={{ height: itemHeight }}
-              data={itemData}
-              isScrolling={false}
+              style={{ height: itemHeight, width: '100%' }}
+              {...rowProps}
             />
           ))
         )}

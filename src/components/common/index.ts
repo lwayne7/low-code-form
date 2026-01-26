@@ -6,4 +6,5 @@ export { Toolbar } from './Toolbar';
 export { ContextMenu } from './ContextMenu';
 export { FormStats } from './FormStats';
 export { ErrorBoundary } from '../ErrorBoundary';
-export { PerformancePanel, trackRender } from './PerformancePanel';
+export { PerformancePanel } from './PerformancePanel';
+export { trackRender } from './performanceTracking';

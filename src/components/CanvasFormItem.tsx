@@ -1,5 +1,6 @@
 import React, { useCallback, useMemo } from 'react';
 import { Form, Input, Select, Radio, Checkbox, Switch, DatePicker, TimePicker, InputNumber, Button } from 'antd';
+import type { Dayjs } from 'dayjs';
 import type { ComponentSchema } from '../types';
 import { useStore } from '../store';
 
@@ -8,7 +9,7 @@ interface CanvasFormItemProps {
 }
 
 // 条件表达式求值
-const evaluateCondition = (condition: string, values: Record<string, any>): boolean => {
+const evaluateCondition = (condition: string, values: Record<string, unknown>): boolean => {
   try {
     // 使用 Function 构造器动态求值
     const func = new Function('values', `try { return ${condition}; } catch(e) { return false; }`);
@@ -18,6 +19,18 @@ const evaluateCondition = (condition: string, values: Record<string, any>): bool
     return true; // 默认显示
   }
 };
+
+const isDayjs = (value: unknown): value is Dayjs =>
+  typeof value === 'object' &&
+  value !== null &&
+  typeof (value as { isValid?: unknown }).isValid === 'function';
+
+const toDayjsOrNull = (value: unknown): Dayjs | null => (isDayjs(value) ? value : null);
+const toStringValue = (value: unknown): string => (typeof value === 'string' ? value : '');
+const toNumberValue = (value: unknown): number | null => (typeof value === 'number' ? value : null);
+const toBooleanValue = (value: unknown): boolean => (typeof value === 'boolean' ? value : false);
+const toStringArrayValue = (value: unknown): string[] =>
+  Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : [];
 
 // 🆕 使用 React.memo 包裹并优化组件
 export const CanvasFormItem: React.FC<CanvasFormItemProps> = React.memo(({ component }) => {
@@ -35,7 +48,7 @@ export const CanvasFormItem: React.FC<CanvasFormItemProps> = React.memo(({ compo
   }, [component.props.visibleOn, formValues]);
 
   // 🆕 使用 useCallback 缓存事件处理函数
-  const handleChange = useCallback((newValue: any) => {
+  const handleChange = useCallback((newValue: unknown) => {
     setFormValue(component.id, newValue);
   }, [component.id, setFormValue]);
 
@@ -65,7 +78,7 @@ export const CanvasFormItem: React.FC<CanvasFormItemProps> = React.memo(({ compo
       case 'Input':
         return (
           <Input
-            value={formValue || ''}
+            value={toStringValue(formValue)}
             placeholder={component.props.placeholder}
             onChange={(e) => handleChange(e.target.value)}
             onBlur={handleBlur}
@@ -75,7 +88,7 @@ export const CanvasFormItem: React.FC<CanvasFormItemProps> = React.memo(({ compo
       case 'TextArea':
         return (
           <Input.TextArea
-            value={formValue || ''}
+            value={toStringValue(formValue)}
             placeholder={component.props.placeholder}
             rows={component.props.rows || 4}
             onChange={(e) => handleChange(e.target.value)}
@@ -86,7 +99,7 @@ export const CanvasFormItem: React.FC<CanvasFormItemProps> = React.memo(({ compo
       case 'InputNumber':
         return (
           <InputNumber
-            value={formValue}
+            value={toNumberValue(formValue)}
             placeholder={component.props.placeholder}
             style={{ width: '100%' }}
             onChange={handleChange}
@@ -97,7 +110,7 @@ export const CanvasFormItem: React.FC<CanvasFormItemProps> = React.memo(({ compo
       case 'Select':
         return (
           <Select
-            value={formValue}
+            value={typeof formValue === 'string' ? formValue : undefined}
             placeholder={component.props.placeholder}
             options={component.props.options}
             style={{ width: '100%' }}
@@ -109,7 +122,7 @@ export const CanvasFormItem: React.FC<CanvasFormItemProps> = React.memo(({ compo
       case 'Radio':
         return (
           <Radio.Group
-            value={formValue}
+            value={typeof formValue === 'string' ? formValue : undefined}
             options={component.props.options}
             onChange={(e) => { handleChange(e.target.value); validateField(component.id); }}
           />
@@ -117,7 +130,7 @@ export const CanvasFormItem: React.FC<CanvasFormItemProps> = React.memo(({ compo
       case 'Checkbox':
         return (
           <Checkbox.Group
-            value={formValue || []}
+            value={toStringArrayValue(formValue)}
             options={component.props.options}
             onChange={(val) => { handleChange(val); validateField(component.id); }}
           />
@@ -125,7 +138,7 @@ export const CanvasFormItem: React.FC<CanvasFormItemProps> = React.memo(({ compo
       case 'Switch':
         return (
           <Switch
-            checked={formValue || false}
+            checked={toBooleanValue(formValue)}
             checkedChildren={component.props.checkedChildren}
             unCheckedChildren={component.props.unCheckedChildren}
             onChange={(val) => { handleChange(val); validateField(component.id); }}
@@ -134,7 +147,7 @@ export const CanvasFormItem: React.FC<CanvasFormItemProps> = React.memo(({ compo
       case 'DatePicker':
         return (
           <DatePicker
-            value={formValue}
+            value={toDayjsOrNull(formValue)}
             placeholder={component.props.placeholder}
             style={{ width: '100%' }}
             onChange={(val) => { handleChange(val); validateField(component.id); }}
@@ -144,7 +157,7 @@ export const CanvasFormItem: React.FC<CanvasFormItemProps> = React.memo(({ compo
       case 'TimePicker':
         return (
           <TimePicker
-            value={formValue}
+            value={toDayjsOrNull(formValue)}
             placeholder={component.props.placeholder}
             style={{ width: '100%' }}
             onChange={(val) => { handleChange(val); validateField(component.id); }}
