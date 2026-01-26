@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/refs */
 import { useRef, useEffect, useCallback } from 'react';
 
 // 使用 Vite 的环境变量方式

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 /**
  * 无障碍支持相关 Hooks
@@ -137,6 +137,16 @@ export function useArrowNavigation(
 ) {
   const { orientation = 'vertical', loop = true, onSelect } = options;
   const currentIndexRef = useRef(0);
+  const [currentIndex, setCurrentIndexState] = useState(0);
+
+  // itemCount 变化时，确保 currentIndex 不越界
+  useEffect(() => {
+    const clamped = Math.max(0, Math.min(currentIndexRef.current, itemCount - 1));
+    if (clamped !== currentIndexRef.current) {
+      currentIndexRef.current = clamped;
+      setCurrentIndexState(clamped);
+    }
+  }, [itemCount]);
 
   const handleKeyDown = useCallback(
     (event: React.KeyboardEvent) => {
@@ -177,6 +187,7 @@ export function useArrowNavigation(
       if (handled) {
         event.preventDefault();
         currentIndexRef.current = newIndex;
+        setCurrentIndexState(newIndex);
       }
 
       return { newIndex, handled };
@@ -185,11 +196,13 @@ export function useArrowNavigation(
   );
 
   const setCurrentIndex = useCallback((index: number) => {
-    currentIndexRef.current = Math.max(0, Math.min(index, itemCount - 1));
+    const clamped = Math.max(0, Math.min(index, itemCount - 1));
+    currentIndexRef.current = clamped;
+    setCurrentIndexState(clamped);
   }, [itemCount]);
 
   return {
-    currentIndex: currentIndexRef.current,
+    currentIndex,
     setCurrentIndex,
     handleKeyDown,
   };

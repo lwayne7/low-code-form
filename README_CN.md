@@ -26,6 +26,13 @@
 - ✅ **React性能优化**：memo、useMemo、useCallback全覆盖
 - ✅ **性能提升**：FPS +57%，内存 -50%（大数据量场景）
 
+### 🛠️ 近期修复与优化（2026-01）
+- ✅ **碰撞检测热路径优化**：为每次计算构建 `id -> depth/rect` 缓存，并使用“距离平方”排序，减少 `find/sqrt` 开销、提升嵌套拖拽稳定性（`src/utils/collisionDetection.ts`）
+- ✅ **拖拽常量统一**：抽出 `CONTAINER_EDGE_RATIO`/`MIN_EDGE_HEIGHT`，保证碰撞检测与拖拽处理逻辑一致（`src/constants/dnd.ts`、`src/hooks/useDragHandlers.ts`）
+- ✅ **主题不同步修复**：`useTheme` 改为全局 Zustand 单一数据源，支持 `auto` 跟随系统与跨标签页同步（`src/themeStore.ts`、`src/hooks/useTheme.ts`）
+- ✅ **虚拟滚动类型修复**：适配 `react-window@2` 的 `List` API，去掉 `@ts-nocheck` 并重新启用导出（`src/components/DragDrop/VirtualizedSortableList.tsx`）
+- ✅ **工程化与类型安全**：分离 `trackRender` 以兼容 Fast Refresh；`formValues` 从 `any` 收紧到 `unknown`；worker 中 `switch/case` 声明块修复 lint（`src/components/common/performanceTracking.ts`、`src/store.ts`、`src/workers/codeGenerator.worker.ts`）
+
 ### 🧪 完整测试体系
 - ✅ **53个单元测试**：覆盖核心业务逻辑
 - ✅ **21个E2E测试**：Playwright端到端测试
@@ -107,14 +114,17 @@ low-code-form/
 │   │   ├── DragDrop/        # 拖拽组件（含虚拟滚动）
 │   │   ├── common/          # 通用组件
 │   │   └── PropertyPanel/   # 属性配置面板
+│   ├── features/            # UI 功能模块（Header/Preview/Sidebar/移动端）
 │   ├── hooks/               # 自定义Hooks
 │   ├── utils/               # 工具函数
 │   │   ├── collisionDetection.ts  # 碰撞检测算法
 │   │   ├── codeGenerator.ts       # 代码生成器
 │   │   └── validation.ts          # 表单校验
 │   ├── constants/           # 常量配置
+│   │   └── dnd.ts            # 拖拽常量（edge ratio/min height）
 │   ├── test/               # 单元测试
 │   ├── store.ts            # Zustand状态管理
+│   ├── themeStore.ts        # 主题状态（单一数据源）
 │   └── types.ts            # TypeScript类型
 ├── e2e/                    # E2E测试
 ├── docs/                   # 文档
@@ -134,9 +144,13 @@ low-code-form/
 
 **解决方案**：
 ```typescript
+// src/constants/dnd.ts
+export const CONTAINER_EDGE_RATIO = 0.25; // 上下各25%为边缘区域
+export const MIN_EDGE_HEIGHT = 20;        // 小容器兜底边缘高度（px）
+
 // src/utils/collisionDetection.ts
-// 基于鼠标位置的智能容器检测
-const EDGE_ZONE_RATIO = 0.25; // 上下各25%为边缘区域
+// - pointerWithin -> rectIntersection -> closestCenter 兜底
+// - 深度优先 + 距离优先（距离使用平方，减少 sqrt）
 
 // 优先级策略：
 // 1. 非容器组件优先 - 用于精确插入位置
@@ -275,7 +289,7 @@ MIT License
 
 ---
 
-**最后更新**: 2025-01-20  
+**最后更新**: 2026-01-26  
 **当前版本**: v2.7.0  
 **性能提升**: +50%  
 **测试覆盖**: 84+测试用例

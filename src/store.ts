@@ -38,7 +38,7 @@ export interface CustomTemplate {
 interface State {
   components: ComponentSchema[];
   selectedIds: string[];
-  formValues: Record<string, any>; // 表单值状态
+  formValues: Record<string, unknown>; // 表单值状态
   validationErrors: Record<string, string>; // 校验错误 { [componentId]: errorMessage }
   clipboard: ComponentSchema[]; // 🆕 剪贴板
   history: HistoryState;
@@ -58,8 +58,8 @@ interface State {
   resetCanvas: () => void; // 🆕 重置画布
   importComponents: (components: ComponentSchema[]) => void; // 🆕 导入组件
   toggleLock: (id: string) => void; // 🆕 切换锁定状态
-  setFormValue: (id: string, value: any) => void;
-  getFormValues: () => Record<string, any>;
+  setFormValue: (id: string, value: unknown) => void;
+  getFormValues: () => Record<string, unknown>;
   
   // 🆕 复制/粘贴
   copyComponents: () => void; // 复制选中组件到剪贴板
@@ -113,7 +113,7 @@ const removeComponents = (components: ComponentSchema[], idsToDelete: string[]):
     }));
 };
 
-const updateComponentInTree = (components: ComponentSchema[], id: string, newProps: any): ComponentSchema[] => {
+const updateComponentInTree = (components: ComponentSchema[], id: string, newProps: Partial<ComponentSchema['props']>): ComponentSchema[] => {
   return components.map((c) => {
     if (c.id === id) {
       return { ...c, props: { ...c.props, ...newProps } } as ComponentSchema;
@@ -164,7 +164,7 @@ export const useStore = create<State>()(
     (set, get) => ({
       components: [] as ComponentSchema[],
       selectedIds: [] as string[],
-      formValues: {} as Record<string, any>,
+      formValues: {} as Record<string, unknown>,
       validationErrors: {} as Record<string, string>,
       clipboard: [] as ComponentSchema[], // 🆕 剪贴板
       customTemplates: [] as CustomTemplate[], // 🆕 自定义模板
@@ -316,7 +316,7 @@ export const useStore = create<State>()(
         formValues: { ...state.formValues, [id]: value }
       })),
 
-      getFormValues: (): Record<string, any> => {
+      getFormValues: (): Record<string, unknown> => {
         return get().formValues;
       },
 

@@ -4,10 +4,10 @@ import type { ComponentSchema, FormSubmitConfig } from '../types';
 
 interface FormRendererProps {
   components: ComponentSchema[]; // 接收 JSON 数组
-  onSubmit?: (values: any) => void; // 预留提交表单的回调
+  onSubmit?: (values: Record<string, unknown>) => void; // 预留提交表单的回调
 }
 
-const evaluateCondition = (condition: string, values: any) => {
+const evaluateCondition = (condition: string, values: Record<string, unknown>) => {
   try {
     const func = new Function('values', `try { return ${condition}; } catch(e) { return false; }`);
     return func(values);
@@ -18,7 +18,7 @@ const evaluateCondition = (condition: string, values: any) => {
 };
 
 // 递归渲染组件
-const renderComponent = (component: ComponentSchema, formValues: any, submitting: boolean) => {
+const renderComponent = (component: ComponentSchema, formValues: Record<string, unknown>, submitting: boolean) => {
   // 显隐逻辑
   if (component.props.visibleOn) {
     const shouldShow = evaluateCondition(component.props.visibleOn, formValues);
@@ -140,10 +140,10 @@ const findSubmitConfig = (components: ComponentSchema[]): FormSubmitConfig | und
 
 export const FormRenderer: React.FC<FormRendererProps> = ({ components, onSubmit }) => {
   const [form] = Form.useForm();
-  const [formValues, setFormValues] = useState<any>({});
+  const [formValues, setFormValues] = useState<Record<string, unknown>>({});
   const [submitting, setSubmitting] = useState(false);
 
-  const handleFinish = async (values: any) => {
+  const handleFinish = async (values: Record<string, unknown>) => {
     console.log('用户提交的数据:', values);
     
     const submitConfig = findSubmitConfig(components);
@@ -187,8 +187,12 @@ export const FormRenderer: React.FC<FormRendererProps> = ({ components, onSubmit
     }
   };
 
-  const handleValuesChange = (_: any, allValues: any) => {
-    setFormValues(allValues);
+  const handleValuesChange = (_: unknown, allValues: unknown) => {
+    if (allValues && typeof allValues === 'object') {
+      setFormValues(allValues as Record<string, unknown>);
+    } else {
+      setFormValues({});
+    }
   };
 
   return (

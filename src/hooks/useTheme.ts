@@ -1,81 +1,20 @@
 /**
  * 主题切换 Hook
  * 支持 light / dark / auto（跟随系统）三种模式
+ *
+ * 🔧 修复：原实现每次调用都会创建独立 state，导致多处使用时主题不同步。
+ * 现在改为使用全局 Zustand store 作为单一数据源。
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useThemeStore, type ThemeMode } from '../themeStore';
 
-export type ThemeMode = 'light' | 'dark' | 'auto';
+export type { ThemeMode };
 
-const THEME_STORAGE_KEY = 'lowcode-theme';
-
-/**
- * 获取实际生效的主题（考虑 auto 模式和系统设置）
- */
-const getEffectiveTheme = (mode: ThemeMode): 'light' | 'dark' => {
-  if (mode === 'auto') {
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-  }
-  return mode;
-};
-
-/**
- * 主题切换 Hook
- */
 export function useTheme() {
-  // 从 localStorage 读取保存的主题设置，默认为 auto
-  const [themeMode, setThemeModeState] = useState<ThemeMode>(() => {
-    const saved = localStorage.getItem(THEME_STORAGE_KEY);
-    if (saved === 'light' || saved === 'dark' || saved === 'auto') {
-      return saved;
-    }
-    return 'auto';
-  });
-
-  // 实际生效的主题
-  const [effectiveTheme, setEffectiveTheme] = useState<'light' | 'dark'>(() => 
-    getEffectiveTheme(themeMode)
-  );
-
-  // 应用主题到 DOM
-  const applyTheme = useCallback((mode: ThemeMode) => {
-    document.documentElement.setAttribute('data-theme', mode);
-    setEffectiveTheme(getEffectiveTheme(mode));
-  }, []);
-
-  // 设置主题模式
-  const setThemeMode = useCallback((mode: ThemeMode) => {
-    setThemeModeState(mode);
-    localStorage.setItem(THEME_STORAGE_KEY, mode);
-    applyTheme(mode);
-  }, [applyTheme]);
-
-  // 切换主题（循环切换 light -> dark -> auto）
-  const toggleTheme = useCallback(() => {
-    const nextMode: ThemeMode = 
-      themeMode === 'light' ? 'dark' : 
-      themeMode === 'dark' ? 'auto' : 'light';
-    setThemeMode(nextMode);
-  }, [themeMode, setThemeMode]);
-
-  // 初始化时应用主题
-  useEffect(() => {
-    applyTheme(themeMode);
-  }, []);
-
-  // 监听系统主题变化（仅在 auto 模式下生效）
-  useEffect(() => {
-    if (themeMode !== 'auto') return;
-
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    
-    const handleChange = (e: MediaQueryListEvent) => {
-      setEffectiveTheme(e.matches ? 'dark' : 'light');
-    };
-
-    mediaQuery.addEventListener('change', handleChange);
-    return () => mediaQuery.removeEventListener('change', handleChange);
-  }, [themeMode]);
+  const themeMode = useThemeStore((state) => state.themeMode);
+  const effectiveTheme = useThemeStore((state) => state.effectiveTheme);
+  const setThemeMode = useThemeStore((state) => state.setThemeMode);
+  const toggleTheme = useThemeStore((state) => state.toggleTheme);
 
   return {
     /** 当前主题模式设置 */
