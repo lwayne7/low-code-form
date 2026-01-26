@@ -12,6 +12,7 @@ interface SortableItemProps {
   isOverlay?: boolean;
   showDropIndicator?: 'top' | 'bottom' | null;
   useHandle?: boolean; // 是否使用拖拽手柄模式
+  parentId?: string | null; // 🆕 父容器 ID（用于碰撞检测过滤后代）
   isFirst?: boolean;  // 是否是列表第一项
   isLast?: boolean;   // 是否是列表最后一项
   isLocked?: boolean; // 🆕 是否锁定
@@ -31,7 +32,7 @@ export const SortableItem = React.memo(function SortableItem(props: SortableItem
   } = useSortable({ 
     id: props.id, 
     disabled: props.isLocked,
-    data: { depth: props.depth ?? 0 }  // 🆕 传递深度信息给碰撞检测
+    data: { depth: props.depth ?? 0, parentId: props.parentId ?? null }  // 🆕 传递深度/父级信息给碰撞检测
   });
 
   // 从 store 获取右键菜单需要的方法
@@ -122,7 +123,7 @@ export const SortableItem = React.memo(function SortableItem(props: SortableItem
             top: 0,
             left: 0,
             right: 0,
-            height: 40, // 增加高度以覆盖整个 Card 标题栏
+            height: 56, // 覆盖 antd Card 标题栏（并留出缓冲，避免“可拖拽但点不到”）
             cursor: 'grab',
             zIndex: 10,
             // 添加透明背景以便点击事件能穿透

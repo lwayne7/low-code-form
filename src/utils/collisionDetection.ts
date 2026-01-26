@@ -11,31 +11,42 @@ import { CONTAINER_EDGE_RATIO, MIN_EDGE_HEIGHT } from '../constants/dnd';
 
 type Rect = { top: number; left: number; width: number; height: number };
 type Point = { x: number; y: number };
-type DepthData = { depth?: number };
+type DndData = { depth?: number; parentId?: string | null };
 
 // ============ 辅助函数 ============
 
 const getDepthFromContainer = (container: DroppableContainer): number => {
-  const data = container.data.current as DepthData | undefined;
+  const data = container.data.current as DndData | undefined;
   return data?.depth ?? 0;
 };
 
 const getActiveDepth = (active: { data: { current?: unknown } }): number => {
-  const data = active.data.current as DepthData | undefined;
+  const data = active.data.current as DndData | undefined;
   return data?.depth ?? 0;
+};
+
+const getParentIdFromContainer = (container: DroppableContainer): string | null | undefined => {
+  const data = container.data.current as DndData | undefined;
+  return data?.parentId;
 };
 
 const buildLookups = (containers: DroppableContainer[]) => {
   const depthById = new Map<string, number>();
   const rectById = new Map<string, Rect | undefined>();
+  const parentById = new Map<string, string | null | undefined>();
 
   for (const container of containers) {
     const id = String(container.id);
     depthById.set(id, getDepthFromContainer(container));
     rectById.set(id, (container.rect.current as Rect | null) ?? undefined);
+
+    // 仅记录 sortable item 的 parentId（用于过滤“拖入自身后代”）
+    if (!id.startsWith('container-') && id !== 'canvas-droppable') {
+      parentById.set(id, getParentIdFromContainer(container));
+    }
   }
 
-  return { depthById, rectById };
+  return { depthById, rectById, parentById };
 };
 
 /**
@@ -83,28 +94,24 @@ const sortCollisions = (
   });
 };
 
-/**
- * 🆕 检查一个矩形是否完全包含在另一个矩形内
- * 用于检测 droppable 是否是被拖动元素的子元素
- */
-const isRectContainedIn = (
-  inner: Rect | undefined,
-  outer: Rect | undefined,
-  tolerance: number = 5 // 容差，处理边界情况
+const getBaseItemId = (id: string) => {
+  if (id.startsWith('container-')) return id.slice('container-'.length);
+  return id;
+};
+
+const isDescendantByParentMap = (
+  candidateId: string,
+  ancestorId: string,
+  parentById: Map<string, string | null | undefined>
 ): boolean => {
-  if (!inner || !outer) return false;
-  
-  const innerRight = inner.left + inner.width;
-  const innerBottom = inner.top + inner.height;
-  const outerRight = outer.left + outer.width;
-  const outerBottom = outer.top + outer.height;
-  
-  return (
-    inner.left >= outer.left - tolerance &&
-    inner.top >= outer.top - tolerance &&
-    innerRight <= outerRight + tolerance &&
-    innerBottom <= outerBottom + tolerance
-  );
+  let current = candidateId;
+  for (let i = 0; i < 50; i++) {
+    const parent = parentById.get(current);
+    if (parent == null) return false;
+    if (parent === ancestorId) return true;
+    current = parent;
+  }
+  return false;
 };
 
 /**
@@ -122,12 +129,11 @@ const isRectContainedIn = (
 export const customCollisionDetection: CollisionDetection = (args) => {
   const { droppableContainers, active, pointerCoordinates } = args;
   const activeId = String(active.id);
-  
-  // 🆕 获取被拖动元素的原始矩形（用于检测子元素）
-  const activeRect = active.rect.current?.initial as Rect | null | undefined;
   const activeDepth = getActiveDepth(active);
 
-  // 🔧 过滤掉被拖拽的组件自身、其容器 droppable，以及其子元素
+  const lookupsAll = buildLookups(droppableContainers);
+
+  // 🔧 过滤掉被拖拽的组件自身、其容器 droppable，以及其后代（避免拖入自身内部）
   const filteredContainers = droppableContainers.filter((container) => {
     const containerId = String(container.id);
     
@@ -137,16 +143,13 @@ export const customCollisionDetection: CollisionDetection = (args) => {
     // 排除被拖拽组件对应的容器 droppable（如果它是容器的话）
     if (containerId === `container-${activeId}`) return false;
     
-    // 🆕 排除被拖动元素的子元素
-    // 通过检查 droppable 的矩形是否完全在被拖动元素的原始矩形内来判断
-    if (activeRect) {
-      const containerRect = container.rect.current as Rect | null;
-      if (containerRect && isRectContainedIn(containerRect, activeRect)) {
-        const containerDepth = getDepthFromContainer(container);
-        // 只有当目标深度大于被拖动元素时才排除（说明可能是子元素）
-        if (containerDepth > activeDepth) {
-          return false;
-        }
+    // 🆕 排除被拖动元素的后代（基于 parentId 链，而不是 DOM rect 关系，避免拖拽过程中排序导致误判）
+    const baseId = getBaseItemId(containerId);
+    if (baseId !== containerId && baseId === activeId) return false;
+    if (baseId !== 'canvas-droppable') {
+      const containerDepth = getDepthFromContainer(container);
+      if (containerDepth > activeDepth && isDescendantByParentMap(baseId, activeId, lookupsAll.parentById)) {
+        return false;
       }
     }
     
