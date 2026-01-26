@@ -2,6 +2,8 @@ import React from 'react';
 import { Form, Input, Button, Space, Tag, Typography } from 'antd';
 import { DeleteOutlined, SettingOutlined } from '@ant-design/icons';
 import type { ComponentSchema } from '../../types';
+import type { PropertyPanelBlock } from '../../registry/componentRegistry';
+import { getComponentDefinition } from '../../registry/componentRegistry';
 
 // 子组件
 import { ContainerConfig } from './ContainerConfig';
@@ -58,6 +60,90 @@ export const PropertyPanel: React.FC<PropertyPanelProps> = ({
     }
   };
 
+  const setPropValue = (prop: string, value: unknown) => {
+    updateProps({ [prop]: value } as Partial<ComponentSchema['props']>);
+  };
+
+  const renderSchemaBlock = (block: PropertyPanelBlock) => {
+    if (!selectedComponent) return null;
+
+    switch (block.kind) {
+      case 'field': {
+        const value = getComponentProp<unknown>(
+          selectedComponent,
+          block.prop,
+          block.defaultValue ?? ''
+        );
+
+        if (block.control === 'number') {
+          const numberValue = typeof value === 'number' ? value : Number(block.defaultValue ?? 0) || 0;
+          return (
+            <Form.Item key={`field-${block.prop}`} label={block.label}>
+              <Input
+                type="number"
+                value={numberValue}
+                onChange={(e) => {
+                  const parsed = Number(e.target.value);
+                  const next = Number.isFinite(parsed) ? parsed : (Number(block.defaultValue ?? 0) || 0);
+                  setPropValue(block.prop, next);
+                }}
+              />
+            </Form.Item>
+          );
+        }
+
+        return (
+          <Form.Item key={`field-${block.prop}`} label={block.label}>
+            <Input
+              value={typeof value === 'string' ? value : String(value ?? '')}
+              onChange={(e) => setPropValue(block.prop, e.target.value)}
+              placeholder={block.placeholder}
+            />
+          </Form.Item>
+        );
+      }
+
+      case 'booleanButton': {
+        const current = getComponentProp(selectedComponent, block.prop, false);
+        return (
+          <Form.Item key={`bool-${block.prop}`} label={block.label}>
+            <Button
+              type={current ? 'primary' : 'default'}
+              size="small"
+              onClick={() => setPropValue(block.prop, !current)}
+            >
+              {current ? block.trueText : block.falseText}
+            </Button>
+          </Form.Item>
+        );
+      }
+
+      case 'builtin': {
+        switch (block.id) {
+          case 'container':
+            return <ContainerConfig key="builtin-container" component={selectedComponent} updateProps={updateProps} />;
+          case 'button':
+            return <ButtonConfig key="builtin-button" component={selectedComponent} updateProps={updateProps} />;
+          case 'options':
+            return <OptionsEditor key="builtin-options" component={selectedComponent} updateProps={updateProps} />;
+          case 'responsive':
+            return <ResponsiveConfig key="builtin-responsive" component={selectedComponent} updateProps={updateProps} />;
+          case 'linkage':
+            return (
+              <LinkageConfig
+                key="builtin-linkage"
+                component={selectedComponent}
+                allComponents={allComponents}
+                updateProps={updateProps}
+              />
+            );
+          case 'validation':
+            return <ValidationConfig key="builtin-validation" component={selectedComponent} updateProps={updateProps} />;
+        }
+      }
+    }
+  };
+
   return (
     <div style={{ padding: '20px 16px' }}>
       <Space align="center" style={{ marginBottom: 24 }}>
@@ -96,107 +182,7 @@ export const PropertyPanel: React.FC<PropertyPanelProps> = ({
             </Form.Item>
           </div>
 
-          {/* 容器组件配置 */}
-          {selectedComponent.type === 'Container' && (
-            <ContainerConfig component={selectedComponent} updateProps={updateProps} />
-          )}
-
-          {/* 标题配置 - 除 Container 和 Button 外 */}
-          {!['Container', 'Button'].includes(selectedComponent.type) && (
-            <Form.Item label="标题 (Label)">
-              <Input
-                value={getComponentProp(selectedComponent, 'label', '')}
-                onChange={(e) => updateProps({ label: e.target.value })}
-              />
-            </Form.Item>
-          )}
-
-          {/* 占位符配置 */}
-          {['Input', 'TextArea', 'InputNumber', 'Select', 'DatePicker', 'TimePicker'].includes(
-            selectedComponent.type
-          ) && (
-            <Form.Item label="占位符">
-              <Input
-                value={getComponentProp(selectedComponent, 'placeholder', '')}
-                onChange={(e) => updateProps({ placeholder: e.target.value })}
-                placeholder="请输入..."
-              />
-            </Form.Item>
-          )}
-
-          {/* 必填配置 */}
-          {!['Container', 'Button'].includes(selectedComponent.type) && (
-            <Form.Item label="必填">
-              <Button
-                type={getComponentProp(selectedComponent, 'required', false) ? 'primary' : 'default'}
-                size="small"
-                onClick={() => {
-                  const current = getComponentProp(selectedComponent, 'required', false);
-                  updateProps({ required: !current });
-                }}
-              >
-                {getComponentProp(selectedComponent, 'required', false) ? '✓ 必填' : '非必填'}
-              </Button>
-            </Form.Item>
-          )}
-
-          {/* 按钮配置 */}
-          {selectedComponent.type === 'Button' && (
-            <ButtonConfig component={selectedComponent} updateProps={updateProps} />
-          )}
-
-          {/* 选项配置 */}
-          {['Select', 'Radio', 'Checkbox'].includes(selectedComponent.type) && (
-            <OptionsEditor component={selectedComponent} updateProps={updateProps} />
-          )}
-
-          {/* Switch 开关文字配置 */}
-          {selectedComponent.type === 'Switch' && (
-            <>
-              <Form.Item label="开启时文字">
-                <Input
-                  value={selectedComponent.props.checkedChildren || ''}
-                  onChange={(e) => updateProps({ checkedChildren: e.target.value })}
-                  placeholder="例如：开"
-                />
-              </Form.Item>
-              <Form.Item label="关闭时文字">
-                <Input
-                  value={selectedComponent.props.unCheckedChildren || ''}
-                  onChange={(e) => updateProps({ unCheckedChildren: e.target.value })}
-                  placeholder="例如：关"
-                />
-              </Form.Item>
-            </>
-          )}
-
-          {/* TextArea 行数配置 */}
-          {selectedComponent.type === 'TextArea' && (
-            <Form.Item label="行数">
-              <Input
-                type="number"
-                value={selectedComponent.props.rows || 4}
-                onChange={(e) => updateProps({ rows: Number(e.target.value) || 4 })}
-              />
-            </Form.Item>
-          )}
-
-          {/* 响应式布局配置 */}
-          {!['Container'].includes(selectedComponent.type) && (
-            <ResponsiveConfig component={selectedComponent} updateProps={updateProps} />
-          )}
-
-          {/* 组件联动配置 */}
-          <LinkageConfig
-            component={selectedComponent}
-            allComponents={allComponents}
-            updateProps={updateProps}
-          />
-
-          {/* 校验规则配置 */}
-          {!['Container', 'Button'].includes(selectedComponent.type) && (
-            <ValidationConfig component={selectedComponent} updateProps={updateProps} />
-          )}
+          {getComponentDefinition(selectedComponent.type).propertyPanel.map(renderSchemaBlock)}
 
           <div style={{ marginTop: 32 }}>
             <Button

@@ -3,6 +3,8 @@ import { Drawer, Typography, Space, Tag, Progress, Divider, Button, Tooltip, Bad
 import { DashboardOutlined, ClockCircleOutlined, ReloadOutlined, ExperimentOutlined, DownloadOutlined, RocketOutlined } from '@ant-design/icons';
 import { useStore } from '../../store';
 import { getRenderTrackingSnapshot, resetRenderTracking } from './performanceTracking';
+import type { TraceEvent } from '../../utils/tracing';
+import { clearTraces, getTraceSnapshot, subscribeTrace } from '../../utils/tracing';
 
 const { Text, Title } = Typography;
 
@@ -45,11 +47,15 @@ export const PerformancePanel: React.FC<PerformancePanelProps> = ({ open, onClos
   });
   const [isMonitoring, setIsMonitoring] = useState(true);
   const [isRunningTest, setIsRunningTest] = useState(false);
+  const [traces, setTraces] = useState<TraceEvent[]>(() => getTraceSnapshot());
   
   const frameCountRef = useRef(0);
   const lastFrameTimeRef = useRef(performance.now());
   const animationFrameRef = useRef<number | undefined>(undefined);
   const longTaskCountRef = useRef(0);
+
+  // Tracing 订阅（拖拽/生成器等关键交互）
+  useEffect(() => subscribeTrace(() => setTraces(getTraceSnapshot())), []);
 
   // FPS 监控
   const measureFPS = useCallback(() => {
@@ -460,6 +466,72 @@ export const PerformancePanel: React.FC<PerformancePanelProps> = ({ open, onClos
                 <Text type="warning" style={{ fontSize: 11 }}>
                   ⚠️ 大规模测试会添加大量组件到画布
                 </Text>
+              </Space>
+            ),
+          },
+          {
+            key: '2',
+            label: (
+              <Space>
+                <ClockCircleOutlined />
+                <Text strong>Tracing（拖拽/生成器）</Text>
+                <Tag>{traces.length}</Tag>
+              </Space>
+            ),
+            children: (
+              <Space direction="vertical" style={{ width: '100%' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Text type="secondary" style={{ fontSize: 12 }}>
+                    最近 {Math.min(20, traces.length)} 条（自动采样关键交互耗时）
+                  </Text>
+                  <Button size="small" onClick={clearTraces} disabled={traces.length === 0}>
+                    清空
+                  </Button>
+                </div>
+                {traces.length === 0 ? (
+                  <Text type="secondary" style={{ fontSize: 12 }}>
+                    暂无数据：尝试拖拽组件或导出代码
+                  </Text>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    {traces
+                      .slice()
+                      .reverse()
+                      .slice(0, 20)
+                      .map((event, index) => (
+                        <div
+                          key={`${event.timestamp}-${event.name}-${index}`}
+                          style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            padding: '4px 8px',
+                            background: '#fafafa',
+                            borderRadius: 4,
+                          }}
+                        >
+                          <div style={{ minWidth: 0 }}>
+                            <Text style={{ fontSize: 12 }} ellipsis>
+                              <Text code style={{ fontSize: 12 }}>
+                                {event.name}
+                              </Text>
+                            </Text>
+                            {event.meta && (
+                              <div style={{ fontSize: 11, color: '#888' }}>
+                                {Object.entries(event.meta)
+                                  .slice(0, 4)
+                                  .map(([k, v]) => `${k}=${String(v)}`)
+                                  .join('  ')}
+                              </div>
+                            )}
+                          </div>
+                          <Tag color={event.durationMs > 200 ? 'orange' : 'green'}>
+                            {event.durationMs.toFixed(1)}ms
+                          </Tag>
+                        </div>
+                      ))}
+                  </div>
+                )}
               </Space>
             ),
           },

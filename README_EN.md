@@ -12,12 +12,16 @@ A React + TypeScript low-code form builder featuring drag-and-drop, nested conta
 - **Virtualized list**: migrate to `react-window@2` `List` API, remove `@ts-nocheck`, and re-enable exports (`src/components/DragDrop/VirtualizedSortableList.tsx`)
 - **Tooling & type safety**: move `trackRender` into a helper for Fast Refresh, tighten `formValues` from `any` to `unknown`, fix worker switch-case lint (`src/components/common/performanceTracking.ts`, `src/store.ts`, `src/workers/codeGenerator.worker.ts`)
 - **Benchmarks & console tooling**: add `vitest bench` baseline benchmarks and expose `window.performanceTest` in dev for quick data generation/reports (`src/test/performance.bench.ts`, `src/utils/performanceTester.ts`)
+- **Undo/redo patch history**: replace full-tree snapshots with patch entries + structural sharing to cut memory/GC; example (100 adds) serialized history size `~373KB → ~18KB` (~**-95%**) (`src/store.ts`, `src/utils/componentTreeOps.ts`, `src/components/common/HistoryPanel.tsx`)
+- **Component registry + schema-driven property panel**: new `src/registry/componentRegistry.tsx` as a single source of truth (defaults/materials/panel schema); adding a component becomes mostly declarative (`src/utils/componentFactory.ts`, `src/constants/materials.tsx`, `src/components/PropertyPanel/index.tsx`)
+- **Safe expressions**: replace `new Function` for `visibleOn` with a whitelisted AST parser + safe evaluator, plus inline validation in the property panel (`src/utils/expression.ts`, `src/components/CanvasFormItem.tsx`, `src/components/FormRenderer.tsx`, `src/components/PropertyPanel/LinkageConfig.tsx`)
+- **Tracing + CI perf budgets**: instrument drag/code export and surface traces in the Performance Panel; add CI workflow (lint/test/build) and perf budget tests to guard regressions (`src/utils/tracing.ts`, `src/hooks/useDragHandlers.ts`, `src/features/Header/AppHeader.tsx`, `src/components/common/PerformancePanel.tsx`, `.github/workflows/ci.yml`, `src/test/perfBudget.test.ts`)
 
 ## Highlights
 
 - Smart nested drag-and-drop based on pointer position + depth
 - Virtualized rendering for large component counts
-- Undo/redo history (50 steps), templates, keyboard shortcuts
+- Patch-based undo/redo (50 steps), templates, keyboard shortcuts
 - Unit tests (Vitest) + E2E tests (Playwright) + Lighthouse CI
 
 ## Getting started
@@ -58,6 +62,10 @@ src/
   themeStore.ts
   utils/
     collisionDetection.ts
+    expression.ts
+    tracing.ts
+  registry/
+    componentRegistry.tsx
 ```
 
 ## Docs

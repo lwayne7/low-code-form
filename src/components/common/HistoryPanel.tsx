@@ -2,58 +2,47 @@ import React from 'react';
 import { Drawer, Timeline, Empty, Typography, Space, Tag } from 'antd';
 import { HistoryOutlined, RollbackOutlined } from '@ant-design/icons';
 import type { ComponentSchema } from '../../types';
+import type { HistoryEntry } from '../../store';
 
 const { Text } = Typography;
 
 interface HistoryPanelProps {
   open: boolean;
   onClose: () => void;
-  past: ComponentSchema[][];
-  future: ComponentSchema[][];
+  past: HistoryEntry[];
+  future: HistoryEntry[];
   currentComponents: ComponentSchema[];
   onJumpTo: (index: number) => void;
 }
 
-// 计算两个状态之间的变化
-const describeChange = (before: ComponentSchema[], after: ComponentSchema[]): string => {
-  const beforeIds = new Set(getAllIds(before));
-  const afterIds = new Set(getAllIds(after));
-  
-  const added = [...afterIds].filter(id => !beforeIds.has(id));
-  const removed = [...beforeIds].filter(id => !afterIds.has(id));
-  
-  if (added.length > 0 && removed.length === 0) {
-    return `添加了 ${added.length} 个组件`;
-  }
-  if (removed.length > 0 && added.length === 0) {
-    return `删除了 ${removed.length} 个组件`;
-  }
-  if (added.length > 0 && removed.length > 0) {
-    return `添加 ${added.length} 个，删除 ${removed.length} 个`;
-  }
-  if (before.length === after.length) {
-    return '修改了组件属性';
-  }
-  return '调整了组件顺序';
-};
-
-// 获取所有组件 ID
-const getAllIds = (components: ComponentSchema[]): string[] => {
-  const ids: string[] = [];
-  const collect = (comps: ComponentSchema[]) => {
-    comps.forEach(c => {
-      ids.push(c.id);
-      if (c.children) collect(c.children);
-    });
+function countComponentTree(components: ComponentSchema[]): number {
+  let count = 0;
+  const traverse = (list: ComponentSchema[]) => {
+    for (const component of list) {
+      count += 1;
+      if (component.children && component.children.length > 0) traverse(component.children);
+    }
   };
-  collect(components);
-  return ids;
-};
+  traverse(components);
+  return count;
+}
 
-// 统计组件数量
-const countComponents = (components: ComponentSchema[]): number => {
-  return getAllIds(components).length;
-};
+function entryDelta(entry: HistoryEntry): number {
+  const countRecords = (records: Array<{ component: ComponentSchema }>) =>
+    records.reduce((sum, record) => sum + countComponentTree([record.component]), 0);
+
+  switch (entry.kind) {
+    case 'insert':
+      return countRecords(entry.inserts);
+    case 'delete':
+      return -countRecords(entry.removes);
+    case 'replaceAll':
+      return countRecords(entry.inserts) - countRecords(entry.removes);
+    case 'move':
+    case 'updateProps':
+      return 0;
+  }
+}
 
 export const HistoryPanel: React.FC<HistoryPanelProps> = ({
   open,
@@ -63,9 +52,9 @@ export const HistoryPanel: React.FC<HistoryPanelProps> = ({
   currentComponents,
   onJumpTo,
 }) => {
-  // 构建完整的历史线
-  const allStates = [...past, currentComponents, ...future.slice().reverse()];
-  const currentIndex = past.length;
+  const currentCount = countComponentTree(currentComponents);
+  const pastDeltas = past.map(entryDelta);
+  const initialCount = currentCount - pastDeltas.reduce((sum, delta) => sum + delta, 0);
 
   return (
     <Drawer
@@ -91,32 +80,32 @@ export const HistoryPanel: React.FC<HistoryPanelProps> = ({
           items={[
             // 初始状态
             {
-              color: currentIndex === 0 ? 'blue' : 'gray',
+              color: past.length === 0 ? 'blue' : 'gray',
               children: (
                 <div 
                   style={{ 
-                    cursor: currentIndex !== 0 ? 'pointer' : 'default',
-                    opacity: currentIndex === 0 ? 1 : 0.7,
+                    cursor: past.length !== 0 ? 'pointer' : 'default',
+                    opacity: past.length === 0 ? 1 : 0.7,
                     padding: '4px 0',
                   }}
-                  onClick={() => currentIndex !== 0 && onJumpTo(-past.length)}
+                  onClick={() => past.length !== 0 && onJumpTo(-past.length)}
                 >
-                  <Text strong={currentIndex === 0}>初始状态</Text>
+                  <Text strong={past.length === 0}>初始状态</Text>
                   <br />
                   <Text type="secondary" style={{ fontSize: 12 }}>
-                    {countComponents(allStates[0] || [])} 个组件
+                    {initialCount} 个组件
                   </Text>
-                  {currentIndex === 0 && (
+                  {past.length === 0 && (
                     <Tag color="blue" style={{ marginLeft: 8 }}>当前</Tag>
                   )}
                 </div>
               ),
             },
             // 历史操作
-            ...past.slice(1).map((state, index) => {
-              const prevState = past[index] || [];
-              const isCurrentState = index + 1 === currentIndex;
-              const stepsBack = currentIndex - (index + 1);
+            ...past.map((entry, index) => {
+              const isCurrentState = index === past.length - 1;
+              const stepsBack = past.length - (index + 1);
+              const countAfter = initialCount + pastDeltas.slice(0, index + 1).reduce((sum, delta) => sum + delta, 0);
               
               return {
                 color: isCurrentState ? 'blue' : 'gray',
@@ -130,11 +119,11 @@ export const HistoryPanel: React.FC<HistoryPanelProps> = ({
                     onClick={() => !isCurrentState && onJumpTo(-stepsBack)}
                   >
                     <Text strong={isCurrentState}>
-                      {describeChange(prevState, state)}
+                      {entry.label}
                     </Text>
                     <br />
                     <Text type="secondary" style={{ fontSize: 12 }}>
-                      {countComponents(state)} 个组件
+                      {countAfter} 个组件
                     </Text>
                     {isCurrentState && (
                       <Tag color="blue" style={{ marginLeft: 8 }}>当前</Tag>
@@ -143,26 +132,14 @@ export const HistoryPanel: React.FC<HistoryPanelProps> = ({
                 ),
               };
             }),
-            // 当前状态（如果不在 past 中）
-            ...(past.length > 0 ? [{
-              color: 'blue',
-              children: (
-                <div style={{ padding: '4px 0' }}>
-                  <Text strong>
-                    {describeChange(past[past.length - 1], currentComponents)}
-                  </Text>
-                  <br />
-                  <Text type="secondary" style={{ fontSize: 12 }}>
-                    {countComponents(currentComponents)} 个组件
-                  </Text>
-                  <Tag color="blue" style={{ marginLeft: 8 }}>当前</Tag>
-                </div>
-              ),
-            }] : []),
             // 未来状态（重做栈）
-            ...future.slice().reverse().map((state, index) => {
-              const prevState = index === 0 ? currentComponents : future[future.length - index];
+            ...future.map((entry, index) => {
               const stepsForward = index + 1;
+              const countAfter =
+                currentCount +
+                future
+                  .slice(0, index + 1)
+                  .reduce((sum, futureEntry) => sum + entryDelta(futureEntry), 0);
               
               return {
                 color: 'gray',
@@ -177,11 +154,11 @@ export const HistoryPanel: React.FC<HistoryPanelProps> = ({
                     onClick={() => onJumpTo(stepsForward)}
                   >
                     <Text type="secondary">
-                      {describeChange(prevState || [], state)}
+                      {entry.label}
                     </Text>
                     <br />
                     <Text type="secondary" style={{ fontSize: 12 }}>
-                      {countComponents(state)} 个组件 · 可重做
+                      {countAfter} 个组件 · 可重做
                     </Text>
                   </div>
                 ),

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Form, Input, Tag, Divider } from 'antd';
 import type { ComponentSchema } from '../../types';
+import { validateConditionExpression } from '../../utils/expression';
 
 // 辅助函数：安全获取组件属性
 const getComponentProp = <T,>(component: ComponentSchema, key: string, defaultValue: T): T => {
@@ -20,6 +21,8 @@ export const LinkageConfig: React.FC<LinkageConfigProps> = ({
   updateProps,
 }) => {
   const visibleOn = getComponentProp(component, 'visibleOn', '');
+  const validation = validateConditionExpression(visibleOn);
+  const hasError = Boolean(visibleOn.trim()) && !validation.ok;
 
   return (
     <>
@@ -27,7 +30,9 @@ export const LinkageConfig: React.FC<LinkageConfigProps> = ({
 
       <Form.Item
         label="显隐条件 (visibleOn)"
-        tooltip="使用 JavaScript 表达式，通过 values['组件ID'] 访问其他组件的值"
+        tooltip="仅支持安全表达式：values['组件ID']、字面量、括号、!、&&、||、比较运算（=== !== < <= > >=）"
+        validateStatus={hasError ? 'error' : undefined}
+        help={hasError ? `表达式错误：${validation.error}` : undefined}
       >
         <Input.TextArea
           value={visibleOn}

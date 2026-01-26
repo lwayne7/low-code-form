@@ -1,27 +1,18 @@
 import React, { useState } from 'react';
 import { Form, Input, Button, Select, Radio, Checkbox, Switch, DatePicker, TimePicker, InputNumber, Card, message } from 'antd';
 import type { ComponentSchema, FormSubmitConfig } from '../types';
+import { evaluateConditionSafe } from '../utils/expression';
 
 interface FormRendererProps {
   components: ComponentSchema[]; // 接收 JSON 数组
   onSubmit?: (values: Record<string, unknown>) => void; // 预留提交表单的回调
 }
 
-const evaluateCondition = (condition: string, values: Record<string, unknown>) => {
-  try {
-    const func = new Function('values', `try { return ${condition}; } catch(e) { return false; }`);
-    return func(values);
-  } catch (error) {
-    console.warn('Condition evaluation failed:', error);
-    return true; 
-  }
-};
-
 // 递归渲染组件
 const renderComponent = (component: ComponentSchema, formValues: Record<string, unknown>, submitting: boolean) => {
   // 显隐逻辑
   if (component.props.visibleOn) {
-    const shouldShow = evaluateCondition(component.props.visibleOn, formValues);
+    const shouldShow = evaluateConditionSafe(component.props.visibleOn, formValues);
     if (!shouldShow) return null;
     }
 

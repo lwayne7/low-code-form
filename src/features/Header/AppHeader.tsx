@@ -27,9 +27,10 @@ import {
 import { Toolbar, FormStats } from '../../components';
 import { formTemplates } from '../../utils/formTemplates';
 import { useStore, type CustomTemplate } from '../../store';
-import { generateFullCode, generateJsonSchema } from '../../utils';
+import { countComponents, generateFullCode, generateJsonSchema, startTrace } from '../../utils';
 import type { ComponentSchema } from '../../types';
 import type { ThemeMode } from '../../hooks';
+import type { HistoryEntry } from '../../store';
 
 const { Header } = Layout;
 const { Title } = Typography;
@@ -39,7 +40,7 @@ interface AppHeaderProps {
     themeMode: ThemeMode;
     setThemeMode: (mode: ThemeMode) => void;
     components: ComponentSchema[];
-    history: { past: ComponentSchema[][]; future: ComponentSchema[][] };
+    history: { past: HistoryEntry[]; future: HistoryEntry[] };
     undo: () => void;
     redo: () => void;
     resetCanvas: () => void;
@@ -112,8 +113,16 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
 
     // 代码导出
     const handleExportCode = () => {
+        const componentCount = countComponents(components);
+
+        const stopReact = startTrace('generator.react', { componentCount });
         const code = generateFullCode(components);
-        const jsonSchema = JSON.stringify(generateJsonSchema(components), null, 2);
+        stopReact({ outputChars: code.length });
+
+        const stopSchema = startTrace('generator.jsonSchema', { componentCount });
+        const schemaObject = generateJsonSchema(components);
+        const jsonSchema = JSON.stringify(schemaObject, null, 2);
+        stopSchema({ outputChars: jsonSchema.length });
 
         Modal.info({
             title: '导出代码',
