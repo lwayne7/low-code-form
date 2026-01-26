@@ -41,7 +41,7 @@ npm run bench
 # 监听模式（开发时）
 npm run bench:watch
 
-# 浏览器控制台使用
+# 浏览器控制台使用（仅开发环境 `npm run dev` 下可用）
 window.performanceTest.generateTestComponents(1000);
 window.performanceTest.generatePerformanceReport();
 window.performanceTest.stressTest(30);

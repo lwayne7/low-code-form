@@ -85,7 +85,7 @@ npm run bench:watch
 
 ### 性能测试工具
 
-在浏览器控制台中使用：
+在浏览器控制台中使用（仅开发环境 `npm run dev` 下可用）：
 
 ```javascript
 // 生成测试组件
