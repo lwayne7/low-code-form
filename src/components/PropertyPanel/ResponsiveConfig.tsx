@@ -14,13 +14,11 @@ const getComponentProp = <T,>(component: ComponentSchema, key: string, defaultVa
 interface ResponsiveConfigProps {
   component: ComponentSchema;
   updateProps: (newProps: Partial<ComponentSchema['props']>) => void;
-  isDark?: boolean;
 }
 
 export const ResponsiveConfig: React.FC<ResponsiveConfigProps> = ({
   component,
   updateProps,
-  isDark = false,
 }) => {
   const { t } = useI18n();
   const responsive = getComponentProp<Record<string, number>>(component, 'responsive', {});
@@ -53,7 +51,9 @@ export const ResponsiveConfig: React.FC<ResponsiveConfigProps> = ({
       <Form.Item label={t('propertyPanel.responsiveConfig')} tooltip={t('propertyPanel.responsiveTooltip')}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
           <div>
-            <Text type="secondary" style={{ fontSize: 11, color: isDark ? '#a3a3a3' : undefined }}>{t('propertyPanel.mobile')}</Text>
+            <Text type="secondary" style={{ fontSize: 11, color: 'var(--text-color-secondary, #666)' }}>
+              {t('propertyPanel.mobile')}
+            </Text>
             <InputNumber
               size="small"
               min={1}
@@ -64,7 +64,9 @@ export const ResponsiveConfig: React.FC<ResponsiveConfigProps> = ({
             />
           </div>
           <div>
-            <Text type="secondary" style={{ fontSize: 11, color: isDark ? '#a3a3a3' : undefined }}>{t('propertyPanel.tablet')}</Text>
+            <Text type="secondary" style={{ fontSize: 11, color: 'var(--text-color-secondary, #666)' }}>
+              {t('propertyPanel.tablet')}
+            </Text>
             <InputNumber
               size="small"
               min={1}
@@ -75,7 +77,9 @@ export const ResponsiveConfig: React.FC<ResponsiveConfigProps> = ({
             />
           </div>
           <div>
-            <Text type="secondary" style={{ fontSize: 11, color: isDark ? '#a3a3a3' : undefined }}>{t('propertyPanel.desktop')}</Text>
+            <Text type="secondary" style={{ fontSize: 11, color: 'var(--text-color-secondary, #666)' }}>
+              {t('propertyPanel.desktop')}
+            </Text>
             <InputNumber
               size="small"
               min={1}
@@ -86,7 +90,9 @@ export const ResponsiveConfig: React.FC<ResponsiveConfigProps> = ({
             />
           </div>
           <div>
-            <Text type="secondary" style={{ fontSize: 11, color: isDark ? '#a3a3a3' : undefined }}>{t('propertyPanel.largeScreen')}</Text>
+            <Text type="secondary" style={{ fontSize: 11, color: 'var(--text-color-secondary, #666)' }}>
+              {t('propertyPanel.largeScreen')}
+            </Text>
             <InputNumber
               size="small"
               min={1}

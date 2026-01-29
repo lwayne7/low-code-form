@@ -60,14 +60,15 @@ async function request<T>(
 
         // 处理网络响应
         if (!response.ok) {
+            const data = await response.json().catch(() => ({} as { error?: string }));
+
             // Token 过期处理
             if (response.status === 401) {
                 removeToken();
-                throw new ApiError(401, t('error.unauthorized'));
+                throw new ApiError(401, (data as { error?: string }).error || t('error.unauthorized'));
             }
 
-            const data = await response.json().catch(() => ({}));
-            throw new ApiError(response.status, data.error || t('common.error'));
+            throw new ApiError(response.status, (data as { error?: string }).error || t('common.error'));
         }
 
         return await response.json();

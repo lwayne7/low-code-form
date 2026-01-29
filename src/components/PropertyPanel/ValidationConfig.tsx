@@ -96,21 +96,49 @@ export const ValidationConfig: React.FC<ValidationConfigProps> = ({
       </div>
 
       {/* 详细规则列表 */}
-      <div style={{ background: isDark ? '#262626' : '#fafafa', padding: 12, borderRadius: 6 }}>
-        <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 8, color: isDark ? '#a3a3a3' : undefined }}>
+      <div
+        style={{
+          background: isDark ? '#262626' : 'var(--background-color-light, #fafafa)',
+          padding: 12,
+          borderRadius: 6,
+        }}
+      >
+        <Text
+          type="secondary"
+          style={{
+            fontSize: 12,
+            display: 'block',
+            marginBottom: 8,
+            color: 'var(--text-color-secondary, #666)',
+          }}
+        >
           {t('propertyPanel.addedRules')}
         </Text>
         {rules.length === 0 ? (
-          <Text type="secondary" style={{ fontSize: 12, color: isDark ? '#a3a3a3' : undefined }}>{t('propertyPanel.noRules')}</Text>
+          <Text type="secondary" style={{ fontSize: 12, color: 'var(--text-color-secondary, #666)' }}>
+            {t('propertyPanel.noRules')}
+          </Text>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {rules.map((rule, index) => (
-              <div key={index} style={{ display: 'flex', alignItems: 'center', gap: 8, background: isDark ? '#1f1f1f' : '#fff', padding: 8, borderRadius: 4 }}>
+              <div
+                key={index}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  background: 'var(--component-background, #fff)',
+                  padding: 8,
+                  borderRadius: 4,
+                }}
+              >
                 <Tag color="blue" style={{ margin: 0 }}>{rule.type}</Tag>
                 {rule.value !== undefined && (
                   <Tag color="orange">{String(rule.value)}</Tag>
                 )}
-                <Text style={{ flex: 1, fontSize: 12, color: isDark ? '#e6e6e6' : undefined }} ellipsis>{rule.message}</Text>
+                <Text style={{ flex: 1, fontSize: 12, color: 'var(--text-color, #1f1f1f)' }} ellipsis>
+                  {rule.message}
+                </Text>
                 <MinusCircleOutlined
                   style={{ color: '#ff4d4f', cursor: 'pointer' }}
                   onClick={() => removeRule(index)}
@@ -146,7 +174,9 @@ export const ValidationConfig: React.FC<ValidationConfigProps> = ({
           if (['minLength', 'maxLength', 'min', 'max'].includes(rule.type)) {
             return (
               <div key={`edit-${index}`} style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8 }}>
-                <Text style={{ fontSize: 12, minWidth: 60, color: isDark ? '#e6e6e6' : undefined }}>{rule.type}:</Text>
+                <Text style={{ fontSize: 12, minWidth: 60, color: 'var(--text-color, #1f1f1f)' }}>
+                  {rule.type}:
+                </Text>
                 <InputNumber
                   size="small"
                   value={rule.value as number}
@@ -166,7 +196,9 @@ export const ValidationConfig: React.FC<ValidationConfigProps> = ({
           if (rule.type === 'pattern') {
             return (
               <div key={`edit-${index}`} style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8 }}>
-                <Text style={{ fontSize: 12, minWidth: 60, color: isDark ? '#e6e6e6' : undefined }}>{t('propertyPanel.regexLabel')}:</Text>
+                <Text style={{ fontSize: 12, minWidth: 60, color: 'var(--text-color, #1f1f1f)' }}>
+                  {t('propertyPanel.regexLabel')}:
+                </Text>
                 <Input
                   size="small"
                   value={rule.value as string}

@@ -194,7 +194,7 @@ export const PerformancePanel: React.FC<PerformancePanelProps> = ({ open, onClos
     } finally {
       setIsRunningTest(false);
     }
-  }, [metrics]);
+  }, [metrics, t]);
 
   // 导出性能报告
   const exportReport = () => {

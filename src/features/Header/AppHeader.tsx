@@ -189,15 +189,27 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                     alignItems: 'center',
                     justifyContent: 'space-between',
                     background: isDark ? '#1f1f1f' : '#fff',
-                    padding: '0 24px',
+                    padding: '8px 24px',
                     borderBottom: `1px solid ${isDark ? '#303030' : '#f0f0f0'}`,
-                    height: 64,
+                    height: 'auto',
+                    minHeight: 64,
                     zIndex: 10,
-                    flexWrap: 'nowrap',
+                    flexWrap: 'wrap',
                     gap: 12,
+                    lineHeight: 1.2,
                 }}
             >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0, flex: '1 1 auto', overflow: 'hidden' }}>
+                <div
+                    style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        flexWrap: 'wrap',
+                        columnGap: 12,
+                        rowGap: 8,
+                        minWidth: 0,
+                        flex: '1 1 auto',
+                    }}
+                >
                     <div
                         style={{
                             width: 32,
@@ -213,7 +225,20 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                     >
                         <RocketOutlined style={{ fontSize: 18 }} />
                     </div>
-                    <Title level={4} className="app-title" style={{ margin: 0, fontWeight: 600, fontSize: 18, whiteSpace: 'nowrap' }}>
+                    <Title
+                        level={4}
+                        className="app-title"
+                        ellipsis={{ tooltip: t('header.title') }}
+                        style={{
+                            margin: 0,
+                            fontWeight: 600,
+                            fontSize: 18,
+                            whiteSpace: 'nowrap',
+                            minWidth: 0,
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                        }}
+                    >
                         {t('header.title')}
                     </Title>
                     <Divider type="vertical" className="header-divider" style={{ height: 24, margin: '0 8px' }} />
@@ -243,9 +268,13 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                         </Tooltip>
                     </Space>
                     <Divider type="vertical" style={{ height: 20, margin: '0 4px' }} />
-                    <Toolbar />
+                    <div style={{ flexShrink: 0 }}>
+                        <Toolbar />
+                    </div>
                     <Divider type="vertical" style={{ height: 20, margin: '0 4px' }} />
-                    <FormStats />
+                    <div style={{ flexShrink: 0 }}>
+                        <FormStats />
+                    </div>
                 </div>
                 {/* 右侧工具按钮区域 - 始终可见 */}
                 <Space size={4} wrap={false} style={{ flexShrink: 0 }}>

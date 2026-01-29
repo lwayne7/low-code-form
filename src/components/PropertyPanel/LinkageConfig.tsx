@@ -14,14 +14,12 @@ interface LinkageConfigProps {
   component: ComponentSchema;
   allComponents: ComponentSchema[];
   updateProps: (newProps: Partial<ComponentSchema['props']>) => void;
-  isDark?: boolean;
 }
 
 export const LinkageConfig: React.FC<LinkageConfigProps> = ({
   component,
   allComponents,
   updateProps,
-  isDark = false,
 }) => {
   const { t } = useI18n();
   const visibleOn = getComponentProp(component, 'visibleOn', '');
@@ -45,7 +43,7 @@ export const LinkageConfig: React.FC<LinkageConfigProps> = ({
           rows={3}
           style={{ fontFamily: 'monospace', fontSize: 12 }}
         />
-        <div style={{ marginTop: 8, fontSize: 12, color: isDark ? '#a3a3a3' : '#666' }}>
+        <div style={{ marginTop: 8, fontSize: 12, color: 'var(--text-color-secondary, #666)' }}>
           <div>{t('propertyPanel.availableIds')}</div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 4 }}>
             {allComponents

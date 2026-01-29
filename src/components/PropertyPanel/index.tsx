@@ -129,7 +129,7 @@ export const PropertyPanel: React.FC<PropertyPanelProps> = ({
           case 'options':
             return <OptionsEditor key="builtin-options" component={selectedComponent} updateProps={updateProps} />;
           case 'responsive':
-            return <ResponsiveConfig key="builtin-responsive" component={selectedComponent} updateProps={updateProps} isDark={isDark} />;
+            return <ResponsiveConfig key="builtin-responsive" component={selectedComponent} updateProps={updateProps} />;
           case 'linkage':
             return (
               <LinkageConfig
@@ -137,7 +137,6 @@ export const PropertyPanel: React.FC<PropertyPanelProps> = ({
                 component={selectedComponent}
                 allComponents={allComponents}
                 updateProps={updateProps}
-                isDark={isDark}
               />
             );
           case 'validation':

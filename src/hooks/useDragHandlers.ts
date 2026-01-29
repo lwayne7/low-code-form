@@ -415,7 +415,7 @@ export function useDragHandlers(): UseDragHandlersResult {
                 moveComponent(activeId, targetParentId, insertIndex);
             }
         }
-    }, [components, dropTarget, addComponent, reorderComponents]);
+    }, [components, dropTarget, addComponent, reorderComponents, t]);
 
     return {
         activeDragId,

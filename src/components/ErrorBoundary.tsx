@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import { Component } from 'react';
 import type { ErrorInfo, ReactNode } from 'react';
 import { Button, Result, Typography, Space, message } from 'antd';
 import { ReloadOutlined, CopyOutlined, BugOutlined } from '@ant-design/icons';
@@ -200,20 +200,6 @@ Time: ${new Date().toISOString()}
 
     return this.props.children;
   }
-}
-
-// HOC 包装器
-export function withErrorBoundary<P extends object>(
-  WrappedComponent: React.ComponentType<P>,
-  fallback?: ReactNode
-) {
-  return function WithErrorBoundaryWrapper(props: P) {
-    return (
-      <ErrorBoundary fallback={fallback}>
-        <WrappedComponent {...props} />
-      </ErrorBoundary>
-    );
-  };
 }
 
 // 带 i18n 的 ErrorBoundary 包装组件
