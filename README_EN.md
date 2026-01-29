@@ -16,6 +16,9 @@ A React + TypeScript low-code form builder featuring drag-and-drop, nested conta
 - **Component registry + schema-driven property panel**: new `src/registry/componentRegistry.tsx` as a single source of truth (defaults/materials/panel schema); adding a component becomes mostly declarative (`src/utils/componentFactory.ts`, `src/constants/materials.tsx`, `src/components/PropertyPanel/index.tsx`)
 - **Safe expressions**: replace `new Function` for `visibleOn` with a whitelisted AST parser + safe evaluator, plus inline validation in the property panel (`src/utils/expression.ts`, `src/components/CanvasFormItem.tsx`, `src/components/FormRenderer.tsx`, `src/components/PropertyPanel/LinkageConfig.tsx`)
 - **Tracing + CI perf budgets**: instrument drag/code export and surface traces in the Performance Panel; add CI workflow (lint/test/build) and perf budget tests to guard regressions (`src/utils/tracing.ts`, `src/hooks/useDragHandlers.ts`, `src/features/Header/AppHeader.tsx`, `src/components/common/PerformancePanel.tsx`, `.github/workflows/ci.yml`, `src/test/perfBudget.test.ts`)
+- **Header stats UI**: fix overflow/cropping for the form count chip across locales and ensure actions remain visible (`src/features/Header/AppHeader.tsx`)
+- **Dark-mode readability**: improve contrast for property panel labels and config text in dark theme (`src/App.css`, `src/components/PropertyPanel/*`)
+- **Canvas i18n**: align canvas labels and default texts with the i18n map to avoid mixed-language UI (`src/registry/componentRegistry.tsx`, `src/i18n/index.tsx`)
 
 ## Highlights
 

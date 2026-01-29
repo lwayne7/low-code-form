@@ -4,7 +4,7 @@
 
 一个基于 React + TypeScript 的**企业级低代码表单构建器**，支持拖拽配置、组件联动、无限嵌套、响应式布局和代码导出。
 
-> 🎯 **项目特色**：采用现代前端最佳实践，具备完整的性能优化和测试体系，适合大厂实习面试展示
+> 🎯 **项目特色**：采用现代前端最佳实践，具备完整的性能优化、可观测性与测试体系，适用于内部工具/运营配置/原型验证等场景
 
 [![GitHub](https://img.shields.io/github/license/lwayne7/low-code-form)](https://github.com/lwayne7/low-code-form)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue)](https://www.typescriptlang.org/)
@@ -39,9 +39,12 @@
 - ✅ **组件注册表 + schema 属性面板**：新增 `src/registry/componentRegistry.tsx` 统一维护组件默认配置/物料/属性面板 schema，新增组件基本只改声明（`src/utils/componentFactory.ts`、`src/constants/materials.tsx`、`src/components/PropertyPanel/index.tsx`）
 - ✅ **表达式安全**：`visibleOn` 从 `new Function` 改为 AST 白名单解析 + 安全执行，并在属性面板实时校验，避免注入与运行时崩溃（`src/utils/expression.ts`、`src/components/CanvasFormItem.tsx`、`src/components/FormRenderer.tsx`、`src/components/PropertyPanel/LinkageConfig.tsx`）
 - ✅ **Tracing + CI 性能预算**：拖拽/导出代码打点并在性能面板展示；新增 CI 工作流运行 lint/test/build，加入性能预算用例防回归（`src/utils/tracing.ts`、`src/hooks/useDragHandlers.ts`、`src/features/Header/AppHeader.tsx`、`src/components/common/PerformancePanel.tsx`、`.github/workflows/ci.yml`、`src/test/perfBudget.test.ts`）
+- ✅ **Header 统计显示修复**：修复中英文环境下表单数量统计被截断/按钮缺失的问题（`src/features/Header/AppHeader.tsx`）
+- ✅ **暗色模式可读性**：提升属性面板与配置项在暗色主题下的对比度与可见性（`src/App.css`、`src/components/PropertyPanel/*`）
+- ✅ **画布组件名称国际化**：统一画布/组件库/默认文案的 i18n 映射，避免中英文混用（`src/registry/componentRegistry.tsx`、`src/i18n/index.tsx`）
 
 ### 🧪 完整测试体系
-- ✅ **65个单元测试**：覆盖核心业务逻辑（Vitest）
+- ✅ **99个单元测试**：覆盖核心业务逻辑（Vitest）
 - ✅ **21个E2E测试**：Playwright端到端测试
 - ✅ **10+性能基准测试**：量化性能指标
 - ✅ **Lighthouse CI**：自动化性能评分
@@ -162,7 +165,7 @@ low-code-form/
 └── playwright.config.ts   # Playwright配置
 ```
 
-## 🎯 技术亮点（面试重点）
+## 🎯 关键实现
 
 ### 1. 自定义碰撞检测算法 ⭐⭐⭐⭐⭐
 
@@ -185,7 +188,7 @@ export const MIN_EDGE_HEIGHT = 20;        // 小容器兜底边缘高度（px）
 // 4. 滞后区设计：防止边界抖动
 ```
 
-**面试加分项**：展示了处理复杂交互逻辑的能力
+**价值**：用“边缘/中心区域 + 深度优先 + 滞后区”策略，让嵌套拖拽插入/放入更稳定且可预期
 
 ### 2. 虚拟滚动优化 ⭐⭐⭐⭐⭐
 
@@ -226,8 +229,8 @@ const handleClick = useCallback((e) => {
        ┌────────┐
       ┌──────────┐
      ┌────────────┐
-	    └──────────────┘
-	     单元测试 (65)    ← Vitest
+		    └──────────────┘
+		     单元测试 (99)    ← Vitest
      
 性能基准 (10+)       ← Vitest Bench
 Lighthouse CI        ← 自动化
@@ -243,19 +246,15 @@ Lighthouse CI        ← 自动化
 
 ## 🏆 适用场景
 
-### ✅ 大厂实习面试（评分：90/100）
+### ✅ 企业内部表单/配置平台
 
-**优势**：
-- 完整的技术栈（React 19 + TS 5.9）
-- 自定义算法（碰撞检测）
-- 性能优化实战（可量化指标）
-- 完善的工程化（测试+CI/CD）
+- 运营活动/问卷/报名等表单快速搭建与版本管理
+- 表单校验、联动、响应式预览与代码导出
 
-**适合公司**：
-- 字节跳动/抖音 - 重视技术深度 ✅
-- 阿里巴巴 - 重视工程化 ✅
-- 腾讯 - 重视产品完整度 ✅
-- 美团/快手 - 需补充后端 ⚠️
+### ✅ 原型验证/二次开发底座
+
+- 作为低代码表单/页面搭建的基础引擎
+- 组件注册表 + schema 驱动属性面板，降低新增组件成本
 
 ### ✅ 技术分享/开源项目
 
@@ -317,5 +316,5 @@ MIT License
 
 **最后更新**: 2026-01-29  
 **当前版本**: v2.8.0  
-**自动化测试**: 单元 65 + E2E 21  
+**自动化测试**: 单元 99 + E2E 21  
 **性能基准**: 10+（Vitest Bench）
