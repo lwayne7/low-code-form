@@ -503,11 +503,13 @@ const zhCN = {
     // Drag & Drop Messages
     'dnd.insertBefore': '↑ 插入到上方',
     'dnd.insertAfter': '↓ 插入到下方',
+    'dnd.level': '层级 {level}',
     'dnd.dropInto': '放入「{label}」内部',
     'dnd.releaseHere': '📥 松开鼠标放入此处',
     'dnd.dragHere': '📦 拖拽组件到这里',
     'dnd.cannotNestSelf': '不能将容器拖入自身',
     'dnd.moving': '正在移动...',
+    'dnd.virtualScrollEnabled': '⚡ 虚拟滚动已启用（{count} 个组件）',
 
     // Canvas Messages
     'canvas.dragFromLeft': '从左侧拖拽组件到这里',
@@ -1055,11 +1057,13 @@ const enUS: Translations = {
     // Drag & Drop Messages
     'dnd.insertBefore': '↑ Insert Above',
     'dnd.insertAfter': '↓ Insert Below',
+    'dnd.level': 'Level {level}',
     'dnd.dropInto': 'Drop into "{label}"',
     'dnd.releaseHere': '📥 Release to drop here',
     'dnd.dragHere': '📦 Drag components here',
     'dnd.cannotNestSelf': 'Cannot nest container into itself',
     'dnd.moving': 'Moving...',
+    'dnd.virtualScrollEnabled': '⚡ Virtualization enabled ({count} components)',
 
     // Canvas Messages
     'canvas.dragFromLeft': 'Drag components from the left panel here',

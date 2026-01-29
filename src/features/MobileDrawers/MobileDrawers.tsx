@@ -12,6 +12,21 @@ import { COMPONENT_MATERIALS } from '../../constants';
 import { useI18n } from '../../i18n';
 import type { ComponentSchema, ComponentType } from '../../types';
 
+// 组件类型到翻译 key 的映射（与桌面端组件库保持一致）
+const COMPONENT_TYPE_I18N_KEYS: Record<ComponentType, string> = {
+    Container: 'components.container',
+    Input: 'components.input',
+    TextArea: 'components.textarea',
+    InputNumber: 'components.inputNumber',
+    Select: 'components.select',
+    Radio: 'components.radio',
+    Checkbox: 'components.checkbox',
+    Switch: 'components.switch',
+    DatePicker: 'components.datePicker',
+    TimePicker: 'components.timePicker',
+    Button: 'components.button',
+};
+
 interface MobileDrawersProps {
     // 组件抽屉
     isMobileDrawerOpen: boolean;
@@ -45,10 +60,16 @@ export const MobileDrawers: React.FC<MobileDrawersProps> = ({
 }) => {
     const { t } = useI18n();
 
-    const filteredMaterials = COMPONENT_MATERIALS.filter((item) =>
-        item.label.toLowerCase().includes(componentSearch.toLowerCase()) ||
-        item.type.toLowerCase().includes(componentSearch.toLowerCase())
-    );
+    const getComponentLabel = (type: ComponentType) => {
+        const key = COMPONENT_TYPE_I18N_KEYS[type];
+        return key ? t(key as keyof typeof t) : type;
+    };
+
+    const filteredMaterials = COMPONENT_MATERIALS.filter((item) => {
+        const translatedLabel = getComponentLabel(item.type);
+        return translatedLabel.toLowerCase().includes(componentSearch.toLowerCase()) ||
+            item.type.toLowerCase().includes(componentSearch.toLowerCase());
+    });
 
     return (
         <>
@@ -83,7 +104,7 @@ export const MobileDrawers: React.FC<MobileDrawersProps> = ({
                             }}
                         >
                             {item.icon}
-                            <span className="component-card-label">{item.label}</span>
+                            <span className="component-card-label">{getComponentLabel(item.type)}</span>
                         </div>
                     ))}
                 </div>

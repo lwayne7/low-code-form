@@ -6,6 +6,7 @@ import { useDroppable } from '@dnd-kit/core';
 import { SortableItem } from './SortableItem';
 import { CanvasFormItem } from '../CanvasFormItem';
 import { useTheme } from '../../hooks/useTheme';
+import { useI18n } from '@/i18n';
 import type { ComponentSchema } from '../../types';
 import type { DropTarget } from './SortableList';
 
@@ -79,6 +80,7 @@ const VirtualRow = ({
   dropTarget,
 }: RowComponentProps<VirtualRowData>): React.ReactElement | null => {
   const { isDark } = useTheme();
+  const { t } = useI18n();
   const component = items[index];
   const componentId = component?.id ?? '';
   const isSelected = component ? selectedIds.includes(componentId) : false;
@@ -146,9 +148,9 @@ const VirtualRow = ({
               size="small"
               title={
                 <span style={{ cursor: isLocked ? 'not-allowed' : 'grab', color: isDark ? '#e6e6e6' : undefined }}>
-                  {isLocked ? '🔒' : '⠿'} {component.props.label || '容器'}
+                  {isLocked ? '🔒' : '⠿'} {component.props.label || t('dnd.container')}
                   <span style={{ marginLeft: 8, fontSize: 11, color: isDark ? '#737373' : '#999' }}>
-                    (层级 {depth + 1})
+                    ({t('dnd.level', { level: depth + 1 })})
                   </span>
                 </span>
               }
@@ -187,106 +189,115 @@ const VirtualRow = ({
 };
 
 // 放置指示器组件
-const DropIndicator: React.FC<{ position: 'before' | 'after' }> = ({ position }) => (
-  <div
-    className="drop-indicator-line"
-    style={{
-      position: 'absolute',
-      left: -8,
-      right: -8,
-      [position === 'before' ? 'top' : 'bottom']: -6,
-      height: 4,
-      background: 'linear-gradient(90deg, #1677ff 0%, #69b1ff 50%, #1677ff 100%)',
-      borderRadius: 2,
-      zIndex: 1000,
-      boxShadow: '0 0 12px rgba(22, 119, 255, 0.6), 0 0 4px rgba(22, 119, 255, 0.8)',
-      animation: 'dropIndicatorPulse 0.8s ease-in-out infinite',
-    }}
-  >
+const DropIndicator: React.FC<{ position: 'before' | 'after' }> = ({ position }) => {
+  const { t } = useI18n();
+
+  return (
     <div
+      className="drop-indicator-line"
       style={{
         position: 'absolute',
-        left: -6,
-        top: -5,
-        width: 14,
-        height: 14,
-        borderRadius: '50%',
-        background: 'linear-gradient(135deg, #1677ff 0%, #4096ff 100%)',
-        border: '3px solid #fff',
-        boxShadow: '0 2px 8px rgba(22, 119, 255, 0.5)',
-      }}
-    />
-    <div
-      style={{
-        position: 'absolute',
-        right: -6,
-        top: -5,
-        width: 14,
-        height: 14,
-        borderRadius: '50%',
-        background: 'linear-gradient(135deg, #1677ff 0%, #4096ff 100%)',
-        border: '3px solid #fff',
-        boxShadow: '0 2px 8px rgba(22, 119, 255, 0.5)',
-      }}
-    />
-    <div
-      style={{
-        position: 'absolute',
-        left: '50%',
-        top: -24,
-        transform: 'translateX(-50%)',
-        background: '#1677ff',
-        color: '#fff',
-        fontSize: 11,
-        fontWeight: 600,
-        padding: '2px 8px',
-        borderRadius: 4,
-        whiteSpace: 'nowrap',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+        left: -8,
+        right: -8,
+        [position === 'before' ? 'top' : 'bottom']: -6,
+        height: 4,
+        background: 'linear-gradient(90deg, #1677ff 0%, #69b1ff 50%, #1677ff 100%)',
+        borderRadius: 2,
+        zIndex: 1000,
+        boxShadow: '0 0 12px rgba(22, 119, 255, 0.6), 0 0 4px rgba(22, 119, 255, 0.8)',
+        animation: 'dropIndicatorPulse 0.8s ease-in-out infinite',
       }}
     >
-      {position === 'before' ? '↑ 插入到上方' : '↓ 插入到下方'}
+      <div
+        style={{
+          position: 'absolute',
+          left: -6,
+          top: -5,
+          width: 14,
+          height: 14,
+          borderRadius: '50%',
+          background: 'linear-gradient(135deg, #1677ff 0%, #4096ff 100%)',
+          border: '3px solid #fff',
+          boxShadow: '0 2px 8px rgba(22, 119, 255, 0.5)',
+        }}
+      />
+      <div
+        style={{
+          position: 'absolute',
+          right: -6,
+          top: -5,
+          width: 14,
+          height: 14,
+          borderRadius: '50%',
+          background: 'linear-gradient(135deg, #1677ff 0%, #4096ff 100%)',
+          border: '3px solid #fff',
+          boxShadow: '0 2px 8px rgba(22, 119, 255, 0.5)',
+        }}
+      />
+      <div
+        style={{
+          position: 'absolute',
+          left: '50%',
+          top: -24,
+          transform: 'translateX(-50%)',
+          background: '#1677ff',
+          color: '#fff',
+          fontSize: 11,
+          fontWeight: 600,
+          padding: '2px 8px',
+          borderRadius: 4,
+          whiteSpace: 'nowrap',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+        }}
+      >
+        {position === 'before' ? t('dnd.insertBefore') : t('dnd.insertAfter')}
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 // 容器嵌套指示器组件
-const ContainerDropOverlay: React.FC<{ label?: string }> = ({ label }) => (
-  <div
-    className="container-drop-overlay"
-    style={{
-      position: 'absolute',
-      inset: 0,
-      background: 'rgba(22, 119, 255, 0.08)',
-      border: '3px dashed #1677ff',
-      borderRadius: 8,
-      zIndex: 50,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      pointerEvents: 'none',
-      animation: 'containerDropPulse 1s ease-in-out infinite',
-    }}
-  >
+const ContainerDropOverlay: React.FC<{ label?: string }> = ({ label }) => {
+  const { t } = useI18n();
+  const displayLabel = label || t('dnd.container');
+
+  return (
     <div
+      className="container-drop-overlay"
       style={{
-        background: 'linear-gradient(135deg, #1677ff 0%, #4096ff 100%)',
-        color: '#fff',
-        fontSize: 13,
-        fontWeight: 600,
-        padding: '8px 16px',
-        borderRadius: 6,
-        boxShadow: '0 4px 12px rgba(22, 119, 255, 0.3)',
+        position: 'absolute',
+        inset: 0,
+        background: 'rgba(22, 119, 255, 0.08)',
+        border: '3px dashed #1677ff',
+        borderRadius: 8,
+        zIndex: 50,
         display: 'flex',
         alignItems: 'center',
-        gap: 6,
+        justifyContent: 'center',
+        pointerEvents: 'none',
+        animation: 'containerDropPulse 1s ease-in-out infinite',
       }}
     >
-      <span style={{ fontSize: 16 }}>📥</span>
-      放入「{label || '容器'}」内部
+      <div
+        style={{
+          background: 'linear-gradient(135deg, #1677ff 0%, #4096ff 100%)',
+          color: '#fff',
+          fontSize: 13,
+          fontWeight: 600,
+          padding: '8px 16px',
+          borderRadius: 6,
+          boxShadow: '0 4px 12px rgba(22, 119, 255, 0.3)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 6,
+        }}
+      >
+        <span style={{ fontSize: 16 }}>📥</span>
+        {t('dnd.dropInto', { label: displayLabel })}
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 export const VirtualizedSortableList: React.FC<VirtualizedSortableListProps> = React.memo(({
   items,
@@ -301,6 +312,7 @@ export const VirtualizedSortableList: React.FC<VirtualizedSortableListProps> = R
   enableVirtualization,
 }) => {
   const { isDark } = useTheme();
+  const { t } = useI18n();
   const droppableId = parentId ? `container-${parentId}` : 'canvas-droppable';
   const listRef = useRef<ListImperativeAPI | null>(null);
   
@@ -372,7 +384,7 @@ export const VirtualizedSortableList: React.FC<VirtualizedSortableListProps> = R
               transition: 'all 0.2s ease',
             }}
           >
-            {isDropTarget ? '📥 松开鼠标放入此处' : '📦 拖拽组件到这里'}
+            {isDropTarget ? t('dnd.releaseHere') : t('dnd.dragHere')}
           </div>
         ) : shouldVirtualize ? (
           <div>
@@ -387,7 +399,7 @@ export const VirtualizedSortableList: React.FC<VirtualizedSortableListProps> = R
               alignItems: 'center',
               gap: 6,
             }}>
-              ⚡ 虚拟滚动已启用（{items.length} 个组件）
+              {t('dnd.virtualScrollEnabled', { count: items.length })}
             </div>
             <List<VirtualRowData>
               listRef={listRef}

@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { useStore } from '../store';
 import type { ComponentSchema } from '../types';
+import { getI18nInstance } from '../i18n';
 
 describe('Store - 组件操作', () => {
   beforeEach(() => {
@@ -22,7 +23,7 @@ describe('Store - 组件操作', () => {
       const state = useStore.getState();
       expect(state.components).toHaveLength(1);
       expect(state.components[0].type).toBe('Input');
-      expect((state.components[0].props as { label?: string }).label).toBe('输入框');
+      expect((state.components[0].props as { label?: string }).label).toBe(getI18nInstance().t('component.inputLabel'));
     });
 
     it('应该能添加 Container 组件', () => {

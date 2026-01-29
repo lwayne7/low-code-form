@@ -356,9 +356,9 @@ const SortableListItem: React.FC<SortableListItemProps> = React.memo(({
             size="small"
             title={
               <span style={{ cursor: isLocked ? 'not-allowed' : 'grab', color: isDark ? '#e6e6e6' : undefined }}>
-                {isLocked ? '🔒' : '⠿'} {component.props.label || '容器'}
+                {isLocked ? '🔒' : '⠿'} {component.props.label || t('dnd.container')}
                 <span style={{ marginLeft: 8, fontSize: 11, color: isDark ? '#737373' : '#999' }}>
-                  (层级 {depth + 1})
+                  ({t('dnd.level', { level: depth + 1 })})
                 </span>
               </span>
             }

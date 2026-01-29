@@ -13,6 +13,7 @@ import {
   RocketOutlined,
 } from '@ant-design/icons';
 import type { ComponentSchema, ComponentType } from '../types';
+import { getI18nInstance } from '../i18n';
 
 export type BuiltinPropertyPanelBlockId =
   | 'container'
@@ -58,12 +59,14 @@ const COMPONENT_DEFINITIONS: Record<ComponentType, ComponentDefinition> = {
     type: 'Container',
     label: '容器',
     icon: <ContainerOutlined />,
-    createDefault: () =>
-      ({
+    createDefault: () => {
+      const { t } = getI18nInstance();
+      return {
         type: 'Container',
-        props: { label: '容器', direction: 'vertical' },
+        props: { label: t('component.container'), direction: 'vertical' },
         children: [],
-      }) as Omit<ComponentSchema, 'id'>,
+      } as Omit<ComponentSchema, 'id'>;
+    },
     propertyPanel: [
       { kind: 'builtin', id: 'container' },
       { kind: 'builtin', id: 'linkage' },
@@ -73,11 +76,13 @@ const COMPONENT_DEFINITIONS: Record<ComponentType, ComponentDefinition> = {
     type: 'Input',
     label: '单行输入',
     icon: <FormOutlined />,
-    createDefault: () =>
-      ({
+    createDefault: () => {
+      const { t } = getI18nInstance();
+      return {
         type: 'Input',
-        props: { label: '输入框', placeholder: '请输入...' },
-      }) as Omit<ComponentSchema, 'id'>,
+        props: { label: t('component.inputLabel'), placeholder: t('component.inputPlaceholder') },
+      } as Omit<ComponentSchema, 'id'>;
+    },
     propertyPanel: [
       { kind: 'field', label: '标题 (Label)', prop: 'label', control: 'text', defaultValue: '' },
       { kind: 'field', label: '占位符', prop: 'placeholder', control: 'text', defaultValue: '', placeholder: '请输入...' },
@@ -91,11 +96,13 @@ const COMPONENT_DEFINITIONS: Record<ComponentType, ComponentDefinition> = {
     type: 'TextArea',
     label: '多行输入',
     icon: <FileTextOutlined />,
-    createDefault: () =>
-      ({
+    createDefault: () => {
+      const { t } = getI18nInstance();
+      return {
         type: 'TextArea',
-        props: { label: '多行文本', placeholder: '请输入...', rows: 4 },
-      }) as Omit<ComponentSchema, 'id'>,
+        props: { label: t('component.textareaLabel'), placeholder: t('component.textareaPlaceholder'), rows: 4 },
+      } as Omit<ComponentSchema, 'id'>;
+    },
     propertyPanel: [
       { kind: 'field', label: '标题 (Label)', prop: 'label', control: 'text', defaultValue: '' },
       { kind: 'field', label: '占位符', prop: 'placeholder', control: 'text', defaultValue: '', placeholder: '请输入...' },
@@ -110,11 +117,13 @@ const COMPONENT_DEFINITIONS: Record<ComponentType, ComponentDefinition> = {
     type: 'InputNumber',
     label: '数字输入',
     icon: <NumberOutlined />,
-    createDefault: () =>
-      ({
+    createDefault: () => {
+      const { t } = getI18nInstance();
+      return {
         type: 'InputNumber',
-        props: { label: '数字输入', placeholder: '请输入数字' },
-      }) as Omit<ComponentSchema, 'id'>,
+        props: { label: t('component.inputNumberLabel'), placeholder: t('component.inputNumberPlaceholder') },
+      } as Omit<ComponentSchema, 'id'>;
+    },
     propertyPanel: [
       { kind: 'field', label: '标题 (Label)', prop: 'label', control: 'text', defaultValue: '' },
       { kind: 'field', label: '占位符', prop: 'placeholder', control: 'text', defaultValue: '', placeholder: '请输入...' },
@@ -128,11 +137,13 @@ const COMPONENT_DEFINITIONS: Record<ComponentType, ComponentDefinition> = {
     type: 'Select',
     label: '下拉选择',
     icon: <SelectOutlined />,
-    createDefault: () =>
-      ({
+    createDefault: () => {
+      const { t } = getI18nInstance();
+      return {
         type: 'Select',
-        props: { label: '下拉选择', placeholder: '请选择', options: [{ label: 'A', value: 'A' }] },
-      }) as Omit<ComponentSchema, 'id'>,
+        props: { label: t('component.selectLabel'), placeholder: t('component.selectPlaceholder'), options: [{ label: 'A', value: 'A' }] },
+      } as Omit<ComponentSchema, 'id'>;
+    },
     propertyPanel: [
       { kind: 'field', label: '标题 (Label)', prop: 'label', control: 'text', defaultValue: '' },
       { kind: 'field', label: '占位符', prop: 'placeholder', control: 'text', defaultValue: '', placeholder: '请输入...' },
@@ -147,11 +158,13 @@ const COMPONENT_DEFINITIONS: Record<ComponentType, ComponentDefinition> = {
     type: 'Radio',
     label: '单选框',
     icon: <CheckCircleOutlined />,
-    createDefault: () =>
-      ({
+    createDefault: () => {
+      const { t } = getI18nInstance();
+      return {
         type: 'Radio',
-        props: { label: '单选框', options: [{ label: 'A', value: 'A' }] },
-      }) as Omit<ComponentSchema, 'id'>,
+        props: { label: t('component.radioLabel'), options: [{ label: 'A', value: 'A' }] },
+      } as Omit<ComponentSchema, 'id'>;
+    },
     propertyPanel: [
       { kind: 'field', label: '标题 (Label)', prop: 'label', control: 'text', defaultValue: '' },
       { kind: 'booleanButton', label: '必填', prop: 'required', trueText: '✓ 必填', falseText: '非必填' },
@@ -165,11 +178,13 @@ const COMPONENT_DEFINITIONS: Record<ComponentType, ComponentDefinition> = {
     type: 'Checkbox',
     label: '多选框',
     icon: <CheckSquareOutlined />,
-    createDefault: () =>
-      ({
+    createDefault: () => {
+      const { t } = getI18nInstance();
+      return {
         type: 'Checkbox',
-        props: { label: '多选框', options: [{ label: 'A', value: 'A' }] },
-      }) as Omit<ComponentSchema, 'id'>,
+        props: { label: t('component.checkboxLabel'), options: [{ label: 'A', value: 'A' }] },
+      } as Omit<ComponentSchema, 'id'>;
+    },
     propertyPanel: [
       { kind: 'field', label: '标题 (Label)', prop: 'label', control: 'text', defaultValue: '' },
       { kind: 'booleanButton', label: '必填', prop: 'required', trueText: '✓ 必填', falseText: '非必填' },
@@ -183,11 +198,13 @@ const COMPONENT_DEFINITIONS: Record<ComponentType, ComponentDefinition> = {
     type: 'Switch',
     label: '开关',
     icon: <RocketOutlined />,
-    createDefault: () =>
-      ({
+    createDefault: () => {
+      const { t } = getI18nInstance();
+      return {
         type: 'Switch',
-        props: { label: '开关' },
-      }) as Omit<ComponentSchema, 'id'>,
+        props: { label: t('component.switchLabel') },
+      } as Omit<ComponentSchema, 'id'>;
+    },
     propertyPanel: [
       { kind: 'field', label: '标题 (Label)', prop: 'label', control: 'text', defaultValue: '' },
       { kind: 'field', label: '开启时文字', prop: 'checkedChildren', control: 'text', defaultValue: '' },
@@ -202,11 +219,13 @@ const COMPONENT_DEFINITIONS: Record<ComponentType, ComponentDefinition> = {
     type: 'DatePicker',
     label: '日期选择',
     icon: <CalendarOutlined />,
-    createDefault: () =>
-      ({
+    createDefault: () => {
+      const { t } = getI18nInstance();
+      return {
         type: 'DatePicker',
-        props: { label: '日期', placeholder: '请选择' },
-      }) as Omit<ComponentSchema, 'id'>,
+        props: { label: t('component.datePickerLabel'), placeholder: t('component.datePickerPlaceholder') },
+      } as Omit<ComponentSchema, 'id'>;
+    },
     propertyPanel: [
       { kind: 'field', label: '标题 (Label)', prop: 'label', control: 'text', defaultValue: '' },
       { kind: 'field', label: '占位符', prop: 'placeholder', control: 'text', defaultValue: '', placeholder: '请输入...' },
@@ -220,11 +239,13 @@ const COMPONENT_DEFINITIONS: Record<ComponentType, ComponentDefinition> = {
     type: 'TimePicker',
     label: '时间选择',
     icon: <ClockCircleOutlined />,
-    createDefault: () =>
-      ({
+    createDefault: () => {
+      const { t } = getI18nInstance();
+      return {
         type: 'TimePicker',
-        props: { label: '时间', placeholder: '请选择' },
-      }) as Omit<ComponentSchema, 'id'>,
+        props: { label: t('component.timePickerLabel'), placeholder: t('component.timePickerPlaceholder') },
+      } as Omit<ComponentSchema, 'id'>;
+    },
     propertyPanel: [
       { kind: 'field', label: '标题 (Label)', prop: 'label', control: 'text', defaultValue: '' },
       { kind: 'field', label: '占位符', prop: 'placeholder', control: 'text', defaultValue: '', placeholder: '请输入...' },
@@ -238,11 +259,13 @@ const COMPONENT_DEFINITIONS: Record<ComponentType, ComponentDefinition> = {
     type: 'Button',
     label: '按钮',
     icon: <BuildOutlined />,
-    createDefault: () =>
-      ({
+    createDefault: () => {
+      const { t } = getI18nInstance();
+      return {
         type: 'Button',
-        props: { content: '提交', type: 'primary', htmlType: 'submit' },
-      }) as Omit<ComponentSchema, 'id'>,
+        props: { content: t('component.buttonText'), type: 'primary', htmlType: 'submit' },
+      } as Omit<ComponentSchema, 'id'>;
+    },
     propertyPanel: [
       { kind: 'builtin', id: 'button' },
       { kind: 'builtin', id: 'responsive' },
@@ -258,4 +281,3 @@ export function getComponentDefinition(type: ComponentType): ComponentDefinition
 export function getAllComponentDefinitions(): ComponentDefinition[] {
   return Object.values(COMPONENT_DEFINITIONS);
 }
-
