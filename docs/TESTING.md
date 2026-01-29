@@ -8,8 +8,8 @@
 
 | 测试类型 | 测试数量 | 覆盖范围 |
 |---------|---------|---------|
-| 单元测试 | 53+ | Store、工具函数、表单校验 |
-| E2E测试 | 20+ | 基础操作、拖拽、预览、性能 |
+| 单元测试 | 99 | Store、组件树工具函数、表达式安全、i18n、API、后端中间件等 |
+| E2E测试 | 21 | 基础操作、拖拽、预览、性能 |
 | 性能基准测试 | 10+ | 添加、删除、查找、渲染 |
 
 ## 🧪 单元测试
@@ -32,14 +32,20 @@ npm run test:run
 ```
 src/test/
 ├── setup.ts                    # 测试环境配置
-├── store.test.ts              # Store状态管理测试（34个测试）
-├── componentHelpers.test.ts   # 组件辅助函数测试（19个测试）
-└── performance.bench.ts       # 性能基准测试
+├── store.test.ts              # Zustand store 核心行为
+├── componentHelpers.test.ts   # 组件树工具函数
+├── expression.test.ts         # visibleOn 表达式安全执行
+├── i18n.test.tsx              # i18n 映射与默认文案
+├── api.test.ts                # API service（token/错误处理等）
+├── middleware.test.ts         # 后端中间件（rate-limit/logger 等）
+├── perfBudget.test.ts         # 性能预算（CI 防回归）
+├── useSWR.test.ts             # useSWR 缓存与并发行为
+└── performance.bench.ts       # 性能基准测试（vitest bench）
 ```
 
 ### 测试覆盖范围
 
-#### Store测试 (34个测试用例)
+#### Store 测试
 - ✅ 组件CRUD操作
 - ✅ 多选和全选
 - ✅ 拖拽排序
@@ -49,12 +55,18 @@ src/test/
 - ✅ 表单校验（7种规则）
 - ✅ 自定义模板
 
-#### 组件辅助函数测试 (19个测试用例)
+#### 组件树工具函数测试
 - ✅ 组件查找
 - ✅ 组件扁平化
 - ✅ 父组件查找
 - ✅ 后代判断
 - ✅ 选择器函数
+
+#### 其他关键测试
+- ✅ `visibleOn` 表达式安全解析与执行
+- ✅ i18n 文案映射与默认值
+- ✅ API 请求层错误处理（401/网络错误等）
+- ✅ 性能预算（关键路径防回归）
 
 ## 📊 性能基准测试
 
@@ -216,18 +228,21 @@ npm run lighthouse
 
 ### GitHub Actions
 
-项目配置了自动化测试流程：
+项目配置了自动化工作流：
 
 ```yaml
+# .github/workflows/ci.yml
+# 每次 Push/PR：lint + unit tests + build
+
 # .github/workflows/lighthouse-ci.yml
-# 每次Push或PR时自动运行Lighthouse测试
+# 每次 Push/PR：运行 Lighthouse CI 并上传报告
 ```
 
 功能：
-- 自动构建项目
-- 运行Lighthouse性能测试
-- 上传测试报告（保留30天）
-- PR中显示性能评分
+- 代码质量检查（ESLint）
+- 单元测试（含性能预算用例，防止关键路径回归）
+- 构建检查（Vite build）
+- Lighthouse CI：生成报告并上传 artifacts（`.lighthouseci/`，保留 30 天）
 
 ## 📈 性能监控
 

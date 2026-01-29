@@ -159,7 +159,7 @@ low-code-form/
 ├── docs/                   # 文档
 │   ├── PERFORMANCE.md     # 性能报告
 │   ├── TESTING.md         # 测试指南
-│   └── OPTIMIZATION_SUMMARY.md  # 优化总结
+│   └── OPTIMIZATIONS.md  # 优化总结
 ├── .github/
 │   └── workflows/         # GitHub Actions
 └── playwright.config.ts   # Playwright配置
@@ -240,7 +240,7 @@ Lighthouse CI        ← 自动化
 
 - 📖 [测试指南](./docs/TESTING.md) - 完整的测试使用说明
 - 📊 [性能报告](./docs/PERFORMANCE.md) - 详细的性能数据和优化措施
-- ✨ [优化总结](./docs/OPTIMIZATION_SUMMARY.md) - 本次优化的完整说明
+- ✨ [优化总结](./docs/OPTIMIZATIONS.md) - 本次优化的完整说明
 - 🚀 [快速开始](./QUICK_START.md) - 5分钟上手指南
 - 📋 [更新日志](./CHANGELOG.md) - 版本更新记录
 
