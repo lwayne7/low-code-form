@@ -5,6 +5,7 @@ import { useStore } from '../../store';
 import { getRenderTrackingSnapshot, resetRenderTracking } from './performanceTracking';
 import type { TraceEvent } from '../../utils/tracing';
 import { clearTraces, getTraceSnapshot, subscribeTrace } from '../../utils/tracing';
+import { useI18n } from '../../i18n';
 
 const { Text, Title } = Typography;
 
@@ -35,6 +36,7 @@ interface PerformancePanelProps {
 }
 
 export const PerformancePanel: React.FC<PerformancePanelProps> = ({ open, onClose }) => {
+  const { t } = useI18n();
   const [metrics, setMetrics] = useState<PerformanceMetrics>({
     fps: 60,
     renderCount: 0,
@@ -148,7 +150,7 @@ export const PerformancePanel: React.FC<PerformancePanelProps> = ({ open, onClos
       memoryHistory: [],
       timestamp: Date.now(),
     });
-    message.success('性能统计已重置');
+    message.success(t('perf.resetSuccess'));
   };
 
   // 性能测试快捷操作
@@ -160,7 +162,7 @@ export const PerformancePanel: React.FC<PerformancePanelProps> = ({ open, onClos
       const counts = { small: 100, medium: 500, large: 1000 };
       const count = counts[testType];
       
-      message.loading(`正在添加 ${count} 个组件...`, 0);
+      message.loading(t('perf.addingComponents', { count }), 0);
       
       const startTime = performance.now();
       
@@ -177,7 +179,7 @@ export const PerformancePanel: React.FC<PerformancePanelProps> = ({ open, onClos
       const duration = Math.round(endTime - startTime);
       
       message.destroy();
-      message.success(`性能测试完成！添加 ${count} 个组件耗时 ${duration}ms`, 3);
+      message.success(t('perf.testComplete', { count, duration }), 3);
       
       console.log(`📊 性能测试结果:`, {
         组件数量: count,
@@ -187,7 +189,7 @@ export const PerformancePanel: React.FC<PerformancePanelProps> = ({ open, onClos
         当前内存: metrics.memoryUsage ? `${metrics.memoryUsage}MB` : 'N/A',
       });
     } catch (error) {
-      message.error('性能测试失败');
+      message.error(t('perf.testFailed'));
       console.error(error);
     } finally {
       setIsRunningTest(false);
@@ -231,7 +233,7 @@ export const PerformancePanel: React.FC<PerformancePanelProps> = ({ open, onClos
     a.click();
     URL.revokeObjectURL(url);
     
-    message.success('性能报告已导出');
+    message.success(t('perf.exportSuccess'));
   };
 
   // FPS 颜色判断
@@ -266,7 +268,7 @@ export const PerformancePanel: React.FC<PerformancePanelProps> = ({ open, onClos
       title={
         <Space>
           <DashboardOutlined style={{ color: '#1677ff' }} />
-          <span>性能监控面板</span>
+          <span>{t('perf.title')}</span>
           <Badge status={isMonitoring ? 'processing' : 'default'} />
         </Space>
       }
@@ -276,18 +278,18 @@ export const PerformancePanel: React.FC<PerformancePanelProps> = ({ open, onClos
       width={360}
       extra={
         <Space>
-          <Tooltip title="导出报告">
+          <Tooltip title={t('perf.exportReport')}>
             <Button type="text" icon={<DownloadOutlined />} size="small" onClick={exportReport} />
           </Tooltip>
-          <Tooltip title="重置统计">
+          <Tooltip title={t('perf.reset')}>
             <Button type="text" icon={<ReloadOutlined />} size="small" onClick={handleReset} />
           </Tooltip>
-          <Switch 
-            size="small" 
-            checked={isMonitoring} 
+          <Switch
+            size="small"
+            checked={isMonitoring}
             onChange={setIsMonitoring}
-            checkedChildren="监控中"
-            unCheckedChildren="已暂停"
+            checkedChildren={t('perf.monitoring')}
+            unCheckedChildren={t('perf.paused')}
           />
         </Space>
       }
@@ -297,12 +299,12 @@ export const PerformancePanel: React.FC<PerformancePanelProps> = ({ open, onClos
         <Col span={12}>
           <Card size="small">
             <Statistic
-              title="当前 FPS"
+              title={t('perf.currentFps')}
               value={metrics.fps}
               valueStyle={{ color: getFPSColor(metrics.fps), fontSize: 28, fontWeight: 'bold' }}
               suffix={
                 <div style={{ fontSize: 12, color: '#999', fontWeight: 'normal' }}>
-                  {metrics.fps >= 55 ? '流畅' : metrics.fps >= 30 ? '一般' : '卡顿'}
+                  {metrics.fps >= 55 ? t('perf.smooth') : metrics.fps >= 30 ? t('perf.normal') : t('perf.laggy')}
                 </div>
               }
             />
@@ -318,26 +320,26 @@ export const PerformancePanel: React.FC<PerformancePanelProps> = ({ open, onClos
         <Col span={12}>
           <Card size="small">
             <Statistic
-              title="平均 FPS"
+              title={t('perf.avgFps')}
               value={averageFPS}
               valueStyle={{ color: getFPSColor(averageFPS), fontSize: 28, fontWeight: 'bold' }}
               suffix={
                 <div style={{ fontSize: 12, color: '#999', fontWeight: 'normal' }}>
-                  稳定性: {fpsStability.toFixed(1)}
+                  {t('perf.stability')}: {fpsStability.toFixed(1)}
                 </div>
               }
             />
             <div style={{ fontSize: 11, color: '#999', marginTop: 4 }}>
-              {metrics.fpsHistory.length > 0 
-                ? `范围: ${Math.min(...metrics.fpsHistory)}-${Math.max(...metrics.fpsHistory)}`
-                : '暂无数据'}
+              {metrics.fpsHistory.length > 0
+                ? `${t('perf.range')}: ${Math.min(...metrics.fpsHistory)}-${Math.max(...metrics.fpsHistory)}`
+                : t('perf.noData')}
             </div>
           </Card>
         </Col>
         <Col span={12}>
           <Card size="small">
             <Statistic
-              title="组件数量"
+              title={t('perf.componentCount')}
               value={componentCount}
               prefix={<RocketOutlined />}
               valueStyle={{ fontSize: 24 }}
@@ -347,7 +349,7 @@ export const PerformancePanel: React.FC<PerformancePanelProps> = ({ open, onClos
         <Col span={12}>
           <Card size="small">
             <Statistic
-              title="渲染次数"
+              title={t('perf.renderCount')}
               value={metrics.renderCount}
               valueStyle={{ fontSize: 24 }}
             />
@@ -361,20 +363,20 @@ export const PerformancePanel: React.FC<PerformancePanelProps> = ({ open, onClos
       <div style={{ marginBottom: 24 }}>
         <Title level={5}>
           <ClockCircleOutlined style={{ marginRight: 8 }} />
-          渲染统计
+          {t('perf.renderStats')}
         </Title>
         <Space direction="vertical" style={{ width: '100%' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <Text>总渲染次数</Text>
+            <Text>{t('perf.totalRenders')}</Text>
             <Tag color="blue">{metrics.renderCount}</Tag>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <Text>长任务次数 (&gt;50ms)</Text>
+            <Text>{t('perf.longTasks')}</Text>
             <Tag color={metrics.longTasks > 0 ? 'orange' : 'green'}>{metrics.longTasks}</Tag>
           </div>
           {metrics.memoryUsage !== undefined && (
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <Text>内存使用</Text>
+              <Text>{t('perf.memoryUsage')}</Text>
               <Tag color={metrics.memoryUsage > 100 ? 'orange' : 'green'}>{metrics.memoryUsage} MB</Tag>
             </div>
           )}
@@ -385,16 +387,16 @@ export const PerformancePanel: React.FC<PerformancePanelProps> = ({ open, onClos
 
       {/* 组件渲染排行 */}
       <div>
-        <Title level={5}>🔥 高频渲染组件 Top 5</Title>
+        <Title level={5}>🔥 {t('perf.topRenders')}</Title>
         {topRenderComponents.length === 0 ? (
-          <Text type="secondary">暂无数据，请操作页面触发渲染</Text>
+          <Text type="secondary">{t('perf.noRenderData')}</Text>
         ) : (
           <Space direction="vertical" style={{ width: '100%' }}>
             {topRenderComponents.map(([name, count], index) => (
-              <div 
-                key={name} 
-                style={{ 
-                  display: 'flex', 
+              <div
+                key={name}
+                style={{
+                  display: 'flex',
                   justifyContent: 'space-between',
                   padding: '4px 8px',
                   background: index === 0 ? '#fff7e6' : '#fafafa',
@@ -402,17 +404,17 @@ export const PerformancePanel: React.FC<PerformancePanelProps> = ({ open, onClos
                 }}
               >
                 <Text>
-                  <span style={{ 
-                    display: 'inline-block', 
-                    width: 20, 
-                    color: index === 0 ? '#fa8c16' : '#999' 
+                  <span style={{
+                    display: 'inline-block',
+                    width: 20,
+                    color: index === 0 ? '#fa8c16' : '#999'
                   }}>
                     {index + 1}.
                   </span>
                   {name}
                 </Text>
                 <Tag color={count > 10 ? 'red' : count > 5 ? 'orange' : 'default'}>
-                  {count}次
+                  {count}{t('perf.times')}
                 </Tag>
               </div>
             ))}
@@ -423,48 +425,48 @@ export const PerformancePanel: React.FC<PerformancePanelProps> = ({ open, onClos
       <Divider />
 
       {/* 性能测试 */}
-      <Collapse 
-        ghost 
+      <Collapse
+        ghost
         items={[
           {
             key: '1',
             label: (
               <Space>
                 <ExperimentOutlined />
-                <Text strong>性能压力测试</Text>
+                <Text strong>{t('perf.stressTest')}</Text>
               </Space>
             ),
             children: (
               <Space direction="vertical" style={{ width: '100%' }}>
                 <Text type="secondary" style={{ fontSize: 12 }}>
-                  快速测试不同数据量下的性能表现
+                  {t('perf.stressTestDesc')}
                 </Text>
                 <Space wrap style={{ width: '100%' }}>
-                  <Button 
-                    size="small" 
+                  <Button
+                    size="small"
                     onClick={() => runPerformanceTest('small')}
                     loading={isRunningTest}
                   >
-                    100 组件
+                    {t('perf.components100')}
                   </Button>
-                  <Button 
-                    size="small" 
+                  <Button
+                    size="small"
                     onClick={() => runPerformanceTest('medium')}
                     loading={isRunningTest}
                   >
-                    500 组件
+                    {t('perf.components500')}
                   </Button>
-                  <Button 
-                    size="small" 
+                  <Button
+                    size="small"
                     type="primary"
                     onClick={() => runPerformanceTest('large')}
                     loading={isRunningTest}
                   >
-                    1000 组件
+                    {t('perf.components1000')}
                   </Button>
                 </Space>
                 <Text type="warning" style={{ fontSize: 11 }}>
-                  ⚠️ 大规模测试会添加大量组件到画布
+                  ⚠️ {t('perf.stressTestWarning')}
                 </Text>
               </Space>
             ),
@@ -474,7 +476,7 @@ export const PerformancePanel: React.FC<PerformancePanelProps> = ({ open, onClos
             label: (
               <Space>
                 <ClockCircleOutlined />
-                <Text strong>Tracing（拖拽/生成器）</Text>
+                <Text strong>{t('perf.tracing')}</Text>
                 <Tag>{traces.length}</Tag>
               </Space>
             ),
@@ -482,15 +484,15 @@ export const PerformancePanel: React.FC<PerformancePanelProps> = ({ open, onClos
               <Space direction="vertical" style={{ width: '100%' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <Text type="secondary" style={{ fontSize: 12 }}>
-                    最近 {Math.min(20, traces.length)} 条（自动采样关键交互耗时）
+                    {t('perf.recentTraces', { count: Math.min(20, traces.length) })}
                   </Text>
                   <Button size="small" onClick={clearTraces} disabled={traces.length === 0}>
-                    清空
+                    {t('perf.clear')}
                   </Button>
                 </div>
                 {traces.length === 0 ? (
                   <Text type="secondary" style={{ fontSize: 12 }}>
-                    暂无数据：尝试拖拽组件或导出代码
+                    {t('perf.noTracingData')}
                   </Text>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -540,29 +542,29 @@ export const PerformancePanel: React.FC<PerformancePanelProps> = ({ open, onClos
       />
 
       {/* 优化建议 */}
-      <div style={{ 
-        background: '#f6ffed', 
-        border: '1px solid #b7eb8f', 
-        borderRadius: 6, 
-        padding: 12 
+      <div style={{
+        background: '#f6ffed',
+        border: '1px solid #b7eb8f',
+        borderRadius: 6,
+        padding: 12
       }}>
         <Title level={5} style={{ color: '#52c41a', margin: 0, marginBottom: 8 }}>
-          💡 优化建议
+          💡 {t('perf.optimizeTips')}
         </Title>
         <ul style={{ margin: 0, paddingLeft: 20, fontSize: 12, color: '#666' }}>
-          <li>组件 &gt; 50 时自动启用虚拟滚动</li>
-          <li>使用 React.memo 减少不必要渲染</li>
-          <li>useMemo/useCallback 缓存计算结果</li>
-          <li>Zustand selector 精确订阅状态</li>
-          <li>防抖/节流优化高频操作</li>
+          <li>{t('perf.tip1')}</li>
+          <li>{t('perf.tip2')}</li>
+          <li>{t('perf.tip3')}</li>
+          <li>{t('perf.tip4')}</li>
+          <li>{t('perf.tip5')}</li>
           {metrics.fps < 30 && (
             <li style={{ color: '#ff4d4f' }}>
-              <strong>当前FPS较低，建议减少组件数量或优化渲染</strong>
+              <strong>{t('perf.lowFpsWarning')}</strong>
             </li>
           )}
           {metrics.longTasks > 10 && (
             <li style={{ color: '#fa8c16' }}>
-              <strong>检测到 {metrics.longTasks} 次长任务，可能影响交互响应</strong>
+              <strong>{t('perf.longTaskWarning', { count: metrics.longTasks })}</strong>
             </li>
           )}
         </ul>

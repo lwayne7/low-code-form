@@ -1,6 +1,7 @@
 import React from 'react';
 import { Form, Input, Select, Divider, Typography } from 'antd';
 import type { ComponentSchema } from '../../types';
+import { useI18n } from '@/i18n';
 
 const { Text } = Typography;
 
@@ -19,64 +20,66 @@ export const ButtonConfig: React.FC<ButtonConfigProps> = ({
   component,
   updateProps,
 }) => {
+  const { t } = useI18n();
+
   return (
     <>
-      <Form.Item label="按钮文字">
+      <Form.Item label={t('propertyPanel.buttonText')}>
         <Input
           value={getComponentProp(component, 'content', '')}
           onChange={(e) => updateProps({ content: e.target.value })}
         />
       </Form.Item>
-      <Form.Item label="按钮类型">
+      <Form.Item label={t('propertyPanel.buttonType')}>
         <Select
           value={getComponentProp(component, 'type', 'default')}
           onChange={(val) => updateProps({ type: val as 'primary' | 'default' | 'dashed' | 'text' | 'link' })}
           options={[
-            { label: '主要按钮', value: 'primary' },
-            { label: '默认按钮', value: 'default' },
-            { label: '虚线按钮', value: 'dashed' },
-            { label: '文字按钮', value: 'text' },
-            { label: '链接按钮', value: 'link' },
+            { label: t('propertyPanel.primaryButton'), value: 'primary' },
+            { label: t('propertyPanel.defaultButton'), value: 'default' },
+            { label: t('propertyPanel.dashedButton'), value: 'dashed' },
+            { label: t('propertyPanel.textButton'), value: 'text' },
+            { label: t('propertyPanel.linkButton'), value: 'link' },
           ]}
         />
       </Form.Item>
-      <Form.Item label="HTML 类型">
+      <Form.Item label={t('propertyPanel.htmlType')}>
         <Select
           value={getComponentProp(component, 'htmlType', 'button')}
           onChange={(val) => updateProps({ htmlType: val as 'button' | 'submit' | 'reset' })}
           options={[
-            { label: '普通按钮', value: 'button' },
-            { label: '提交按钮', value: 'submit' },
-            { label: '重置按钮', value: 'reset' },
+            { label: t('propertyPanel.normalButton'), value: 'button' },
+            { label: t('propertyPanel.submitButton'), value: 'submit' },
+            { label: t('propertyPanel.resetButton'), value: 'reset' },
           ]}
         />
       </Form.Item>
-      
+
       {/* 表单提交配置 */}
       {getComponentProp<string>(component, 'htmlType', 'button') === 'submit' && (
         <>
           <Divider style={{ margin: '12px 0' }} dashed />
-          <Text strong style={{ display: 'block', marginBottom: 12 }}>提交配置</Text>
-          <Form.Item label="提交地址">
+          <Text strong style={{ display: 'block', marginBottom: 12 }}>{t('propertyPanel.submitConfig')}</Text>
+          <Form.Item label={t('propertyPanel.submitUrl')}>
             <Input
               value={getComponentProp<{ action?: string }>(component, 'submitConfig', {}).action || ''}
-              onChange={(e) => updateProps({ 
-                submitConfig: { 
-                  ...getComponentProp(component, 'submitConfig', {}), 
-                  action: e.target.value 
-                } 
+              onChange={(e) => updateProps({
+                submitConfig: {
+                  ...getComponentProp(component, 'submitConfig', {}),
+                  action: e.target.value
+                }
               })}
-              placeholder="例如：/api/submit"
+              placeholder={t('propertyPanel.submitUrlPlaceholder')}
             />
           </Form.Item>
-          <Form.Item label="请求方法">
+          <Form.Item label={t('propertyPanel.requestMethod')}>
             <Select
               value={getComponentProp<{ method?: string }>(component, 'submitConfig', {}).method || 'POST'}
-              onChange={(val) => updateProps({ 
-                submitConfig: { 
-                  ...getComponentProp(component, 'submitConfig', {}), 
+              onChange={(val) => updateProps({
+                submitConfig: {
+                  ...getComponentProp(component, 'submitConfig', {}),
                   method: val as 'GET' | 'POST' | 'PUT' | 'DELETE'
-                } 
+                }
               })}
               options={[
                 { label: 'GET', value: 'GET' },
@@ -86,40 +89,40 @@ export const ButtonConfig: React.FC<ButtonConfigProps> = ({
               ]}
             />
           </Form.Item>
-          <Form.Item label="成功提示">
+          <Form.Item label={t('propertyPanel.successMessage')}>
             <Input
               value={getComponentProp<{ successMessage?: string }>(component, 'submitConfig', {}).successMessage || ''}
-              onChange={(e) => updateProps({ 
-                submitConfig: { 
-                  ...getComponentProp(component, 'submitConfig', {}), 
-                  successMessage: e.target.value 
-                } 
+              onChange={(e) => updateProps({
+                submitConfig: {
+                  ...getComponentProp(component, 'submitConfig', {}),
+                  successMessage: e.target.value
+                }
               })}
-              placeholder="提交成功！"
+              placeholder={t('propertyPanel.successMessagePlaceholder')}
             />
           </Form.Item>
-          <Form.Item label="失败提示">
+          <Form.Item label={t('propertyPanel.errorMessage')}>
             <Input
               value={getComponentProp<{ errorMessage?: string }>(component, 'submitConfig', {}).errorMessage || ''}
-              onChange={(e) => updateProps({ 
-                submitConfig: { 
-                  ...getComponentProp(component, 'submitConfig', {}), 
-                  errorMessage: e.target.value 
-                } 
+              onChange={(e) => updateProps({
+                submitConfig: {
+                  ...getComponentProp(component, 'submitConfig', {}),
+                  errorMessage: e.target.value
+                }
               })}
-              placeholder="提交失败，请重试"
+              placeholder={t('propertyPanel.errorMessagePlaceholder')}
             />
           </Form.Item>
-          <Form.Item label="成功跳转">
+          <Form.Item label={t('propertyPanel.successRedirect')}>
             <Input
               value={getComponentProp<{ redirectUrl?: string }>(component, 'submitConfig', {}).redirectUrl || ''}
-              onChange={(e) => updateProps({ 
-                submitConfig: { 
-                  ...getComponentProp(component, 'submitConfig', {}), 
-                  redirectUrl: e.target.value 
-                } 
+              onChange={(e) => updateProps({
+                submitConfig: {
+                  ...getComponentProp(component, 'submitConfig', {}),
+                  redirectUrl: e.target.value
+                }
               })}
-              placeholder="例如：/success"
+              placeholder={t('propertyPanel.successRedirectPlaceholder')}
             />
           </Form.Item>
         </>

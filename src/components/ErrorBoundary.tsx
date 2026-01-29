@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import type { ErrorInfo, ReactNode } from 'react';
 import { Button, Result, Typography, Space, message } from 'antd';
 import { ReloadOutlined, CopyOutlined, BugOutlined } from '@ant-design/icons';
+import { useI18n } from '@/i18n';
 
 const { Paragraph, Text } = Typography;
 
@@ -40,6 +41,7 @@ interface Props {
   children: ReactNode;
   fallback?: ReactNode;
   onError?: (error: Error, errorInfo: ErrorInfo) => void;
+  t?: (key: string, params?: Record<string, string | number>) => string;
 }
 
 interface State {
@@ -90,19 +92,20 @@ export class ErrorBoundary extends Component<Props, State> {
 
   handleCopyError = () => {
     const { error, errorInfo, errorId } = this.state;
+    const t = this.props.t || ((key: string) => key);
     const errorText = `
-错误ID: ${errorId}
-错误信息: ${error?.message}
-错误堆栈: ${error?.stack}
-组件堆栈: ${errorInfo?.componentStack}
+${t('errorBoundary.errorId')}: ${errorId}
+${t('errorBoundary.errorMessage')}: ${error?.message}
+${t('errorBoundary.errorStack')}: ${error?.stack}
+Component Stack: ${errorInfo?.componentStack}
 URL: ${window.location.href}
-时间: ${new Date().toISOString()}
+Time: ${new Date().toISOString()}
     `.trim();
 
     navigator.clipboard.writeText(errorText).then(() => {
-      message.success('错误信息已复制到剪贴板');
+      message.success(t('error.copied'));
     }).catch(() => {
-      message.error('复制失败，请手动复制');
+      message.error(t('error.copyFailed'));
     });
   };
 
@@ -113,58 +116,59 @@ URL: ${window.location.href}
       }
 
       const { error, errorInfo, errorId } = this.state;
+      const t = this.props.t || ((key: string) => key);
 
       return (
-        <div style={{ 
-          height: '100vh', 
-          display: 'flex', 
-          alignItems: 'center', 
+        <div style={{
+          height: '100vh',
+          display: 'flex',
+          alignItems: 'center',
           justifyContent: 'center',
           background: '#f5f5f5'
         }}>
           <Result
             status="error"
-            title="页面出错了"
+            title={t('errorBoundary.title')}
             subTitle={
               <Space direction="vertical" size={4}>
-                <Text>抱歉，应用遇到了一些问题。您可以尝试刷新页面或重置应用。</Text>
+                <Text>{t('errorBoundary.description')}</Text>
                 {errorId && (
                   <Text type="secondary" style={{ fontSize: 12 }}>
-                    错误ID: {errorId}
+                    {t('errorBoundary.errorId')}: {errorId}
                   </Text>
                 )}
               </Space>
             }
             extra={[
-              <Button 
-                key="reload" 
-                type="primary" 
+              <Button
+                key="reload"
+                type="primary"
                 icon={<ReloadOutlined />}
                 onClick={this.handleReload}
               >
-                刷新页面
+                {t('errorBoundary.refresh')}
               </Button>,
-              <Button 
-                key="copy" 
+              <Button
+                key="copy"
                 icon={<CopyOutlined />}
                 onClick={this.handleCopyError}
               >
-                复制错误信息
+                {t('errorBoundary.copyError')}
               </Button>,
-              <Button 
-                key="reset" 
+              <Button
+                key="reset"
                 danger
                 onClick={this.handleReset}
               >
-                重置应用
+                {t('errorBoundary.reset')}
               </Button>,
             ]}
           >
             {import.meta.env.DEV && error && (
-              <div style={{ 
-                marginTop: 24, 
-                padding: 16, 
-                background: '#fff1f0', 
+              <div style={{
+                marginTop: 24,
+                padding: 16,
+                background: '#fff1f0',
                 borderRadius: 8,
                 textAlign: 'left',
                 maxWidth: 600,
@@ -172,10 +176,10 @@ URL: ${window.location.href}
               }}>
                 <Paragraph>
                   <BugOutlined style={{ marginRight: 8, color: '#cf1322' }} />
-                  <Text strong style={{ color: '#cf1322' }}>错误详情（仅开发环境显示）：</Text>
+                  <Text strong style={{ color: '#cf1322' }}>{t('errorBoundary.details')}：</Text>
                 </Paragraph>
-                <pre style={{ 
-                  fontSize: 12, 
+                <pre style={{
+                  fontSize: 12,
                   color: '#666',
                   whiteSpace: 'pre-wrap',
                   wordBreak: 'break-all',
@@ -210,4 +214,14 @@ export function withErrorBoundary<P extends object>(
       </ErrorBoundary>
     );
   };
+}
+
+// 带 i18n 的 ErrorBoundary 包装组件
+export function ErrorBoundaryWithI18n({ children, fallback, onError }: Omit<Props, 't'>) {
+  const { t } = useI18n();
+  return (
+    <ErrorBoundary fallback={fallback} onError={onError} t={t as Props['t']}>
+      {children}
+    </ErrorBoundary>
+  );
 }

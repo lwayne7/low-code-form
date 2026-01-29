@@ -1685,8 +1685,84 @@
   [data-theme="auto"] .ant-collapse-header {
     color: #e6e6e6 !important;
   }
-  
+
   [data-theme="auto"] .ant-form-item-label > label {
     color: #e6e6e6 !important;
+  }
+}
+
+/* ============================================
+   PropertyPanel 深色模式适配
+   ============================================ */
+
+/* 手动深色模式 */
+[data-theme="dark"] .ant-layout-sider-children {
+  color: #e6e6e6;
+}
+
+[data-theme="dark"] .ant-layout-sider .ant-typography {
+  color: #e6e6e6 !important;
+}
+
+[data-theme="dark"] .ant-layout-sider .ant-typography.ant-typography-secondary {
+  color: #a3a3a3 !important;
+}
+
+[data-theme="dark"] .ant-layout-sider .ant-tag {
+  background: #262626;
+  border-color: #404040;
+  color: #e6e6e6;
+}
+
+[data-theme="dark"] .ant-layout-sider .ant-divider {
+  border-color: #404040;
+}
+
+[data-theme="dark"] .ant-layout-sider .ant-divider-inner-text {
+  color: #a3a3a3;
+}
+
+/* PropertyPanel 内的辅助文字 */
+[data-theme="dark"] .ant-layout-sider div[style*="color: #666"],
+[data-theme="dark"] .ant-layout-sider div[style*="color:#666"] {
+  color: #a3a3a3 !important;
+}
+
+/* PropertyPanel 内的信息区块背景 */
+[data-theme="dark"] .ant-layout-sider div[style*="background: #f9fafb"],
+[data-theme="dark"] .ant-layout-sider div[style*="background:#f9fafb"],
+[data-theme="dark"] .ant-layout-sider div[style*="background: #fafafa"],
+[data-theme="dark"] .ant-layout-sider div[style*="background:#fafafa"],
+[data-theme="dark"] .ant-layout-sider div[style*="background: #fff"],
+[data-theme="dark"] .ant-layout-sider div[style*="background:#fff"] {
+  background: #262626 !important;
+}
+
+/* 自动模式深色支持 */
+@media (prefers-color-scheme: dark) {
+  [data-theme="auto"] .ant-layout-sider-children {
+    color: #e6e6e6;
+  }
+
+  [data-theme="auto"] .ant-layout-sider .ant-typography {
+    color: #e6e6e6 !important;
+  }
+
+  [data-theme="auto"] .ant-layout-sider .ant-typography.ant-typography-secondary {
+    color: #a3a3a3 !important;
+  }
+
+  [data-theme="auto"] .ant-layout-sider .ant-tag {
+    background: #262626;
+    border-color: #404040;
+    color: #e6e6e6;
+  }
+
+  [data-theme="auto"] .ant-layout-sider .ant-divider {
+    border-color: #404040;
+  }
+
+  [data-theme="auto"] .ant-layout-sider .ant-divider-inner-text {
+    color: #a3a3a3;
   }
 }

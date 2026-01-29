@@ -4,6 +4,7 @@ import type { Dayjs } from 'dayjs';
 import type { ComponentSchema } from '../types';
 import { useStore } from '../store';
 import { evaluateConditionSafe } from '../utils/expression';
+import { useI18n } from '@/i18n';
 
 interface CanvasFormItemProps {
   component: ComponentSchema;
@@ -28,6 +29,7 @@ export const CanvasFormItem: React.FC<CanvasFormItemProps> = React.memo(({ compo
   const validationError = useStore((state) => state.validationErrors[component.id]);
   const formValues = useStore((state) => state.formValues);
   const setFormValue = useStore((state) => state.setFormValue);
+  const { t } = useI18n();
   const validateField = useStore((state) => state.validateField);
 
   // 处理 visibleOn 条件
@@ -57,7 +59,7 @@ export const CanvasFormItem: React.FC<CanvasFormItemProps> = React.memo(({ compo
         fontSize: 12,
         marginBottom: 16
       }}>
-        🔗 条件隐藏: {component.props.visibleOn}
+        {t('canvas.conditionalHidden', { condition: component.props.visibleOn || '' })}
       </div>
     );
   }
@@ -194,7 +196,7 @@ export const CanvasFormItem: React.FC<CanvasFormItemProps> = React.memo(({ compo
           borderRadius: '0 0 0 4px',
           zIndex: 5,
         }}>
-          🔒 已锁定
+          {t('canvas.locked')}
         </div>
       )}
       <Form.Item 

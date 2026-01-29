@@ -2,10 +2,11 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { nanoid } from 'nanoid';
 import type { ComponentSchema, ComponentType } from './types';
+import { getI18nInstance } from './i18n';
 
 // 导入辅助函数
-import { 
-  findComponentById, 
+import {
+  findComponentById,
   flattenComponents,
   findParentInfo,
 } from './utils/componentHelpers';
@@ -239,7 +240,7 @@ export const useStore = create<State>()(
 
         const entry: HistoryEntry = {
           kind: 'insert',
-          label: `添加 ${type}`,
+          label: getI18nInstance().t('history.add', { type }),
           timestamp: Date.now(),
           inserts: [
             {
@@ -296,7 +297,7 @@ export const useStore = create<State>()(
 
         const entry: HistoryEntry = {
           kind: 'updateProps',
-          label: '修改组件属性',
+          label: getI18nInstance().t('history.update'),
           timestamp: Date.now(),
           targetId: id,
           prevProps: result.prevProps,
@@ -321,7 +322,7 @@ export const useStore = create<State>()(
 
         const entry: HistoryEntry = {
           kind: 'delete',
-          label: idsToDelete.length > 1 ? `删除 ${idsToDelete.length} 个组件` : '删除组件',
+          label: idsToDelete.length > 1 ? getI18nInstance().t('history.deleteMultiple', { count: idsToDelete.length }) : getI18nInstance().t('history.delete'),
           timestamp: Date.now(),
           removes: removeResult.removed,
         };
@@ -351,7 +352,7 @@ export const useStore = create<State>()(
 
         const entry: HistoryEntry = {
           kind: 'move',
-          label: '调整组件顺序',
+          label: getI18nInstance().t('history.reorder'),
           timestamp: Date.now(),
           targetId: activeId,
           from: { parentId: from.parentId, index: from.index },
@@ -383,7 +384,7 @@ export const useStore = create<State>()(
 
         const entry: HistoryEntry = {
           kind: 'move',
-          label: '移动组件',
+          label: getI18nInstance().t('history.move'),
           timestamp: Date.now(),
           targetId: activeId,
           from: moved.moved.from,
@@ -416,7 +417,7 @@ export const useStore = create<State>()(
 
         const entry: HistoryEntry = {
           kind: 'insert',
-          label: `批量添加 ${newComponents.length} 个组件`,
+          label: getI18nInstance().t('history.batchAdd', { count: newComponents.length }),
           timestamp: Date.now(),
           inserts,
         };
@@ -445,7 +446,7 @@ export const useStore = create<State>()(
         const baseIndex = state.components.length;
         const entry: HistoryEntry = {
           kind: 'insert',
-          label: `粘贴 ${clonedComponents.length} 个组件`,
+          label: getI18nInstance().t('history.paste', { count: clonedComponents.length }),
           timestamp: Date.now(),
           inserts: clonedComponents.map((component, offset) => ({
             component,
@@ -473,7 +474,7 @@ export const useStore = create<State>()(
         const baseIndex = state.components.length;
         const entry: HistoryEntry = {
           kind: 'insert',
-          label: `复制 ${clonedComponents.length} 个组件`,
+          label: getI18nInstance().t('history.duplicate', { count: clonedComponents.length }),
           timestamp: Date.now(),
           inserts: clonedComponents.map((component, offset) => ({
             component,
@@ -502,7 +503,7 @@ export const useStore = create<State>()(
 
         const entry: HistoryEntry = {
           kind: 'delete',
-          label: `剪切 ${removeResult.removed.length} 个组件`,
+          label: getI18nInstance().t('history.cut', { count: removeResult.removed.length }),
           timestamp: Date.now(),
           removes: removeResult.removed,
         };
@@ -552,7 +553,7 @@ export const useStore = create<State>()(
 
         const entry: HistoryEntry = {
           kind: 'move',
-          label: '移动组件位置',
+          label: getI18nInstance().t('history.movePosition'),
           timestamp: Date.now(),
           targetId: id,
           from: moved.moved.from,
@@ -576,7 +577,7 @@ export const useStore = create<State>()(
         
         const value = state.formValues[id];
         const rules = component.props.rules;
-        const label = ('label' in component.props) ? (component.props.label || '此项') : '此项';
+        const label = ('label' in component.props) ? (component.props.label || getI18nInstance().t('validation.defaultLabel')) : getI18nInstance().t('validation.defaultLabel');
         
         const error = validateValue(value, rules, label);
         
@@ -602,7 +603,7 @@ export const useStore = create<State>()(
           
           const value = state.formValues[component.id];
           const rules = component.props.rules;
-          const label = ('label' in component.props) ? (component.props.label || '此项') : '此项';
+          const label = ('label' in component.props) ? (component.props.label || getI18nInstance().t('validation.defaultLabel')) : getI18nInstance().t('validation.defaultLabel');
           
           const error = validateValue(value, rules, label);
           if (error) {
@@ -669,7 +670,7 @@ export const useStore = create<State>()(
 
         const entry: HistoryEntry = {
           kind: 'replaceAll',
-          label: '清空画布',
+          label: getI18nInstance().t('history.clear'),
           timestamp: Date.now(),
           removes: buildReplaceRecords(state.components),
           inserts: [],
@@ -693,7 +694,7 @@ export const useStore = create<State>()(
 
         const entry: HistoryEntry = {
           kind: 'replaceAll',
-          label: '导入组件',
+          label: getI18nInstance().t('history.import'),
           timestamp: Date.now(),
           removes: buildReplaceRecords(state.components),
           inserts: buildReplaceRecords(clonedComponents),
@@ -723,7 +724,7 @@ export const useStore = create<State>()(
 
         const entry: HistoryEntry = {
           kind: 'updateProps',
-          label: '切换锁定',
+          label: getI18nInstance().t('history.toggleLock'),
           timestamp: Date.now(),
           targetId: id,
           prevProps,

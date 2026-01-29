@@ -2,6 +2,7 @@ import React from 'react';
 import { Form, Input, Button } from 'antd';
 import { MinusCircleOutlined, PlusOutlined } from '@ant-design/icons';
 import type { ComponentSchema } from '../../types';
+import { useI18n } from '@/i18n';
 
 // 辅助函数：安全获取组件属性
 const getComponentProp = <T,>(component: ComponentSchema, key: string, defaultValue: T): T => {
@@ -18,10 +19,11 @@ export const OptionsEditor: React.FC<OptionsEditorProps> = ({
   component,
   updateProps,
 }) => {
+  const { t } = useI18n();
   const options = getComponentProp<Array<{ label: string; value: string }>>(component, 'options', []);
-  
+
   const handleAddOption = () => {
-    const newOptions = [...options, { label: `选项${options.length + 1}`, value: `option${options.length + 1}` }];
+    const newOptions = [...options, { label: t('propertyPanel.defaultOption', { index: options.length + 1 }), value: `option${options.length + 1}` }];
     updateProps({ options: newOptions });
   };
 
@@ -37,20 +39,20 @@ export const OptionsEditor: React.FC<OptionsEditorProps> = ({
   };
 
   return (
-    <Form.Item label="选项配置">
+    <Form.Item label={t('propertyPanel.optionsConfig')}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {options.map((opt: { label: string; value: string }, index: number) => (
           <div key={index} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             <Input
               size="small"
-              placeholder="显示名称"
+              placeholder={t('propertyPanel.optionLabel')}
               value={opt.label}
               onChange={(e) => handleUpdateOption(index, 'label', e.target.value)}
               style={{ flex: 1 }}
             />
             <Input
               size="small"
-              placeholder="值"
+              placeholder={t('propertyPanel.optionValue')}
               value={opt.value}
               onChange={(e) => handleUpdateOption(index, 'value', e.target.value)}
               style={{ flex: 1 }}
@@ -68,7 +70,7 @@ export const OptionsEditor: React.FC<OptionsEditorProps> = ({
           onClick={handleAddOption}
           style={{ marginTop: 4 }}
         >
-          添加选项
+          {t('propertyPanel.addOption')}
         </Button>
       </div>
     </Form.Item>

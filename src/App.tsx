@@ -18,6 +18,7 @@ import {
   SettingOutlined,
 } from '@ant-design/icons';
 import { useStore } from './store';
+import { useI18n } from './i18n';
 import './App.css';
 
 // Components
@@ -100,6 +101,7 @@ function App() {
 
   // 主题切换
   const { themeMode, isDark, setThemeMode } = useTheme();
+  const { t } = useI18n();
 
   // UI 状态
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
@@ -308,7 +310,7 @@ function App() {
                     }}
                   >
                     <AppstoreAddOutlined style={{ fontSize: 48, marginBottom: 16, opacity: 0.5 }} />
-                    <p>从左侧拖拽组件到这里</p>
+                    <p>{t('canvas.dragFromLeft')}</p>
                   </div>
                 )}
               </DroppableCanvas>
@@ -344,7 +346,7 @@ function App() {
                   color: isDark ? '#e6e6e6' : undefined,
                 }}
               >
-                正在移动...
+                {t('dnd.moving')}
               </div>
             )
           ) : null}
@@ -410,13 +412,13 @@ function App() {
       <FloatButton.Group className="mobile-fab" shape="square" style={{ right: 24, bottom: 24 }}>
         <FloatButton
           icon={<PlusOutlined />}
-          tooltip="添加组件"
+          tooltip={t('canvas.addComponent')}
           onClick={() => setIsMobileDrawerOpen(true)}
         />
         {selectedIds.length > 0 && (
           <FloatButton
             icon={<SettingOutlined />}
-            tooltip="编辑属性"
+            tooltip={t('canvas.editProperties')}
             type="primary"
             onClick={() => setIsPropertyDrawerOpen(true)}
           />

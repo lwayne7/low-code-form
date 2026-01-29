@@ -12,6 +12,7 @@ import { findComponentById, findParentInfo, isDescendant } from '../utils/compon
 import type { ComponentType } from '../types';
 import { CONTAINER_EDGE_RATIO, MAX_EDGE_HEIGHT, MIN_EDGE_HEIGHT } from '../constants/dnd';
 import { startTrace } from '../utils/tracing';
+import { useI18n } from '@/i18n';
 
 // ============ 常量定义 ============
 /** 滞后区比例（用于防止抖动） */
@@ -54,6 +55,7 @@ export function useDragHandlers(): UseDragHandlersResult {
         addComponent,
         reorderComponents,
     } = useStore();
+    const { t } = useI18n();
 
     // 拖拽状态
     const [activeDragId, setActiveDragId] = useState<string | null>(null);
@@ -354,7 +356,7 @@ export function useDragHandlers(): UseDragHandlersResult {
 
             // 防止容器拖入自身或其后代
             if (containerId === activeId || checkIsDescendant(activeId, containerId)) {
-                message.warning('不能将容器拖入自身');
+                message.warning(t('dnd.cannotNestSelf'));
                 return;
             }
 
@@ -378,7 +380,7 @@ export function useDragHandlers(): UseDragHandlersResult {
 
             // 防止容器拖入自身或其后代
             if (overId === activeId || checkIsDescendant(activeId, overId)) {
-                message.warning('不能将容器拖入自身');
+                message.warning(t('dnd.cannotNestSelf'));
                 return;
             }
 

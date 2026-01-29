@@ -1,6 +1,7 @@
 import React from 'react';
 import { Form, Select, InputNumber, Divider, Typography } from 'antd';
 import type { ComponentSchema } from '../../types';
+import { useI18n } from '@/i18n';
 
 const { Text } = Typography;
 
@@ -13,12 +14,15 @@ const getComponentProp = <T,>(component: ComponentSchema, key: string, defaultVa
 interface ResponsiveConfigProps {
   component: ComponentSchema;
   updateProps: (newProps: Partial<ComponentSchema['props']>) => void;
+  isDark?: boolean;
 }
 
 export const ResponsiveConfig: React.FC<ResponsiveConfigProps> = ({
   component,
   updateProps,
+  isDark = false,
 }) => {
+  const { t } = useI18n();
   const responsive = getComponentProp<Record<string, number>>(component, 'responsive', {});
 
   const updateResponsive = (key: string, value: number | null) => {
@@ -29,27 +33,27 @@ export const ResponsiveConfig: React.FC<ResponsiveConfigProps> = ({
 
   return (
     <>
-      <Divider style={{ margin: '16px 0' }}>响应式布局</Divider>
-      
-      <Form.Item label="占用列数" tooltip="组件在父容器栅格中占用的列数 (1-24)">
+      <Divider style={{ margin: '16px 0' }}>{t('propertyPanel.responsiveLayout')}</Divider>
+
+      <Form.Item label={t('propertyPanel.columnSpan')} tooltip={t('propertyPanel.columnSpanTooltip')}>
         <Select
           value={getComponentProp(component, 'colSpan', 24)}
           onChange={(val) => updateProps({ colSpan: val })}
           options={[
-            { label: '满行 (24)', value: 24 },
-            { label: '3/4 行 (18)', value: 18 },
-            { label: '2/3 行 (16)', value: 16 },
-            { label: '半行 (12)', value: 12 },
-            { label: '1/3 行 (8)', value: 8 },
-            { label: '1/4 行 (6)', value: 6 },
+            { label: t('propertyPanel.fullWidth'), value: 24 },
+            { label: t('propertyPanel.threeQuarter'), value: 18 },
+            { label: t('propertyPanel.twoThird'), value: 16 },
+            { label: t('propertyPanel.half'), value: 12 },
+            { label: t('propertyPanel.oneThird'), value: 8 },
+            { label: t('propertyPanel.quarter'), value: 6 },
           ]}
         />
       </Form.Item>
 
-      <Form.Item label="响应式配置" tooltip="不同屏幕尺寸下的列数">
+      <Form.Item label={t('propertyPanel.responsiveConfig')} tooltip={t('propertyPanel.responsiveTooltip')}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
           <div>
-            <Text type="secondary" style={{ fontSize: 11 }}>手机 (xs)</Text>
+            <Text type="secondary" style={{ fontSize: 11, color: isDark ? '#a3a3a3' : undefined }}>{t('propertyPanel.mobile')}</Text>
             <InputNumber
               size="small"
               min={1}
@@ -60,7 +64,7 @@ export const ResponsiveConfig: React.FC<ResponsiveConfigProps> = ({
             />
           </div>
           <div>
-            <Text type="secondary" style={{ fontSize: 11 }}>平板 (sm)</Text>
+            <Text type="secondary" style={{ fontSize: 11, color: isDark ? '#a3a3a3' : undefined }}>{t('propertyPanel.tablet')}</Text>
             <InputNumber
               size="small"
               min={1}
@@ -71,7 +75,7 @@ export const ResponsiveConfig: React.FC<ResponsiveConfigProps> = ({
             />
           </div>
           <div>
-            <Text type="secondary" style={{ fontSize: 11 }}>桌面 (md)</Text>
+            <Text type="secondary" style={{ fontSize: 11, color: isDark ? '#a3a3a3' : undefined }}>{t('propertyPanel.desktop')}</Text>
             <InputNumber
               size="small"
               min={1}
@@ -82,7 +86,7 @@ export const ResponsiveConfig: React.FC<ResponsiveConfigProps> = ({
             />
           </div>
           <div>
-            <Text type="secondary" style={{ fontSize: 11 }}>大屏 (lg)</Text>
+            <Text type="secondary" style={{ fontSize: 11, color: isDark ? '#a3a3a3' : undefined }}>{t('propertyPanel.largeScreen')}</Text>
             <InputNumber
               size="small"
               min={1}

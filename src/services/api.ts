@@ -3,6 +3,8 @@
  * 封装与后端的所有 HTTP 请求
  */
 
+import { getI18nInstance } from '../i18n';
+
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
 // 配置常量
@@ -45,6 +47,8 @@ async function request<T>(
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
 
+    const { t } = getI18nInstance();
+
     try {
         const response = await fetch(`${API_BASE_URL}${endpoint}`, {
             ...options,
@@ -56,14 +60,14 @@ async function request<T>(
 
         // 处理网络响应
         if (!response.ok) {
-            // Token 过期塨理
+            // Token 过期处理
             if (response.status === 401) {
                 removeToken();
-                throw new ApiError(401, '登录已过期，请重新登录');
+                throw new ApiError(401, t('error.unauthorized'));
             }
 
             const data = await response.json().catch(() => ({}));
-            throw new ApiError(response.status, data.error || '请求失败');
+            throw new ApiError(response.status, data.error || t('common.error'));
         }
 
         return await response.json();
@@ -72,7 +76,7 @@ async function request<T>(
 
         // 处理超时
         if (error instanceof DOMException && error.name === 'AbortError') {
-            throw new ApiError(408, '请求超时，请检查网络连接');
+            throw new ApiError(408, t('error.timeout'));
         }
 
         // 处理网络错误并重试
@@ -82,7 +86,7 @@ async function request<T>(
                 await new Promise(resolve => setTimeout(resolve, 1000 * (retries + 1)));
                 return request<T>(endpoint, options, retries + 1);
             }
-            throw new ApiError(0, '网络连接失败，请检查网络设置');
+            throw new ApiError(0, t('error.network'));
         }
 
         throw error;

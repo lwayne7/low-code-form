@@ -197,7 +197,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                     gap: 12,
                 }}
             >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0, flex: '1 1 auto' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0, flex: '1 1 auto', overflow: 'hidden' }}>
                     <div
                         style={{
                             width: 32,
@@ -241,11 +241,11 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                                 type="text"
                             />
                         </Tooltip>
-                        <Divider type="vertical" style={{ height: 20, margin: '0 4px' }} />
-                        <Toolbar />
-                        <Divider type="vertical" style={{ height: 20, margin: '0 4px' }} />
-                        <FormStats />
                     </Space>
+                    <Divider type="vertical" style={{ height: 20, margin: '0 4px' }} />
+                    <Toolbar />
+                    <Divider type="vertical" style={{ height: 20, margin: '0 4px' }} />
+                    <FormStats />
                 </div>
                 {/* 右侧工具按钮区域 - 始终可见 */}
                 <Space size={4} wrap={false} style={{ flexShrink: 0 }}>

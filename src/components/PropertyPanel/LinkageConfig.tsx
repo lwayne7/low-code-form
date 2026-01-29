@@ -2,6 +2,7 @@ import React from 'react';
 import { Form, Input, Tag, Divider } from 'antd';
 import type { ComponentSchema } from '../../types';
 import { validateConditionExpression } from '../../utils/expression';
+import { useI18n } from '@/i18n';
 
 // 辅助函数：安全获取组件属性
 const getComponentProp = <T,>(component: ComponentSchema, key: string, defaultValue: T): T => {
@@ -13,36 +14,39 @@ interface LinkageConfigProps {
   component: ComponentSchema;
   allComponents: ComponentSchema[];
   updateProps: (newProps: Partial<ComponentSchema['props']>) => void;
+  isDark?: boolean;
 }
 
 export const LinkageConfig: React.FC<LinkageConfigProps> = ({
   component,
   allComponents,
   updateProps,
+  isDark = false,
 }) => {
+  const { t } = useI18n();
   const visibleOn = getComponentProp(component, 'visibleOn', '');
   const validation = validateConditionExpression(visibleOn);
   const hasError = Boolean(visibleOn.trim()) && !validation.ok;
 
   return (
     <>
-      <Divider style={{ margin: '16px 0' }}>组件联动</Divider>
+      <Divider style={{ margin: '16px 0' }}>{t('propertyPanel.componentLinkage')}</Divider>
 
       <Form.Item
-        label="显隐条件 (visibleOn)"
-        tooltip="仅支持安全表达式：values['组件ID']、字面量、括号、!、&&、||、比较运算（=== !== < <= > >=）"
+        label={t('propertyPanel.visibleCondition')}
+        tooltip={t('propertyPanel.visibleTooltip')}
         validateStatus={hasError ? 'error' : undefined}
-        help={hasError ? `表达式错误：${validation.error}` : undefined}
+        help={hasError ? t('propertyPanel.expressionError', { error: validation.error || '' }) : undefined}
       >
         <Input.TextArea
           value={visibleOn}
           onChange={(e) => updateProps({ visibleOn: e.target.value })}
-          placeholder={`例如：values['${allComponents[0]?.id || 'xxx'}'] === 'show'`}
+          placeholder={t('propertyPanel.visiblePlaceholder', { id: allComponents[0]?.id || 'xxx' })}
           rows={3}
           style={{ fontFamily: 'monospace', fontSize: 12 }}
         />
-        <div style={{ marginTop: 8, fontSize: 12, color: '#666' }}>
-          <div>可用的组件 ID：</div>
+        <div style={{ marginTop: 8, fontSize: 12, color: isDark ? '#a3a3a3' : '#666' }}>
+          <div>{t('propertyPanel.availableIds')}</div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 4 }}>
             {allComponents
               .filter((c) => c.id !== component.id)

@@ -5,6 +5,7 @@ import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { SortableItem } from './SortableItem';
 import { CanvasFormItem } from '../CanvasFormItem';
 import { useTheme } from '../../hooks/useTheme';
+import { useI18n } from '@/i18n';
 import type { ComponentSchema } from '../../types';
 
 // 🆕 放置目标类型
@@ -110,13 +111,13 @@ const DropIndicator: React.FC<{ position: 'before' | 'after' }> = ({ position })
         boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
       }}
     >
-      {position === 'before' ? '↑ 插入到上方' : '↓ 插入到下方'}
+      {position === 'before' ? '↑' : '↓'}
     </div>
   </div>
 );
 
 // 🆕 容器嵌套指示器组件
-const ContainerDropOverlay: React.FC<{ label?: string }> = ({ label }) => (
+const ContainerDropOverlay: React.FC<{ label?: string; dropText?: string }> = ({ label, dropText }) => (
   <div
     className="container-drop-overlay"
     style={{
@@ -148,7 +149,7 @@ const ContainerDropOverlay: React.FC<{ label?: string }> = ({ label }) => (
       }}
     >
       <span style={{ fontSize: 16 }}>📥</span>
-      放入「{label || '容器'}」内部
+      {dropText || `Drop into "${label || 'Container'}"`}
     </div>
   </div>
 );
@@ -164,6 +165,7 @@ export const SortableList: React.FC<SortableListProps> = React.memo(({
   dropTarget,
 }) => {
   const { isDark } = useTheme(); // 🆕 获取当前主题
+  const { t } = useI18n();
   const droppableId = parentId ? `container-${parentId}` : 'canvas-droppable';
   
   const { setNodeRef, isOver, active } = useDroppable({
@@ -228,7 +230,7 @@ export const SortableList: React.FC<SortableListProps> = React.memo(({
               transition: 'all 0.2s ease',
             }}
           >
-            {isDropTarget ? '📥 松开鼠标放入此处' : '📦 拖拽组件到这里'}
+            {isDropTarget ? t('dnd.releaseHere') : t('dnd.dragHere')}
           </div>
         )}
       </div>
@@ -286,6 +288,7 @@ const SortableListItem: React.FC<SortableListItemProps> = React.memo(({
   isLast,
 }) => {
   const { isDark } = useTheme(); // 🆕 获取当前主题
+  const { t } = useI18n(); // 🆕 获取国际化翻译函数
   const isSelected = selectedIds.includes(component.id);
   const isContainer = component.type === 'Container';
   const isDragging = activeDragId === component.id;
@@ -347,7 +350,7 @@ const SortableListItem: React.FC<SortableListItemProps> = React.memo(({
         <div style={{ pointerEvents: 'none', position: 'relative' }}>
           {/* 🆕 容器嵌套放置指示器 - 更明显 */}
           {isContainerDropTarget && !isDragging && (
-            <ContainerDropOverlay label={component.props.label} />
+            <ContainerDropOverlay label={component.props.label} dropText={t('dnd.dropInto', { label: component.props.label || t('dnd.container') })} />
           )}
           <Card
             size="small"

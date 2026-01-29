@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { message } from 'antd';
 import { useStore } from '../store';
 import { findComponentById } from '../utils/componentHelpers';
+import { useI18n } from '@/i18n';
 
 /**
  * 键盘快捷键 Hook
@@ -21,6 +22,7 @@ export function useKeyboardShortcuts() {
     duplicateComponents,
     clearSelection,
   } = useStore();
+  const { t } = useI18n();
 
   // 检查是否有锁定的组件
   const hasLockedComponent = selectedIds.some(id => {
@@ -37,7 +39,7 @@ export function useKeyboardShortcuts() {
       if ((e.key === 'Delete' || e.key === 'Backspace') && selectedIds.length > 0) {
         if (!isInputFocused) {
           if (hasLockedComponent) {
-            message.warning('无法删除锁定的组件');
+            message.warning(t('toast.cannotDeleteLocked'));
           } else {
             deleteComponent(selectedIds);
           }
@@ -66,7 +68,7 @@ export function useKeyboardShortcuts() {
       if ((e.metaKey || e.ctrlKey) && e.key === 'c' && !isInputFocused) {
         if (selectedIds.length > 0) {
           copyComponents();
-          message.success(`已复制 ${selectedIds.length} 个组件`);
+          message.success(t('toast.componentsCopied', { count: selectedIds.length }));
         }
       }
 
@@ -74,7 +76,7 @@ export function useKeyboardShortcuts() {
       if ((e.metaKey || e.ctrlKey) && e.key === 'v' && !isInputFocused) {
         if (clipboard.length > 0) {
           pasteComponents();
-          message.success(`已粘贴 ${clipboard.length} 个组件`);
+          message.success(t('toast.componentsPasted', { count: clipboard.length }));
         }
       }
 
@@ -83,7 +85,7 @@ export function useKeyboardShortcuts() {
         if (selectedIds.length > 0 && !isInputFocused) {
           e.preventDefault();
           duplicateComponents();
-          message.success('已复制组件');
+          message.success(t('toast.componentDuplicated'));
         }
       }
 
@@ -108,5 +110,6 @@ export function useKeyboardShortcuts() {
     duplicateComponents,
     clipboard,
     clearSelection,
+    t,
   ]);
 }
