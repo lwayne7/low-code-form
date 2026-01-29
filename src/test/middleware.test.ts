@@ -68,6 +68,7 @@ describe('Rate Limit Middleware', () => {
         const res = createMockRes();
         const next = vi.fn();
 
+        // @ts-expect-error - using mock objects for testing
         middleware(req as unknown, res as unknown, next);
 
         expect(next).toHaveBeenCalled();
@@ -85,12 +86,14 @@ describe('Rate Limit Middleware', () => {
         // 前两次请求应该通过
         for (let i = 0; i < 2; i++) {
             const res = createMockRes();
+            // @ts-expect-error - using mock objects for testing
             middleware(req as unknown, res as unknown, next);
         }
         expect(next).toHaveBeenCalledTimes(2);
 
         // 第三次请求应该被限制
         const res = createMockRes();
+        // @ts-expect-error - using mock objects for testing
         middleware(req as unknown, res as unknown, next);
         
         expect(res._status).toBe(429);
@@ -112,6 +115,7 @@ describe('Rate Limit Middleware', () => {
         const res = createMockRes();
         const next = vi.fn();
 
+        // @ts-expect-error - using mock objects for testing
         middleware(req as unknown, res as unknown, next);
 
         expect(customKeyGen).toHaveBeenCalledWith(req);
@@ -135,6 +139,7 @@ describe('Logger Middleware', () => {
         const res = createMockRes();
         const next = vi.fn();
 
+        // @ts-expect-error - using mock objects for testing
         loggerMiddleware(req as unknown, res as unknown, next);
 
         expect(next).toHaveBeenCalled();
