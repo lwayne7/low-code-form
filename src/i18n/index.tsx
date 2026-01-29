@@ -576,6 +576,7 @@ const translations = {
 } as const;
 
 // 语言名称
+// eslint-disable-next-line react-refresh/only-export-components
 export const localeNames: Record<Locale, string> = {
     'zh-CN': '简体中文',
     'en-US': 'English',
@@ -648,6 +649,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
 }
 
 // Hook
+// eslint-disable-next-line react-refresh/only-export-components
 export function useI18n() {
     const context = useContext(I18nContext);
     if (!context) {

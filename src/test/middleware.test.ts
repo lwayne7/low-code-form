@@ -28,7 +28,7 @@ function createMockReq(overrides: Partial<MockRequest> = {}): MockRequest {
         url: '/api/test',
         ip: '127.0.0.1',
         body: {},
-        socket: { remoteAddress: '127.0.0.1' } as any,
+        socket: { remoteAddress: '127.0.0.1' } as { remoteAddress: string },
         ...overrides,
     };
 }
@@ -68,7 +68,7 @@ describe('Rate Limit Middleware', () => {
         const res = createMockRes();
         const next = vi.fn();
 
-        middleware(req as any, res as any, next);
+        middleware(req as unknown, res as unknown, next);
 
         expect(next).toHaveBeenCalled();
         expect(res._headers['X-RateLimit-Limit']).toBe(10);
@@ -85,13 +85,13 @@ describe('Rate Limit Middleware', () => {
         // 前两次请求应该通过
         for (let i = 0; i < 2; i++) {
             const res = createMockRes();
-            middleware(req as any, res as any, next);
+            middleware(req as unknown, res as unknown, next);
         }
         expect(next).toHaveBeenCalledTimes(2);
 
         // 第三次请求应该被限制
         const res = createMockRes();
-        middleware(req as any, res as any, next);
+        middleware(req as unknown, res as unknown, next);
         
         expect(res._status).toBe(429);
         expect(res._json).toEqual(expect.objectContaining({
@@ -112,7 +112,7 @@ describe('Rate Limit Middleware', () => {
         const res = createMockRes();
         const next = vi.fn();
 
-        middleware(req as any, res as any, next);
+        middleware(req as unknown, res as unknown, next);
 
         expect(customKeyGen).toHaveBeenCalledWith(req);
     });
@@ -135,7 +135,7 @@ describe('Logger Middleware', () => {
         const res = createMockRes();
         const next = vi.fn();
 
-        loggerMiddleware(req as any, res as any, next);
+        loggerMiddleware(req as unknown, res as unknown, next);
 
         expect(next).toHaveBeenCalled();
         expect(res.on).toHaveBeenCalledWith('finish', expect.any(Function));

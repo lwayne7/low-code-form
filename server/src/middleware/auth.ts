@@ -3,12 +3,10 @@ import jwt from 'jsonwebtoken';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-key';
 
-// 扩展 Request 类型
-declare global {
-    namespace Express {
-        interface Request {
-            userId?: number;
-        }
+// 扩展 Request 类型 - 使用模块扩展而非 namespace
+declare module 'express-serve-static-core' {
+    interface Request {
+        userId?: number;
     }
 }
 
