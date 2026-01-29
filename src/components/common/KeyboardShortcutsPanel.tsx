@@ -12,31 +12,32 @@ import {
   SwapOutlined,
   DragOutlined,
 } from '@ant-design/icons';
+import { useI18n } from '../../i18n';
 
 const { Text, Title } = Typography;
 
 interface ShortcutItem {
   keys: string[];
-  description: string;
+  descriptionKey: string;
   icon: React.ReactNode;
 }
 
-const shortcuts: ShortcutItem[] = [
-  { keys: ['⌘/Ctrl', 'C'], description: '复制选中组件', icon: <CopyOutlined /> },
-  { keys: ['⌘/Ctrl', 'V'], description: '粘贴组件', icon: <SnippetsOutlined /> },
-  { keys: ['⌘/Ctrl', 'D'], description: '复制并粘贴组件', icon: <BlockOutlined /> },
-  { keys: ['⌘/Ctrl', 'A'], description: '全选组件', icon: <SelectOutlined /> },
-  { keys: ['⌘/Ctrl', 'Z'], description: '撤销操作', icon: <UndoOutlined /> },
-  { keys: ['⌘/Ctrl', 'Shift', 'Z'], description: '重做操作', icon: <RedoOutlined /> },
-  { keys: ['Delete'], description: '删除选中组件', icon: <DeleteOutlined /> },
-  { keys: ['Backspace'], description: '删除选中组件', icon: <DeleteOutlined /> },
-  { keys: ['Esc'], description: '取消选择', icon: <CloseCircleOutlined /> },
+const shortcutConfigs: ShortcutItem[] = [
+  { keys: ['⌘/Ctrl', 'C'], descriptionKey: 'shortcuts.copyComponent', icon: <CopyOutlined /> },
+  { keys: ['⌘/Ctrl', 'V'], descriptionKey: 'shortcuts.pasteComponent', icon: <SnippetsOutlined /> },
+  { keys: ['⌘/Ctrl', 'D'], descriptionKey: 'shortcuts.duplicateComponent', icon: <BlockOutlined /> },
+  { keys: ['⌘/Ctrl', 'A'], descriptionKey: 'shortcuts.selectAll', icon: <SelectOutlined /> },
+  { keys: ['⌘/Ctrl', 'Z'], descriptionKey: 'shortcuts.undo', icon: <UndoOutlined /> },
+  { keys: ['⌘/Ctrl', 'Shift', 'Z'], descriptionKey: 'shortcuts.redo', icon: <RedoOutlined /> },
+  { keys: ['Delete'], descriptionKey: 'shortcuts.deleteComponent', icon: <DeleteOutlined /> },
+  { keys: ['Backspace'], descriptionKey: 'shortcuts.deleteComponent', icon: <DeleteOutlined /> },
+  { keys: ['Esc'], descriptionKey: 'shortcuts.cancelSelect', icon: <CloseCircleOutlined /> },
 ];
 
-// 🆕 拖拽相关快捷键
-const dragShortcuts: ShortcutItem[] = [
-  { keys: ['Shift', '+ 拖拽'], description: '强制嵌套到容器内部', icon: <BlockOutlined /> },
-  { keys: ['Alt/Option', '+ 拖拽'], description: '强制在容器前/后放置', icon: <SwapOutlined /> },
+// 拖拽相关快捷键
+const dragShortcutConfigs: { keys: string[]; descriptionKey: string; icon: React.ReactNode }[] = [
+  { keys: ['Shift'], descriptionKey: 'shortcuts.forceNest', icon: <BlockOutlined /> },
+  { keys: ['Alt/Option'], descriptionKey: 'shortcuts.forceSibling', icon: <SwapOutlined /> },
 ];
 
 interface KeyboardShortcutsPanelProps {
@@ -48,12 +49,27 @@ export const KeyboardShortcutsPanel: React.FC<KeyboardShortcutsPanelProps> = ({
   open,
   onClose,
 }) => {
+  const { t, locale } = useI18n();
+
+  // 鼠标操作翻译
+  const mouseOps = locale === 'zh-CN' ? [
+    { action: '单击组件', result: '选中组件' },
+    { action: '⌘/Ctrl + 单击', result: '多选组件' },
+    { action: '框选', result: '批量选中区域内组件' },
+    { action: '拖拽', result: '移动组件位置' },
+  ] : [
+    { action: 'Click component', result: 'Select component' },
+    { action: '⌘/Ctrl + Click', result: 'Multi-select' },
+    { action: 'Box select', result: 'Batch select components' },
+    { action: 'Drag', result: 'Move component' },
+  ];
+
   return (
     <Modal
       title={
         <Space>
           <span>⌨️</span>
-          <span>快捷键</span>
+          <span>{t('shortcuts.title')}</span>
         </Space>
       }
       open={open}
@@ -63,11 +79,11 @@ export const KeyboardShortcutsPanel: React.FC<KeyboardShortcutsPanelProps> = ({
     >
       <div style={{ padding: '8px 0' }}>
         <Title level={5} style={{ marginBottom: 16 }}>
-          编辑操作
+          {locale === 'zh-CN' ? '编辑操作' : 'Edit Operations'}
         </Title>
-        
+
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {shortcuts.map((shortcut, index) => (
+          {shortcutConfigs.map((shortcut, index) => (
             <div
               key={index}
               style={{
@@ -81,7 +97,7 @@ export const KeyboardShortcutsPanel: React.FC<KeyboardShortcutsPanelProps> = ({
             >
               <Space>
                 <span style={{ color: '#1677ff', fontSize: 16 }}>{shortcut.icon}</span>
-                <Text>{shortcut.description}</Text>
+                <Text>{t(shortcut.descriptionKey as keyof typeof t)}</Text>
               </Space>
               <Space size={4}>
                 {shortcut.keys.map((key, i) => (
@@ -112,73 +128,37 @@ export const KeyboardShortcutsPanel: React.FC<KeyboardShortcutsPanelProps> = ({
         <Divider />
 
         <Title level={5} style={{ marginBottom: 16 }}>
-          鼠标操作
+          {locale === 'zh-CN' ? '鼠标操作' : 'Mouse Operations'}
         </Title>
-        
+
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              padding: '8px 12px',
-              background: '#fafafa',
-              borderRadius: 6,
-            }}
-          >
-            <Text>单击组件</Text>
-            <Text type="secondary">选中组件</Text>
-          </div>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              padding: '8px 12px',
-              background: '#fafafa',
-              borderRadius: 6,
-            }}
-          >
-            <Text>⌘/Ctrl + 单击</Text>
-            <Text type="secondary">多选组件</Text>
-          </div>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              padding: '8px 12px',
-              background: '#fafafa',
-              borderRadius: 6,
-            }}
-          >
-            <Text>框选</Text>
-            <Text type="secondary">批量选中区域内组件</Text>
-          </div>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              padding: '8px 12px',
-              background: '#fafafa',
-              borderRadius: 6,
-            }}
-          >
-            <Text>拖拽</Text>
-            <Text type="secondary">移动组件位置</Text>
-          </div>
+          {mouseOps.map((op, index) => (
+            <div
+              key={index}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '8px 12px',
+                background: '#fafafa',
+                borderRadius: 6,
+              }}
+            >
+              <Text>{op.action}</Text>
+              <Text type="secondary">{op.result}</Text>
+            </div>
+          ))}
         </div>
 
         <Divider />
 
         <Title level={5} style={{ marginBottom: 16 }}>
           <DragOutlined style={{ marginRight: 8 }} />
-          拖拽修饰键
+          {locale === 'zh-CN' ? '拖拽修饰键' : 'Drag Modifiers'}
         </Title>
-        
+
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {dragShortcuts.map((shortcut, index) => (
+          {dragShortcutConfigs.map((shortcut, index) => (
             <div
               key={index}
               style={{
@@ -193,7 +173,7 @@ export const KeyboardShortcutsPanel: React.FC<KeyboardShortcutsPanelProps> = ({
             >
               <Space>
                 <span style={{ color: '#1677ff', fontSize: 16 }}>{shortcut.icon}</span>
-                <Text>{shortcut.description}</Text>
+                <Text>{t(shortcut.descriptionKey as keyof typeof t)}</Text>
               </Space>
               <Space size={4}>
                 {shortcut.keys.map((key, i) => (
@@ -208,7 +188,7 @@ export const KeyboardShortcutsPanel: React.FC<KeyboardShortcutsPanelProps> = ({
                         fontSize: 12,
                       }}
                     >
-                      {key}
+                      {key} {t('shortcuts.drag')}
                     </Tag>
                   </React.Fragment>
                 ))}

@@ -10,6 +10,7 @@ import {
   UploadOutlined,
 } from '@ant-design/icons';
 import { useStore } from '../../store';
+import { useI18n } from '../../i18n';
 
 interface ToolbarProps {
   disabled?: boolean;
@@ -28,6 +29,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({ disabled = false }) => {
     importComponents,
   } = useStore();
 
+  const { t } = useI18n();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const hasSelection = selectedIds.length > 0;
@@ -37,35 +39,35 @@ export const Toolbar: React.FC<ToolbarProps> = ({ disabled = false }) => {
   const handleCopy = () => {
     if (hasSelection) {
       copyComponents();
-      message.success(`已复制 ${selectedIds.length} 个组件`);
+      message.success(t('toolbar.copied', { count: selectedIds.length }));
     }
   };
 
   const handlePaste = () => {
     if (hasClipboard) {
       pasteComponents();
-      message.success(`已粘贴 ${clipboard.length} 个组件`);
+      message.success(t('toolbar.pasted', { count: clipboard.length }));
     }
   };
 
   const handleDuplicate = () => {
     if (hasSelection) {
       duplicateComponents();
-      message.success('已复制组件');
+      message.success(t('toolbar.duplicated'));
     }
   };
 
   const handleDelete = () => {
     if (hasSelection) {
       deleteComponent(selectedIds);
-      message.success(`已删除 ${selectedIds.length} 个组件`);
+      message.success(t('toolbar.deleted', { count: selectedIds.length }));
     }
   };
 
   // 🆕 导出 JSON
   const handleExport = () => {
     if (!hasComponents) {
-      message.warning('没有组件可导出');
+      message.warning(t('toolbar.noExport'));
       return;
     }
     
@@ -81,7 +83,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({ disabled = false }) => {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
     
-    message.success('已导出表单配置');
+    message.success(t('toolbar.exported'));
   };
 
   // 🆕 导入 JSON
@@ -99,12 +101,12 @@ export const Toolbar: React.FC<ToolbarProps> = ({ disabled = false }) => {
         const json = JSON.parse(event.target?.result as string);
         if (json.components && Array.isArray(json.components)) {
           importComponents(json.components);
-          message.success(`已导入 ${json.components.length} 个组件`);
+          message.success(t('toolbar.imported', { count: json.components.length }));
         } else {
-          message.error('无效的表单配置文件');
+          message.error(t('toolbar.invalidFile'));
         }
       } catch {
-        message.error('解析文件失败，请确保是有效的 JSON 文件');
+        message.error(t('toolbar.parseError'));
       }
     };
     reader.readAsText(file);
@@ -115,7 +117,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({ disabled = false }) => {
 
   return (
     <Space size={4}>
-      <Tooltip title="全选 (⌘A)">
+      <Tooltip title={t('toolbar.selectAll')}>
         <Button
           size="small"
           type="text"
@@ -127,7 +129,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({ disabled = false }) => {
       
       <Divider type="vertical" style={{ height: 16, margin: '0 4px' }} />
       
-      <Tooltip title="复制 (⌘C)">
+      <Tooltip title={t('toolbar.copy')}>
         <Button
           size="small"
           type="text"
@@ -137,7 +139,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({ disabled = false }) => {
         />
       </Tooltip>
       
-      <Tooltip title="粘贴 (⌘V)">
+      <Tooltip title={t('toolbar.paste')}>
         <Button
           size="small"
           type="text"
@@ -147,7 +149,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({ disabled = false }) => {
         />
       </Tooltip>
       
-      <Tooltip title="复制并粘贴 (⌘D)">
+      <Tooltip title={t('toolbar.duplicate')}>
         <Button
           size="small"
           type="text"
@@ -159,7 +161,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({ disabled = false }) => {
       
       <Divider type="vertical" style={{ height: 16, margin: '0 4px' }} />
 
-      <Tooltip title="导出 JSON">
+      <Tooltip title={t('toolbar.exportJson')}>
         <Button
           size="small"
           type="text"
@@ -169,7 +171,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({ disabled = false }) => {
         />
       </Tooltip>
       
-      <Tooltip title="导入 JSON">
+      <Tooltip title={t('toolbar.importJson')}>
         <Button
           size="small"
           type="text"
@@ -190,7 +192,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({ disabled = false }) => {
       
       <Divider type="vertical" style={{ height: 16, margin: '0 4px' }} />
       
-      <Tooltip title="删除 (Delete)">
+      <Tooltip title={t('toolbar.delete')}>
         <Button
           size="small"
           type="text"

@@ -18,6 +18,10 @@ export { useCodeWorker, useCodeGeneratorFallback } from './useCodeWorker';
 
 // 主题切换
 export { useTheme } from './useTheme';
+
+// SWR 请求缓存
+export { useSWR, clearCache, prefetch, getCachedData } from './useSWR';
+export type { SWROptions, SWRResponse } from './useSWR';
 export type { ThemeMode } from './useTheme';
 
 // 拖拽处理

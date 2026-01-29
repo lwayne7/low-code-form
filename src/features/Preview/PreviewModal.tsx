@@ -14,6 +14,7 @@ import {
     FullscreenExitOutlined,
 } from '@ant-design/icons';
 import { LazyFormRenderer } from '../../components';
+import { useI18n } from '../../i18n';
 import type { ComponentSchema } from '../../types';
 
 interface PreviewModalProps {
@@ -31,6 +32,7 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
 }) => {
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [previewDevice, setPreviewDevice] = useState<PreviewDevice>('desktop');
+    const { t } = useI18n();
 
     const handleClose = () => {
         onClose();
@@ -58,9 +60,9 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
         <Modal
             title={
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingRight: 32 }}>
-                    <span>表单预览</span>
+                    <span>{t('preview.title')}</span>
                     <Space>
-                        <Tooltip title="手机 (375px)">
+                        <Tooltip title={t('preview.mobile')}>
                             <Button
                                 type={previewDevice === 'mobile' ? 'primary' : 'text'}
                                 icon={<MobileOutlined />}
@@ -68,7 +70,7 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
                                 onClick={() => setPreviewDevice('mobile')}
                             />
                         </Tooltip>
-                        <Tooltip title="平板 (768px)">
+                        <Tooltip title={t('preview.tablet')}>
                             <Button
                                 type={previewDevice === 'tablet' ? 'primary' : 'text'}
                                 icon={<TabletOutlined />}
@@ -76,7 +78,7 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
                                 onClick={() => setPreviewDevice('tablet')}
                             />
                         </Tooltip>
-                        <Tooltip title="桌面 (100%)">
+                        <Tooltip title={t('preview.desktop')}>
                             <Button
                                 type={previewDevice === 'desktop' ? 'primary' : 'text'}
                                 icon={<DesktopOutlined />}
@@ -85,7 +87,7 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
                             />
                         </Tooltip>
                         <Divider type="vertical" style={{ height: 16 }} />
-                        <Tooltip title={isFullscreen ? "退出全屏" : "全屏预览"}>
+                        <Tooltip title={isFullscreen ? t('preview.exitFullscreen') : t('preview.fullscreen')}>
                             <Button
                                 type="text"
                                 icon={isFullscreen ? <FullscreenExitOutlined /> : <FullscreenOutlined />}

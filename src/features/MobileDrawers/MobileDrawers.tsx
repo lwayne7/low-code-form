@@ -9,6 +9,7 @@ import { Drawer, Space, Input } from 'antd';
 import { AppstoreAddOutlined, SettingOutlined } from '@ant-design/icons';
 import { PropertyPanel } from '../../components';
 import { COMPONENT_MATERIALS } from '../../constants';
+import { useI18n } from '../../i18n';
 import type { ComponentSchema, ComponentType } from '../../types';
 
 interface MobileDrawersProps {
@@ -42,6 +43,8 @@ export const MobileDrawers: React.FC<MobileDrawersProps> = ({
     updateComponentProps,
     deleteComponent,
 }) => {
+    const { t } = useI18n();
+
     const filteredMaterials = COMPONENT_MATERIALS.filter((item) =>
         item.label.toLowerCase().includes(componentSearch.toLowerCase()) ||
         item.type.toLowerCase().includes(componentSearch.toLowerCase())
@@ -54,7 +57,7 @@ export const MobileDrawers: React.FC<MobileDrawersProps> = ({
                 title={
                     <Space>
                         <AppstoreAddOutlined style={{ color: '#1677ff' }} />
-                        <span>组件库</span>
+                        <span>{t('components.library')}</span>
                     </Space>
                 }
                 placement="left"
@@ -63,7 +66,7 @@ export const MobileDrawers: React.FC<MobileDrawersProps> = ({
                 width={280}
             >
                 <Input
-                    placeholder="搜索组件..."
+                    placeholder={t('components.search')}
                     value={componentSearch}
                     onChange={(e) => onSearchChange(e.target.value)}
                     allowClear
@@ -91,7 +94,7 @@ export const MobileDrawers: React.FC<MobileDrawersProps> = ({
                 title={
                     <Space>
                         <SettingOutlined style={{ color: '#1677ff' }} />
-                        <span>组件属性</span>
+                        <span>{t('property.title')}</span>
                     </Space>
                 }
                 placement="right"

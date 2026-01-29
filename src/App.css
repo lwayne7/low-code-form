@@ -523,10 +523,27 @@
    响应式适配
    ============================================ */
 
+/* 中等屏幕 - 隐藏部分按钮文字 */
 @media (max-width: 1400px) {
   .canvas-paper {
     max-width: 580px;
     padding: 28px;
+  }
+  
+  /* Header 按钮紧凑布局 */
+  .app-header .ant-space {
+    gap: 4px !important;
+  }
+}
+
+/* 较小屏幕 - 隐藏更多按钮文字 */
+@media (max-width: 1280px) {
+  .app-header .btn-text {
+    display: none !important;
+  }
+  
+  .header-divider {
+    margin: 0 4px !important;
   }
 }
 

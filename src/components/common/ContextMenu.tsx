@@ -12,6 +12,7 @@ import {
   LockOutlined,
   UnlockOutlined,
 } from '@ant-design/icons';
+import { useI18n } from '../../i18n';
 
 interface ContextMenuProps {
   children: React.ReactNode;
@@ -46,10 +47,12 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
   canMoveDown = true,
   isLocked = false,
 }) => {
+  const { t } = useI18n();
+
   const menuItems: MenuProps['items'] = [
     {
       key: 'lock',
-      label: isLocked ? '解锁组件' : '锁定组件',
+      label: isLocked ? t('contextMenu.unlock') : t('contextMenu.lock'),
       icon: isLocked ? <UnlockOutlined /> : <LockOutlined />,
       onClick: onToggleLock,
     },
@@ -58,21 +61,21 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
     },
     {
       key: 'copy',
-      label: '复制',
+      label: t('common.copy'),
       icon: <CopyOutlined />,
       onClick: onCopy,
       disabled: isLocked,
     },
     {
       key: 'cut',
-      label: '剪切',
+      label: t('common.cut'),
       icon: <ScissorOutlined />,
       onClick: onCut,
       disabled: isLocked,
     },
     {
       key: 'paste',
-      label: '粘贴',
+      label: t('common.paste'),
       icon: <SnippetsOutlined />,
       onClick: onPaste,
       disabled: !canPaste,
@@ -82,28 +85,28 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
     },
     {
       key: 'moveUp',
-      label: '上移',
+      label: t('contextMenu.moveUp'),
       icon: <ArrowUpOutlined />,
       onClick: onMoveUp,
       disabled: !canMoveUp || isLocked,
     },
     {
       key: 'moveDown',
-      label: '下移',
+      label: t('contextMenu.moveDown'),
       icon: <ArrowDownOutlined />,
       onClick: onMoveDown,
       disabled: !canMoveDown || isLocked,
     },
     {
       key: 'moveToTop',
-      label: '移到顶部',
+      label: t('contextMenu.moveToTop'),
       icon: <VerticalAlignTopOutlined />,
       onClick: onMoveToTop,
       disabled: !canMoveUp || isLocked,
     },
     {
       key: 'moveToBottom',
-      label: '移到底部',
+      label: t('contextMenu.moveToBottom'),
       icon: <VerticalAlignBottomOutlined />,
       onClick: onMoveToBottom,
       disabled: !canMoveDown || isLocked,
@@ -113,7 +116,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
     },
     {
       key: 'delete',
-      label: '删除',
+      label: t('common.delete'),
       icon: <DeleteOutlined />,
       onClick: onDelete,
       danger: true,

@@ -4,6 +4,7 @@ import { DeleteOutlined, SettingOutlined } from '@ant-design/icons';
 import type { ComponentSchema } from '../../types';
 import type { PropertyPanelBlock } from '../../registry/componentRegistry';
 import { getComponentDefinition } from '../../registry/componentRegistry';
+import { useI18n } from '../../i18n';
 
 // 子组件
 import { ContainerConfig } from './ContainerConfig';
@@ -52,6 +53,7 @@ export const PropertyPanel: React.FC<PropertyPanelProps> = ({
   isDark = false,
 }) => {
   const allComponents = flattenComponents(components);
+  const { t } = useI18n();
 
   // 包装 updateProps 函数
   const updateProps = (newProps: Partial<ComponentSchema['props']>) => {
@@ -149,7 +151,7 @@ export const PropertyPanel: React.FC<PropertyPanelProps> = ({
       <Space align="center" style={{ marginBottom: 24 }}>
         <SettingOutlined style={{ color: isDark ? '#4096ff' : '#1677ff' }} />
         <Title level={5} style={{ margin: 0, color: isDark ? '#e6e6e6' : undefined }}>
-          属性配置
+          {t('property.title')}
         </Title>
       </Space>
 
@@ -157,14 +159,14 @@ export const PropertyPanel: React.FC<PropertyPanelProps> = ({
         // 多选状态
         <div style={{ textAlign: 'center', color: isDark ? '#a3a3a3' : '#666', padding: '40px 0' }}>
           <div style={{ fontSize: 48, marginBottom: 16 }}>📚</div>
-          <p>已选中 {selectedIds.length} 个组件</p>
+          <p>{t('property.multiSelect', { count: selectedIds.length })}</p>
           <Button
             danger
             icon={<DeleteOutlined />}
             onClick={() => deleteComponent(selectedIds)}
             style={{ marginTop: 16 }}
           >
-            批量删除
+            {t('property.batchDelete')}
           </Button>
         </div>
       ) : selectedComponent ? (
@@ -172,7 +174,7 @@ export const PropertyPanel: React.FC<PropertyPanelProps> = ({
         <Form layout="vertical">
           {/* 组件信息 */}
           <div style={{ background: isDark ? '#262626' : '#f9fafb', padding: 12, borderRadius: 6, marginBottom: 20 }}>
-            <Form.Item label="组件 ID" style={{ marginBottom: 0 }}>
+            <Form.Item label={t('property.componentId')} style={{ marginBottom: 0 }}>
               <Space>
                 <Tag>{selectedComponent.type}</Tag>
                 <Text code style={{ fontSize: 12 }}>
@@ -191,13 +193,13 @@ export const PropertyPanel: React.FC<PropertyPanelProps> = ({
               icon={<DeleteOutlined />}
               onClick={() => deleteComponent(selectedComponent.id)}
             >
-              删除
+              {t('common.delete')}
             </Button>
           </div>
         </Form>
       ) : (
         // 未选中状态
-        <div style={{ textAlign: 'center', color: isDark ? '#737373' : '#999', marginTop: 50 }}>请选择一个组件</div>
+        <div style={{ textAlign: 'center', color: isDark ? '#737373' : '#999', marginTop: 50 }}>{t('property.noSelection')}</div>
       )}
     </div>
   );

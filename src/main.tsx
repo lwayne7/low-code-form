@@ -5,6 +5,7 @@ import './App.css'
 import './components/common/common.css'
 import App from './App.tsx'
 import { ErrorBoundary } from './components/ErrorBoundary.tsx'
+import { I18nProvider } from './i18n'
 
 if (import.meta.env.DEV) {
   void import('./utils/performanceTester').then(({ registerPerformanceTest }) => {
@@ -15,7 +16,9 @@ if (import.meta.env.DEV) {
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ErrorBoundary>
-      <App />
+      <I18nProvider>
+        <App />
+      </I18nProvider>
     </ErrorBoundary>
   </StrictMode>,
 )

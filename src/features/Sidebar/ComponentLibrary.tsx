@@ -9,9 +9,25 @@ import { Input, Space, Typography } from 'antd';
 import { AppstoreAddOutlined } from '@ant-design/icons';
 import { DraggableSidebarItem } from '../../components';
 import { COMPONENT_MATERIALS } from '../../constants';
+import { useI18n } from '../../i18n';
 import type { ComponentType } from '../../types';
 
 const { Title } = Typography;
+
+// 组件类型到翻译 key 的映射
+const COMPONENT_TYPE_I18N_KEYS: Record<ComponentType, string> = {
+    Container: 'components.container',
+    Input: 'components.input',
+    TextArea: 'components.textarea',
+    InputNumber: 'components.inputNumber',
+    Select: 'components.select',
+    Radio: 'components.radio',
+    Checkbox: 'components.checkbox',
+    Switch: 'components.switch',
+    DatePicker: 'components.datePicker',
+    TimePicker: 'components.timePicker',
+    Button: 'components.button',
+};
 
 interface ComponentLibraryProps {
     isDark: boolean;
@@ -26,23 +42,32 @@ export const ComponentLibrary: React.FC<ComponentLibraryProps> = ({
     onSearchChange,
     onAddComponent,
 }) => {
-    const filteredMaterials = COMPONENT_MATERIALS.filter((item) =>
-        item.label.toLowerCase().includes(componentSearch.toLowerCase()) ||
-        item.type.toLowerCase().includes(componentSearch.toLowerCase())
-    );
+    const { t } = useI18n();
+
+    // 获取组件的翻译名称
+    const getComponentLabel = (type: ComponentType) => {
+        const key = COMPONENT_TYPE_I18N_KEYS[type];
+        return key ? t(key as keyof typeof t) : type;
+    };
+
+    const filteredMaterials = COMPONENT_MATERIALS.filter((item) => {
+        const translatedLabel = getComponentLabel(item.type);
+        return translatedLabel.toLowerCase().includes(componentSearch.toLowerCase()) ||
+            item.type.toLowerCase().includes(componentSearch.toLowerCase());
+    });
 
     return (
         <div style={{ padding: '20px 16px' }}>
             <Space align="center" style={{ marginBottom: 12 }}>
                 <AppstoreAddOutlined style={{ color: isDark ? '#4096ff' : '#1677ff' }} />
                 <Title level={5} style={{ margin: 0, color: isDark ? '#e6e6e6' : undefined }}>
-                    组件库
+                    {t('components.library')}
                 </Title>
             </Space>
 
             {/* 组件搜索 */}
             <Input
-                placeholder="搜索组件..."
+                placeholder={t('components.search')}
                 value={componentSearch}
                 onChange={(e) => onSearchChange(e.target.value)}
                 allowClear
@@ -57,12 +82,12 @@ export const ComponentLibrary: React.FC<ComponentLibraryProps> = ({
                         onClick={() => onAddComponent(item.type as ComponentType)}
                     >
                         {item.icon}
-                        <span className="component-card-label">{item.label}</span>
+                        <span className="component-card-label">{getComponentLabel(item.type)}</span>
                     </DraggableSidebarItem>
                 ))}
                 {filteredMaterials.length === 0 && (
                     <div style={{ gridColumn: '1 / -1', textAlign: 'center', color: isDark ? '#737373' : '#999', padding: 16 }}>
-                        未找到匹配的组件
+                        {t('components.notFound')}
                     </div>
                 )}
             </div>
@@ -71,3 +96,4 @@ export const ComponentLibrary: React.FC<ComponentLibraryProps> = ({
 };
 
 export default ComponentLibrary;
+
