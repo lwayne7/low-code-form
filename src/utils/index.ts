@@ -7,3 +7,6 @@ export * from './componentFactory';
 export * from './validation';
 export * from './selectors';
 export * from './tracing';
+export * from './eventBus';
+export * from './profiler';
+export * from './security';
