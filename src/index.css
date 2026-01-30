@@ -114,6 +114,13 @@ body {
   width: 100%;
 }
 
+/* 提供首屏 HTML fallback，避免 Lighthouse 出现 NO_FCP */
+.app-shell-loading {
+  padding: 24px;
+  font-size: 14px;
+  color: var(--text-color);
+}
+
 *, *::before, *::after {
   box-sizing: border-box;
 }
