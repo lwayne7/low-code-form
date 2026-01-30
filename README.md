@@ -14,6 +14,7 @@
 ## ✨ 核心亮点
 
 ### 🎨 技术架构
+
 - **React 19** + **TypeScript 5.9** - 最新技术栈
 - **Zustand** - 轻量级状态管理（with persist）
 - **@dnd-kit** - 现代化拖拽方案
@@ -23,12 +24,14 @@
 - **SQLite + Drizzle ORM** - 类型安全的数据持久化
 
 ### 🚀 性能优化
+
 - ✅ **虚拟滚动**：支持1000+组件流畅渲染（FPS 55+）
 - ✅ **自定义碰撞检测算法**：智能判断拖拽位置
 - ✅ **React性能优化**：memo、useMemo、useCallback全覆盖
 - ✅ **性能提升**：FPS +57%，内存 -50%（大数据量场景）
 
 ### 🛠️ 近期修复与优化（2026-01）
+
 - ✅ **碰撞检测热路径优化**：为每次计算构建 `id -> depth/rect` 缓存，并使用“距离平方”排序，减少 `find/sqrt` 开销、提升嵌套拖拽稳定性（`src/utils/collisionDetection.ts`）
 - ✅ **拖拽常量统一**：抽出 `CONTAINER_EDGE_RATIO`/`MIN_EDGE_HEIGHT`，保证碰撞检测与拖拽处理逻辑一致（`src/constants/dnd.ts`、`src/hooks/useDragHandlers.ts`）
 - ✅ **主题不同步修复**：`useTheme` 改为全局 Zustand 单一数据源，支持 `auto` 跟随系统与跨标签页同步（`src/themeStore.ts`、`src/hooks/useTheme.ts`）
@@ -48,6 +51,7 @@
 - ✅ **E2E 稳定性与可访问性**：补齐关键交互的 `data-testid`/`aria-label`，让 E2E 不依赖中文文案且在不同主题/语言下更稳（`e2e/*`、`src/features/Header/AppHeader.tsx`、`src/features/Preview/PreviewModal.tsx`、`src/components/Sidebar/DraggableSidebarItem.tsx`）
 
 ### 🏗️ 架构增强（2026-01）
+
 - ✅ **EventBus 事件总线**：类型安全的发布-订阅系统，支持组件生命周期、拖拽、表单、插件事件（`src/utils/eventBus.ts`）
 - ✅ **Plugin System 插件架构**：生命周期钩子、依赖管理、组件扩展机制（`src/plugins/pluginManager.ts`）
 - ✅ **Command Pattern 命令模式**：支持撤销/重做、命令合并、宏命令（`src/commands/commandManager.ts`）
@@ -58,13 +62,15 @@
 - ✅ **工程化增强**：Husky + lint-staged + commitlint 规范提交，Bundle Analyzer 分析包体积（`commitlint.config.js`、`.husky/*`）
 
 ### 🧪 完整测试体系
-- ✅ **100+ 单元测试**：覆盖核心业务逻辑（Vitest）
-- ✅ **20+ E2E测试**：Playwright端到端测试
+
+- ✅ **103+ 单元测试**：覆盖核心业务逻辑（Vitest）
+- ✅ **21+ E2E测试**：Playwright端到端测试
 - ✅ **10+性能基准测试**：量化性能指标
 - ✅ **Lighthouse CI**：自动化性能评分
 - ✅ **覆盖率报告**：`npm run test:coverage`（HTML 输出到 `coverage/`）
 
 ### 💡 功能特性
+
 - 🎨 可视化拖拽构建表单
 - 📦 丰富的组件库（10+种组件）
 - 🏗️ 容器支持无限嵌套
@@ -83,20 +89,20 @@
 
 ### 大数据量场景（1000组件）
 
-| 指标 | 优化前 | 优化后 | 提升 |
-|-----|-------|-------|------|
-| **FPS** | ~35 | ~55 | **+57%** |
-| **内存占用** | ~80MB | ~40MB | **-50%** |
-| **首屏渲染** | ~3s | ~1.5s | **-50%** |
+| 指标         | 优化前 | 优化后 | 提升     |
+| ------------ | ------ | ------ | -------- |
+| **FPS**      | ~35    | ~55    | **+57%** |
+| **内存占用** | ~80MB  | ~40MB  | **-50%** |
+| **首屏渲染** | ~3s    | ~1.5s  | **-50%** |
 
 ### 操作性能
 
-| 操作 | 数量 | 耗时 | 评级 |
-|-----|------|------|------|
-| 添加组件 | 100 | ~200ms | ⭐⭐⭐⭐⭐ |
-| 添加组件 | 1000 | ~1.5s | ⭐⭐⭐⭐ |
-| 删除组件（批量） | 100 | ~50ms | ⭐⭐⭐⭐⭐ |
-| 撤销操作 | 50次 | ~300ms | ⭐⭐⭐⭐⭐ |
+| 操作             | 数量 | 耗时   | 评级       |
+| ---------------- | ---- | ------ | ---------- |
+| 添加组件         | 100  | ~200ms | ⭐⭐⭐⭐⭐ |
+| 添加组件         | 1000 | ~1.5s  | ⭐⭐⭐⭐   |
+| 删除组件（批量） | 100  | ~50ms  | ⭐⭐⭐⭐⭐ |
+| 撤销操作         | 50次 | ~300ms | ⭐⭐⭐⭐⭐ |
 
 ## 🚀 快速开始
 
@@ -197,10 +203,11 @@ low-code-form/
 **问题**：拖拽到嵌套容器时，如何智能判断是放入容器内部还是排序到容器前后？
 
 **解决方案**：
+
 ```typescript
 // src/constants/dnd.ts
 export const CONTAINER_EDGE_RATIO = 0.25; // 上下各25%为边缘区域
-export const MIN_EDGE_HEIGHT = 20;        // 小容器兜底边缘高度（px）
+export const MIN_EDGE_HEIGHT = 20; // 小容器兜底边缘高度（px）
 
 // src/utils/collisionDetection.ts
 // - pointerWithin -> rectIntersection -> closestCenter 兜底
@@ -220,6 +227,7 @@ export const MIN_EDGE_HEIGHT = 20;        // 小容器兜底边缘高度（px）
 **问题**：1000+组件时页面卡顿，FPS降至30
 
 **解决方案**：
+
 - 使用 react-window 实现虚拟列表
 - 组件数量 > 50 时自动启用
 - 只渲染可见区域（overscan: 5）
@@ -231,20 +239,22 @@ export const MIN_EDGE_HEIGHT = 20;        // 小容器兜底边缘高度（px）
 // 自定义memo比较函数
 const SortableList = React.memo(Component, (prev, next) => {
   // dropTarget深比较，避免引用变化触发不必要渲染
-  if (prevDrop?.targetId === nextDrop?.targetId &&
-      prevDrop?.position === nextDrop?.position) {
+  if (prevDrop?.targetId === nextDrop?.targetId && prevDrop?.position === nextDrop?.position) {
     return true;
   }
   return false;
 });
 
 // useMemo缓存计算
-const itemIds = useMemo(() => items.map(c => c.id), [items]);
+const itemIds = useMemo(() => items.map((c) => c.id), [items]);
 
 // useCallback缓存回调
-const handleClick = useCallback((e) => {
-  onSelect(component.id, e.metaKey || e.ctrlKey);
-}, [component.id, onSelect]);
+const handleClick = useCallback(
+  (e) => {
+    onSelect(component.id, e.metaKey || e.ctrlKey);
+  },
+  [component.id, onSelect]
+);
 ```
 
 ### 4. 完整的测试金字塔 ⭐⭐⭐⭐⭐
@@ -256,7 +266,7 @@ const handleClick = useCallback((e) => {
      ┌────────────┐
 		    └──────────────┘
 		     单元测试 (99)    ← Vitest
-     
+
 性能基准 (10+)       ← Vitest Bench
 Lighthouse CI        ← 自动化
 ```
@@ -339,7 +349,7 @@ MIT License
 
 ---
 
-**最后更新**: 2026-01-29  
-**当前版本**: v2.8.0  
-**自动化测试**: 单元 99 + E2E 21  
+**最后更新**: 2026-01-31  
+**当前版本**: v2.9.0  
+**自动化测试**: 单元 103 + E2E 21  
 **性能基准**: 10+（Vitest Bench）
