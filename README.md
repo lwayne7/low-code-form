@@ -47,6 +47,16 @@
 - ✅ **启动稳定性（LHCI）**：i18n 默认语言推断增加 `localStorage/navigator` 兜底，并在启动阶段增加 ErrorBoundary，降低首屏崩溃导致的 NO_FCP 风险（`src/i18n/index.tsx`、`src/main.tsx`）
 - ✅ **E2E 稳定性与可访问性**：补齐关键交互的 `data-testid`/`aria-label`，让 E2E 不依赖中文文案且在不同主题/语言下更稳（`e2e/*`、`src/features/Header/AppHeader.tsx`、`src/features/Preview/PreviewModal.tsx`、`src/components/Sidebar/DraggableSidebarItem.tsx`）
 
+### 🏗️ 架构增强（2026-01）
+- ✅ **EventBus 事件总线**：类型安全的发布-订阅系统，支持组件生命周期、拖拽、表单、插件事件（`src/utils/eventBus.ts`）
+- ✅ **Plugin System 插件架构**：生命周期钩子、依赖管理、组件扩展机制（`src/plugins/pluginManager.ts`）
+- ✅ **Command Pattern 命令模式**：支持撤销/重做、命令合并、宏命令（`src/commands/commandManager.ts`）
+- ✅ **Branded Types 品牌类型**：ComponentId/TemplateId 等类型安全增强，防止 ID 混用（`src/types/branded.ts`）
+- ✅ **Zod Schema 运行时校验**：Schema-first 设计，组件/模板/API 响应类型验证（`src/schemas/index.ts`）
+- ✅ **React Profiler 性能分析**：Long Task API 监控、慢渲染检测、调试工具（`src/utils/profiler.tsx`）
+- ✅ **Security 安全工具**：XSS 防护、CSP 辅助、输入净化、表达式安全检查（`src/utils/security.ts`）
+- ✅ **工程化增强**：Husky + lint-staged + commitlint 规范提交，Bundle Analyzer 分析包体积（`commitlint.config.js`、`.husky/*`）
+
 ### 🧪 完整测试体系
 - ✅ **100+ 单元测试**：覆盖核心业务逻辑（Vitest）
 - ✅ **20+ E2E测试**：Playwright端到端测试
@@ -137,12 +147,23 @@ low-code-form/
 │   │   ├── DragDrop/        # 拖拽组件（含虚拟滚动）
 │   │   ├── common/          # 通用组件
 │   │   └── PropertyPanel/   # 属性配置面板
+│   ├── commands/            # 命令模式（撤销/重做）
+│   │   └── commandManager.ts # Command Pattern 实现
+│   ├── plugins/             # 插件系统
+│   │   └── pluginManager.ts  # 插件生命周期管理
+│   ├── schemas/             # Zod 运行时校验
+│   │   └── index.ts          # 组件/模板 Schema
+│   ├── types/               # TypeScript 类型增强
+│   │   └── branded.ts        # 品牌类型
 │   ├── features/            # UI 功能模块（Header/Preview/Sidebar/移动端）
 │   ├── hooks/               # 自定义Hooks
 │   ├── services/            # API 服务层（后端交互）
 │   ├── utils/               # 工具函数
 │   │   ├── collisionDetection.ts  # 碰撞检测算法
 │   │   ├── codeGenerator.ts       # 代码生成器
+│   │   ├── eventBus.ts            # 事件总线（发布-订阅）
+│   │   ├── profiler.tsx           # React 性能分析
+│   │   ├── security.ts            # 安全工具（XSS/CSP）
 │   │   ├── performanceTester.ts   # 性能测试工具（dev: window.performanceTest）
 │   │   └── validation.ts          # 表单校验
 │   ├── constants/           # 常量配置
