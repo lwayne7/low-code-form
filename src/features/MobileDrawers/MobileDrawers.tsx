@@ -7,7 +7,7 @@
 import React from 'react';
 import { Drawer, Space, Input } from 'antd';
 import { AppstoreAddOutlined, SettingOutlined } from '@ant-design/icons';
-import { PropertyPanel } from '../../components';
+import { LazyPropertyPanel } from '../../components';
 import { COMPONENT_MATERIALS } from '../../constants';
 import { useI18n } from '../../i18n';
 import type { ComponentSchema, ComponentType } from '../../types';
@@ -123,7 +123,7 @@ export const MobileDrawers: React.FC<MobileDrawersProps> = ({
                 onClose={onPropertyDrawerClose}
                 width={320}
             >
-                <PropertyPanel
+                <LazyPropertyPanel
                     selectedIds={selectedIds}
                     selectedComponent={selectedComponent}
                     components={components}

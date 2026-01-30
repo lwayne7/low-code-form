@@ -54,3 +54,29 @@ export const LazyKeyboardShortcutsPanel: React.FC<React.ComponentProps<typeof La
     <LazyKeyboardShortcutsPanelComponent {...props} />
   </Suspense>
 );
+
+/**
+ * 懒加载的性能面板
+ */
+const LazyPerformancePanelComponent = lazy(() =>
+  import('./common/PerformancePanel').then((m) => ({ default: m.PerformancePanel }))
+);
+
+export const LazyPerformancePanel: React.FC<React.ComponentProps<typeof LazyPerformancePanelComponent>> = (props) => (
+  <Suspense fallback={null}>
+    <LazyPerformancePanelComponent {...props} />
+  </Suspense>
+);
+
+/**
+ * 懒加载的属性面板（属性配置模块较大，且不一定会在首屏就使用）
+ */
+const LazyPropertyPanelComponent = lazy(() =>
+  import('./PropertyPanel/index').then((m) => ({ default: m.PropertyPanel }))
+);
+
+export const LazyPropertyPanel: React.FC<React.ComponentProps<typeof LazyPropertyPanelComponent>> = (props) => (
+  <Suspense fallback={<LoadingSpinner tip="加载属性面板..." />}>
+    <LazyPropertyPanelComponent {...props} />
+  </Suspense>
+);

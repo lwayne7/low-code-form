@@ -22,7 +22,7 @@ import { useI18n } from './i18n';
 import './App.css';
 
 // Components
-import { PropertyPanel, SortableList, LazyKeyboardShortcutsPanel, LazyHistoryPanel, PerformancePanel } from './components';
+import { SortableList, LazyKeyboardShortcutsPanel, LazyHistoryPanel, LazyPerformancePanel, LazyPropertyPanel } from './components';
 
 // Features
 import { AppHeader, PreviewModal, ComponentLibrary, MobileDrawers } from './features';
@@ -319,7 +319,7 @@ function App() {
 
           {/* 右侧属性面板 */}
           <Sider className="sidebar-right" width={320} theme="light" style={{ borderLeft: `1px solid ${isDark ? '#303030' : '#f0f0f0'}`, overflow: 'hidden auto', background: isDark ? '#1f1f1f' : '#fff' }}>
-            <PropertyPanel
+            <LazyPropertyPanel
               selectedIds={selectedIds}
               selectedComponent={selectedComponent}
               components={components}
@@ -387,7 +387,7 @@ function App() {
       />
 
       {/* 性能监控面板 */}
-      <PerformancePanel
+      <LazyPerformancePanel
         open={isPerfPanelOpen}
         onClose={() => setIsPerfPanelOpen(false)}
       />

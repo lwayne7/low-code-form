@@ -1485,7 +1485,7 @@
 }
 
 [data-theme="dark"] .ant-modal-close-x {
-  color: #a3a3a3 !important;
+  color: #c7c7c7 !important;
 }
 
 [data-theme="dark"] .ant-modal-footer {
@@ -1507,7 +1507,7 @@
 }
 
 [data-theme="dark"] .ant-drawer-close {
-  color: #a3a3a3 !important;
+  color: #c7c7c7 !important;
 }
 
 /* Card 深色模式 */
@@ -1527,6 +1527,13 @@
   color: #e6e6e6 !important;
 }
 
+/* Typography/辅助信息在暗色模式下的可读性 */
+[data-theme="dark"] .ant-typography-secondary,
+[data-theme="dark"] .ant-form-item-extra,
+[data-theme="dark"] .ant-form-item-explain {
+  color: var(--text-color-secondary, #c7c7c7) !important;
+}
+
 /* Input 深色模式 */
 [data-theme="dark"] .ant-input,
 [data-theme="dark"] .ant-input-number,
@@ -1538,7 +1545,8 @@
 
 [data-theme="dark"] .ant-input::placeholder,
 [data-theme="dark"] .ant-input-number-input::placeholder {
-  color: #737373 !important;
+  /* 提升 placeholder 对比度，避免暗色模式下“看不清” */
+  color: #a3a3a3 !important;
 }
 
 [data-theme="dark"] .ant-input-number-input {
@@ -1570,7 +1578,7 @@
 }
 
 [data-theme="dark"] .ant-select-selection-placeholder {
-  color: #737373 !important;
+  color: #a3a3a3 !important;
 }
 
 [data-theme="dark"] .ant-select-dropdown {
@@ -1592,12 +1600,12 @@
 }
 
 [data-theme="dark"] .ant-select-arrow {
-  color: #a3a3a3 !important;
+  color: #c7c7c7 !important;
 }
 
 /* Tabs 深色模式 */
 [data-theme="dark"] .ant-tabs-tab {
-  color: #a3a3a3 !important;
+  color: #c7c7c7 !important;
 }
 
 [data-theme="dark"] .ant-tabs-tab:hover {
