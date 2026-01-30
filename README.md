@@ -32,20 +32,24 @@
 - ✅ **碰撞检测热路径优化**：为每次计算构建 `id -> depth/rect` 缓存，并使用“距离平方”排序，减少 `find/sqrt` 开销、提升嵌套拖拽稳定性（`src/utils/collisionDetection.ts`）
 - ✅ **拖拽常量统一**：抽出 `CONTAINER_EDGE_RATIO`/`MIN_EDGE_HEIGHT`，保证碰撞检测与拖拽处理逻辑一致（`src/constants/dnd.ts`、`src/hooks/useDragHandlers.ts`）
 - ✅ **主题不同步修复**：`useTheme` 改为全局 Zustand 单一数据源，支持 `auto` 跟随系统与跨标签页同步（`src/themeStore.ts`、`src/hooks/useTheme.ts`）
+- ✅ **Ant Design 主题算法**：通过 `ConfigProvider` 在暗色模式启用 `darkAlgorithm`，提升暗色主题一致性与可读性（`src/App.tsx`）
 - ✅ **虚拟滚动类型修复**：适配 `react-window@2` 的 `List` API，去掉 `@ts-nocheck` 并重新启用导出（`src/components/DragDrop/VirtualizedSortableList.tsx`）
 - ✅ **工程化与类型安全**：分离 `trackRender` 以兼容 Fast Refresh；`formValues` 从 `any` 收紧到 `unknown`；worker 中 `switch/case` 声明块修复 lint（`src/components/common/performanceTracking.ts`、`src/store.ts`、`src/workers/codeGenerator.worker.ts`）
 - ✅ **性能基准与控制台工具**：新增 `vitest bench` 基准（`src/test/performance.bench.ts`）与开发环境控制台 `window.performanceTest`（`src/utils/performanceTester.ts`、`src/main.tsx`、`src/global.d.ts`）
 - ✅ **Undo/Redo Patch 历史**：用“补丁记录 + 结构共享”替代整树快照，显著降低内存与 GC；示例（100 次添加）历史数据序列化大小 `~373KB → ~18KB`（约 **-95%**）（`src/store.ts`、`src/utils/componentTreeOps.ts`、`src/components/common/HistoryPanel.tsx`）
 - ✅ **组件注册表 + schema 属性面板**：新增 `src/registry/componentRegistry.tsx` 统一维护组件默认配置/物料/属性面板 schema，新增组件基本只改声明（`src/utils/componentFactory.ts`、`src/constants/materials.tsx`、`src/components/PropertyPanel/index.tsx`）
 - ✅ **表达式安全**：`visibleOn` 从 `new Function` 改为 AST 白名单解析 + 安全执行，并在属性面板实时校验，避免注入与运行时崩溃（`src/utils/expression.ts`、`src/components/CanvasFormItem.tsx`、`src/components/FormRenderer.tsx`、`src/components/PropertyPanel/LinkageConfig.tsx`）
+- ✅ **表达式类型提示（zod）**：在安全 AST 基础上增加“字段存在性 + 类型可能不匹配”提示，降低联动配置出错成本（`src/utils/visibleOnTypeValidation.ts`、`src/components/PropertyPanel/LinkageConfig.tsx`）
 - ✅ **Tracing + CI 性能预算**：拖拽/导出代码打点并在性能面板展示；新增 CI 工作流运行 lint/test/build，加入性能预算用例防回归（`src/utils/tracing.ts`、`src/hooks/useDragHandlers.ts`、`src/features/Header/AppHeader.tsx`、`src/components/common/PerformancePanel.tsx`、`.github/workflows/ci.yml`、`src/test/perfBudget.test.ts`）
 - ✅ **Header 统计显示修复**：修复中英文环境下表单数量统计被截断/按钮缺失的问题（`src/features/Header/AppHeader.tsx`）
 - ✅ **暗色模式可读性**：提升属性面板与配置项在暗色主题下的对比度与可见性（`src/App.css`、`src/components/PropertyPanel/*`）
 - ✅ **画布组件名称国际化**：统一画布/组件库/默认文案的 i18n 映射，避免中英文混用（`src/registry/componentRegistry.tsx`、`src/i18n/index.tsx`）
+- ✅ **启动稳定性（LHCI）**：i18n 默认语言推断增加 `localStorage/navigator` 兜底，并在启动阶段增加 ErrorBoundary，降低首屏崩溃导致的 NO_FCP 风险（`src/i18n/index.tsx`、`src/main.tsx`）
+- ✅ **E2E 稳定性与可访问性**：补齐关键交互的 `data-testid`/`aria-label`，让 E2E 不依赖中文文案且在不同主题/语言下更稳（`e2e/*`、`src/features/Header/AppHeader.tsx`、`src/features/Preview/PreviewModal.tsx`、`src/components/Sidebar/DraggableSidebarItem.tsx`）
 
 ### 🧪 完整测试体系
-- ✅ **99个单元测试**：覆盖核心业务逻辑（Vitest）
-- ✅ **21个E2E测试**：Playwright端到端测试
+- ✅ **100+ 单元测试**：覆盖核心业务逻辑（Vitest）
+- ✅ **20+ E2E测试**：Playwright端到端测试
 - ✅ **10+性能基准测试**：量化性能指标
 - ✅ **Lighthouse CI**：自动化性能评分
 - ✅ **覆盖率报告**：`npm run test:coverage`（HTML 输出到 `coverage/`）
