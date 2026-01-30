@@ -1152,16 +1152,24 @@ const LOCALE_STORAGE_KEY = 'low-code-form-locale';
 
 // 获取默认语言
 function getDefaultLocale(): Locale {
-    // 1. 从本地存储读取
-    const stored = localStorage.getItem(LOCALE_STORAGE_KEY);
-    if (stored && (stored === 'zh-CN' || stored === 'en-US')) {
-        return stored;
+    // 1. 从本地存储读取（某些环境下 localStorage 可能不可用，需兜底避免首屏崩溃）
+    try {
+        const stored = localStorage.getItem(LOCALE_STORAGE_KEY);
+        if (stored && (stored === 'zh-CN' || stored === 'en-US')) {
+            return stored;
+        }
+    } catch {
+        // ignore
     }
 
     // 2. 从浏览器语言推断
-    const browserLang = navigator.language;
-    if (browserLang.startsWith('zh')) {
-        return 'zh-CN';
+    try {
+        const browserLang = navigator.language ?? '';
+        if (browserLang.startsWith('zh')) {
+            return 'zh-CN';
+        }
+    } catch {
+        // ignore
     }
 
     return 'en-US';

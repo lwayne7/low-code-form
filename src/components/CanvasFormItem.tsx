@@ -52,10 +52,10 @@ export const CanvasFormItem: React.FC<CanvasFormItemProps> = React.memo(({ compo
     return (
       <div style={{ 
         padding: '8px 12px', 
-        background: '#f5f5f5', 
-        border: '1px dashed #d9d9d9', 
+        background: 'var(--background-color-light, #f5f5f5)', 
+        border: '1px dashed var(--border-color, #d9d9d9)', 
         borderRadius: 4,
-        color: '#999',
+        color: 'var(--text-color-tertiary, #999)',
         fontSize: 12,
         marginBottom: 16
       }}>

@@ -6,6 +6,7 @@ import { useStore } from '../../store';
 
 interface SortableItemProps {
   id: string;
+  componentType?: string;
   children: React.ReactNode;
   onClick: (e: React.MouseEvent) => void;
   isSelected: boolean;
@@ -112,6 +113,8 @@ export const SortableItem = React.memo(function SortableItem(props: SortableItem
       onClick={props.onClick}
       className={className}
       data-component-id={props.id}
+      data-component-type={props.componentType}
+      data-testid={props.componentType ? `canvas-${props.componentType}` : undefined}
     >
       {/* 拖拽手柄（仅在 useHandle 模式下显示）- 覆盖容器标题栏区域 */}
       {props.useHandle && (

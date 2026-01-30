@@ -89,6 +89,8 @@ export const PropertyPanel: React.FC<PropertyPanelProps> = ({
                   const next = Number.isFinite(parsed) ? parsed : (Number(block.defaultValue ?? 0) || 0);
                   setPropValue(block.prop, next);
                 }}
+                aria-label={block.label}
+                data-testid={`prop-${block.prop}`}
               />
             </Form.Item>
           );
@@ -100,6 +102,8 @@ export const PropertyPanel: React.FC<PropertyPanelProps> = ({
               value={typeof value === 'string' ? value : String(value ?? '')}
               onChange={(e) => setPropValue(block.prop, e.target.value)}
               placeholder={block.placeholder}
+              aria-label={block.label}
+              data-testid={`prop-${block.prop}`}
             />
           </Form.Item>
         );
@@ -147,7 +151,7 @@ export const PropertyPanel: React.FC<PropertyPanelProps> = ({
   };
 
   return (
-    <div style={{ padding: '20px 16px' }}>
+    <div style={{ padding: '20px 16px' }} data-testid="property-panel">
       <Space align="center" style={{ marginBottom: 24 }}>
         <SettingOutlined style={{ color: isDark ? '#4096ff' : '#1677ff' }} />
         <Title level={5} style={{ margin: 0, color: isDark ? '#e6e6e6' : undefined }}>
@@ -157,7 +161,7 @@ export const PropertyPanel: React.FC<PropertyPanelProps> = ({
 
       {selectedIds.length > 1 ? (
         // 多选状态
-        <div style={{ textAlign: 'center', color: isDark ? '#a3a3a3' : '#666', padding: '40px 0' }}>
+        <div style={{ textAlign: 'center', color: 'var(--text-color-secondary, #666)', padding: '40px 0' }}>
           <div style={{ fontSize: 48, marginBottom: 16 }}>📚</div>
           <p>{t('property.multiSelect', { count: selectedIds.length })}</p>
           <Button
@@ -165,6 +169,7 @@ export const PropertyPanel: React.FC<PropertyPanelProps> = ({
             icon={<DeleteOutlined />}
             onClick={() => deleteComponent(selectedIds)}
             style={{ marginTop: 16 }}
+            data-testid="btn-batch-delete"
           >
             {t('property.batchDelete')}
           </Button>
@@ -192,6 +197,7 @@ export const PropertyPanel: React.FC<PropertyPanelProps> = ({
               block
               icon={<DeleteOutlined />}
               onClick={() => deleteComponent(selectedComponent.id)}
+              data-testid="btn-delete-component"
             >
               {t('common.delete')}
             </Button>
@@ -199,7 +205,7 @@ export const PropertyPanel: React.FC<PropertyPanelProps> = ({
         </Form>
       ) : (
         // 未选中状态
-        <div style={{ textAlign: 'center', color: isDark ? '#737373' : '#999', marginTop: 50 }}>{t('property.noSelection')}</div>
+        <div style={{ textAlign: 'center', color: 'var(--text-color-tertiary, #999)', marginTop: 50 }}>{t('property.noSelection')}</div>
       )}
     </div>
   );

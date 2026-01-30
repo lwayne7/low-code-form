@@ -11,7 +11,7 @@
  */
 
 import { useState, useRef } from 'react';
-import { Layout, FloatButton } from 'antd';
+import { ConfigProvider, Layout, FloatButton, theme as antdTheme } from 'antd';
 import {
   AppstoreAddOutlined,
   PlusOutlined,
@@ -50,6 +50,7 @@ import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import type { ComponentType } from './types';
 
 const { Sider, Content } = Layout;
+const { defaultAlgorithm, darkAlgorithm } = antdTheme;
 
 // 侧边栏 Overlay 组件
 const SidebarItemOverlay = ({ type }: { type: ComponentType }) => (
@@ -218,45 +219,50 @@ function App() {
   };
 
   return (
-    <Layout style={{ height: '100vh' }}>
-      {/* 顶部工具栏 */}
-      <AppHeader
-        isDark={isDark}
-        themeMode={themeMode}
-        setThemeMode={setThemeMode}
-        components={components}
-        history={history}
-        undo={undo}
-        redo={redo}
-        resetCanvas={resetCanvas}
-        customTemplates={customTemplates}
-        saveAsTemplate={saveAsTemplate}
-        deleteTemplate={deleteTemplate}
-        addComponents={addComponents}
-        importComponents={importComponents}
-        onPreviewOpen={() => setIsPreviewOpen(true)}
-        onShortcutsOpen={() => setIsShortcutsOpen(true)}
-        onHistoryOpen={() => setIsHistoryOpen(true)}
-        onPerfPanelOpen={() => setIsPerfPanelOpen(true)}
-      />
+    <ConfigProvider
+      theme={{
+        algorithm: isDark ? darkAlgorithm : defaultAlgorithm,
+      }}
+    >
+      <Layout style={{ height: '100vh' }}>
+        {/* 顶部工具栏 */}
+        <AppHeader
+          isDark={isDark}
+          themeMode={themeMode}
+          setThemeMode={setThemeMode}
+          components={components}
+          history={history}
+          undo={undo}
+          redo={redo}
+          resetCanvas={resetCanvas}
+          customTemplates={customTemplates}
+          saveAsTemplate={saveAsTemplate}
+          deleteTemplate={deleteTemplate}
+          addComponents={addComponents}
+          importComponents={importComponents}
+          onPreviewOpen={() => setIsPreviewOpen(true)}
+          onShortcutsOpen={() => setIsShortcutsOpen(true)}
+          onHistoryOpen={() => setIsHistoryOpen(true)}
+          onPerfPanelOpen={() => setIsPerfPanelOpen(true)}
+        />
 
-      <DndContext
-        sensors={sensors}
-        collisionDetection={customCollisionDetection}
-        onDragStart={handleDragStart}
-        onDragOver={handleDragOver}
-        onDragEnd={handleDragEnd}
-      >
-        <Layout>
-          {/* 左侧组件库 */}
-          <Sider className="sidebar-left" width={280} theme="light" style={{ borderRight: `1px solid ${isDark ? '#303030' : '#f0f0f0'}`, overflow: 'hidden auto', background: isDark ? '#1f1f1f' : '#fff' }}>
-            <ComponentLibrary
-              isDark={isDark}
-              componentSearch={componentSearch}
-              onSearchChange={setComponentSearch}
-              onAddComponent={(type) => addComponent(type)}
-            />
-          </Sider>
+        <DndContext
+          sensors={sensors}
+          collisionDetection={customCollisionDetection}
+          onDragStart={handleDragStart}
+          onDragOver={handleDragOver}
+          onDragEnd={handleDragEnd}
+        >
+          <Layout>
+            {/* 左侧组件库 */}
+            <Sider className="sidebar-left" width={280} theme="light" style={{ borderRight: `1px solid ${isDark ? '#303030' : '#f0f0f0'}`, overflow: 'hidden auto', background: isDark ? '#1f1f1f' : '#fff' }}>
+              <ComponentLibrary
+                isDark={isDark}
+                componentSearch={componentSearch}
+                onSearchChange={setComponentSearch}
+                onAddComponent={(type) => addComponent(type)}
+              />
+            </Sider>
 
           {/* 中间画布 */}
           <Content
@@ -425,6 +431,7 @@ function App() {
         )}
       </FloatButton.Group>
     </Layout>
+    </ConfigProvider>
   );
 }
 

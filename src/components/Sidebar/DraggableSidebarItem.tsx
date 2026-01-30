@@ -11,6 +11,7 @@ export function DraggableSidebarItem({ id, children, onClick }: DraggableSidebar
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: id,
   });
+  const componentType = id.startsWith('new-') ? id.slice('new-'.length) : id;
 
   // 侧边栏物料区建议使用 DragOverlay 展示拖拽预览，
   // 避免把原始卡片本体 translate 出侧边栏导致“组件库跟着跑/位移”的观感。
@@ -29,6 +30,8 @@ export function DraggableSidebarItem({ id, children, onClick }: DraggableSidebar
       {...attributes}
       onClick={onClick}
       className="component-card" // 复用之前的样式
+      data-testid={`material-${componentType}`}
+      data-component-type={componentType}
     >
       {children}
     </div>

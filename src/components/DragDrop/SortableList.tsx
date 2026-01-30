@@ -330,11 +330,12 @@ const SortableListItem: React.FC<SortableListItemProps> = React.memo(({
   }), [depth, isContainerDropTarget, isDragging, isDark]);
 
   return (
-    <SortableItem
-      id={component.id}
-      isSelected={isSelected}
-      onClick={handleClick}
-      useHandle={isContainer && (component.children?.length ?? 0) > 0}
+	    <SortableItem
+	      id={component.id}
+	      componentType={component.type}
+	      isSelected={isSelected}
+	      onClick={handleClick}
+	      useHandle={isContainer && (component.children?.length ?? 0) > 0}
       isFirst={isFirst}
       isLast={isLast}
       isLocked={isLocked}
@@ -354,14 +355,14 @@ const SortableListItem: React.FC<SortableListItemProps> = React.memo(({
           )}
           <Card
             size="small"
-            title={
-              <span style={{ cursor: isLocked ? 'not-allowed' : 'grab', color: isDark ? '#e6e6e6' : undefined }}>
-                {isLocked ? '🔒' : '⠿'} {component.props.label || t('dnd.container')}
-                <span style={{ marginLeft: 8, fontSize: 11, color: isDark ? '#737373' : '#999' }}>
-                  ({t('dnd.level', { level: depth + 1 })})
-                </span>
-              </span>
-            }
+	            title={
+	              <span style={{ cursor: isLocked ? 'not-allowed' : 'grab', color: isDark ? '#e6e6e6' : undefined }}>
+	                {isLocked ? '🔒' : '⠿'} {component.props.label || t('dnd.container')}
+	                <span style={{ marginLeft: 8, fontSize: 11, color: 'var(--text-color-tertiary, #999)' }}>
+	                  ({t('dnd.level', { level: depth + 1 })})
+	                </span>
+	              </span>
+	            }
             style={cardStyle}
             styles={{ 
               body: { padding: 8, minHeight: 60 },

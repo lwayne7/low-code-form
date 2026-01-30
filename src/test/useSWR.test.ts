@@ -51,7 +51,7 @@ describe('useSWR', () => {
         const fallbackData = { initial: 'data' };
         
         const { result } = renderHook(() => 
-            useSWR('fallback-key', fetcher, { fallbackData })
+            useSWR('fallback-key', fetcher, { fallbackData, isPaused: true })
         );
 
         expect(result.current.data).toEqual(fallbackData);

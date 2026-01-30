@@ -18,7 +18,7 @@ test.describe('拖拽功能', () => {
 
   test('应该能够从侧边栏拖拽组件到画布', async ({ page }) => {
     // 获取输入框组件卡片
-    const inputCard = page.locator('.component-card', { hasText: '输入框' }).first();
+    const inputCard = page.getByTestId('material-Input');
     const canvas = page.locator('.canvas-paper');
     
     // 执行拖拽
@@ -33,11 +33,11 @@ test.describe('拖拽功能', () => {
 
   test('应该能够在画布内拖拽组件进行排序', async ({ page }) => {
     // 先添加三个组件（点击方式）
-    await page.locator('.component-card', { hasText: '输入框' }).click();
+    await page.getByTestId('material-Input').click();
     await page.waitForTimeout(200);
-    await page.locator('.component-card', { hasText: '按钮' }).click();
+    await page.getByTestId('material-Button').click();
     await page.waitForTimeout(200);
-    await page.locator('.component-card', { hasText: '下拉选择' }).click();
+    await page.getByTestId('material-Select').click();
     await page.waitForTimeout(200);
     
     // 获取第一个和第三个组件
@@ -58,16 +58,16 @@ test.describe('拖拽功能', () => {
 
   test('应该能够拖拽组件到容器内', async ({ page }) => {
     // 添加容器
-    await page.locator('.component-card', { hasText: '容器' }).click();
+    await page.getByTestId('material-Container').click();
     await page.waitForTimeout(200);
     
     // 添加输入框
-    await page.locator('.component-card', { hasText: '输入框' }).click();
+    await page.getByTestId('material-Input').click();
     await page.waitForTimeout(200);
     
     // 获取容器和输入框
-    const container = page.locator('.sortable-item', { has: page.locator('text=容器') }).first();
-    const input = page.locator('.sortable-item').nth(1);
+    const container = page.locator('[data-component-type="Container"]').first();
+    const input = page.locator('[data-component-type="Input"]').first();
     
     // 拖拽输入框到容器内
     await input.dragTo(container);
@@ -80,12 +80,12 @@ test.describe('拖拽功能', () => {
 
   test('应该支持容器嵌套后继续放入组件', async ({ page }) => {
     // 添加两个容器
-    await page.locator('.component-card', { hasText: '容器' }).click();
+    await page.getByTestId('material-Container').click();
     await page.waitForTimeout(200);
-    await page.locator('.component-card', { hasText: '容器' }).click();
+    await page.getByTestId('material-Container').click();
     await page.waitForTimeout(200);
 
-    const containers = page.locator('.canvas-paper .sortable-item', { hasText: '容器' });
+    const containers = page.locator('[data-component-type="Container"]');
     const outer = containers.first();
     const inner = containers.nth(1);
 
@@ -94,11 +94,11 @@ test.describe('拖拽功能', () => {
     await page.waitForTimeout(300);
 
     // 添加输入框并拖入内层容器
-    await page.locator('.component-card', { hasText: '输入框' }).click();
+    await page.getByTestId('material-Input').click();
     await page.waitForTimeout(200);
 
-    const nestedInner = outer.locator('.sortable-item', { hasText: '容器' }).first();
-    const input = page.locator('.canvas-paper .sortable-item').filter({ hasText: '输入框' }).first();
+    const nestedInner = outer.locator('[data-component-type="Container"]').first();
+    const input = page.locator('[data-component-type="Input"]').first();
 
     await input.dragTo(nestedInner);
     await page.waitForTimeout(300);

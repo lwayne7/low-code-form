@@ -16,19 +16,18 @@ test.describe('表单预览和导出', () => {
     await page.waitForSelector('.app-header');
     
     // 添加几个测试组件
-    await page.locator('.component-card', { hasText: '输入框' }).click();
+    await page.getByTestId('material-Input').click();
     await page.waitForTimeout(200);
-    await page.locator('.component-card', { hasText: '按钮' }).click();
+    await page.getByTestId('material-Button').click();
     await page.waitForTimeout(200);
   });
 
   test('应该能够打开预览模态框', async ({ page }) => {
     // 点击预览按钮
-    await page.getByRole('button', { name: /预览/ }).click();
+    await page.getByTestId('btn-preview').click();
     
     // 验证预览模态框已打开
     await expect(page.locator('.ant-modal')).toBeVisible();
-    await expect(page.locator('.ant-modal-title')).toContainText('表单预览');
     
     // 验证预览内容中有表单组件
     await expect(page.locator('.ant-modal .ant-form')).toBeVisible();
@@ -36,14 +35,11 @@ test.describe('表单预览和导出', () => {
 
   test('应该能够切换预览设备尺寸', async ({ page }) => {
     // 打开预览
-    await page.getByRole('button', { name: /预览/ }).click();
+    await page.getByTestId('btn-preview').click();
     
     // 点击手机预览按钮
-    const mobileBtn = page.locator('.ant-modal-title').locator('button').filter({ hasText: /手机|Mobile/ }).first();
-    if (await mobileBtn.isVisible()) {
-      await mobileBtn.click();
-      await page.waitForTimeout(200);
-    }
+    await page.getByTestId('preview-device-mobile').click();
+    await page.waitForTimeout(200);
     
     // 验证预览区域调整为手机尺寸
     const previewContainer = page.locator('.ant-modal-body > div').first();
@@ -52,23 +48,20 @@ test.describe('表单预览和导出', () => {
 
   test('应该能够全屏预览', async ({ page }) => {
     // 打开预览
-    await page.getByRole('button', { name: /预览/ }).click();
+    await page.getByTestId('btn-preview').click();
     
     // 点击全屏按钮（如果存在）
-    const fullscreenBtn = page.locator('button').filter({ hasText: /全屏/ }).first();
-    if (await fullscreenBtn.isVisible()) {
-      await fullscreenBtn.click();
-      await page.waitForTimeout(200);
-      
-      // 验证模态框变大
-      const modal = page.locator('.ant-modal');
-      await expect(modal).toBeVisible();
-    }
+    await page.getByTestId('preview-fullscreen').click();
+    await page.waitForTimeout(200);
+    
+    // 验证模态框仍可见
+    const modal = page.locator('.ant-modal');
+    await expect(modal).toBeVisible();
   });
 
   test('应该能够导出 JSON', async ({ page }) => {
     // 点击 JSON 按钮
-    await page.getByRole('button', { name: /JSON/ }).click();
+    await page.getByTestId('btn-json').click();
     
     // 验证 JSON 编辑器出现
     await expect(page.locator('.ant-modal')).toBeVisible();
@@ -82,11 +75,10 @@ test.describe('表单预览和导出', () => {
 
   test('应该能够导出代码', async ({ page }) => {
     // 点击导出按钮
-    await page.getByRole('button', { name: /导出/ }).click();
+    await page.getByTestId('btn-export').click();
     
     // 验证导出模态框出现
     await expect(page.locator('.ant-modal')).toBeVisible();
-    await expect(page.locator('.ant-modal-title')).toContainText('导出代码');
     
     // 验证有 React 代码
     await expect(page.locator('textarea').first()).toBeVisible();

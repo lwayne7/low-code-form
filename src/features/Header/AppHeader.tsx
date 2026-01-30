@@ -247,6 +247,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                         <Tooltip title={`${t('header.undo')} (Cmd/Ctrl + Z)`}>
                             <Button
                                 aria-label={t('header.undo')}
+                                data-testid="btn-undo"
                                 icon={<UndoOutlined />}
                                 disabled={history.past.length === 0}
                                 onClick={undo}
@@ -256,6 +257,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                         <Tooltip title={`${t('header.redo')} (Cmd/Ctrl + Shift + Z)`}>
                             <Button
                                 aria-label={t('header.redo')}
+                                data-testid="btn-redo"
                                 icon={<RedoOutlined />}
                                 disabled={history.future.length === 0}
                                 onClick={redo}
@@ -265,6 +267,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                         <Tooltip title={t('header.history')}>
                             <Button
                                 aria-label={t('header.history')}
+                                data-testid="btn-history"
                                 icon={<HistoryOutlined />}
                                 onClick={onHistoryOpen}
                                 type="text"
@@ -285,6 +288,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                     <Tooltip title={t('header.clear')}>
                         <Button
                             aria-label={t('header.clear')}
+                            data-testid="btn-clear"
                             icon={<ClearOutlined />}
                             disabled={components.length === 0}
                             onClick={() => {
@@ -307,6 +311,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                     <Tooltip title={t('header.shortcuts')}>
                         <Button
                             aria-label={t('header.shortcuts')}
+                            data-testid="btn-shortcuts"
                             icon={<QuestionCircleOutlined />}
                             onClick={onShortcutsOpen}
                             type="text"
@@ -315,6 +320,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                     <Tooltip title={t('header.performance')}>
                         <Button
                             aria-label={t('header.performance')}
+                            data-testid="btn-performance"
                             icon={<DashboardOutlined />}
                             onClick={onPerfPanelOpen}
                             type="text"
@@ -350,6 +356,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                     >
                         <Button
                             aria-label={t('header.theme.auto')}
+                            data-testid="btn-theme"
                             icon={isDark ? <MoonOutlined /> : <SunOutlined />}
                             type="text"
                             title={t('header.theme.light')}
@@ -372,6 +379,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                     >
                         <Button
                             aria-label={localeNames[locale]}
+                            data-testid="btn-locale"
                             icon={<GlobalOutlined />}
                             type="text"
                             title={localeNames[locale]}
@@ -392,7 +400,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                                             <div style={{ padding: '4px 0' }}>
                                                 <span style={{ marginRight: 8 }}>{template.icon}</span>
                                                 <strong>{t(`template.${template.id}.name` as keyof typeof t)}</strong>
-                                                <div style={{ fontSize: 12, color: '#666', marginTop: 2 }}>
+                                                <div style={{ fontSize: 12, color: 'var(--text-color-secondary, #666)', marginTop: 2 }}>
                                                     {t(`template.${template.id}.desc` as keyof typeof t)}
                                                 </div>
                                             </div>
@@ -433,7 +441,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                                                     <div>
                                                         <strong>{template.name}</strong>
                                                         {template.description && (
-                                                            <div style={{ fontSize: 12, color: '#666', marginTop: 2 }}>
+                                                            <div style={{ fontSize: 12, color: 'var(--text-color-secondary, #666)', marginTop: 2 }}>
                                                                 {template.description}
                                                             </div>
                                                         )}
@@ -518,13 +526,13 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                             <span className="btn-text">{t('header.template')}</span>
                         </Button>
                     </Dropdown>
-                    <Button icon={<CodeOutlined />} onClick={handleShowJson} style={isDark ? { color: '#e6e6e6', borderColor: '#404040' } : undefined}>
+                    <Button data-testid="btn-json" icon={<CodeOutlined />} onClick={handleShowJson} style={isDark ? { color: '#e6e6e6', borderColor: '#404040' } : undefined}>
                         <span className="btn-text">{t('header.json')}</span>
                     </Button>
-                    <Button icon={<ExportOutlined />} onClick={handleExportCode} style={isDark ? { color: '#e6e6e6', borderColor: '#404040' } : undefined}>
+                    <Button data-testid="btn-export" icon={<ExportOutlined />} onClick={handleExportCode} style={isDark ? { color: '#e6e6e6', borderColor: '#404040' } : undefined}>
                         <span className="btn-text">{t('header.export')}</span>
                     </Button>
-                    <Button type="primary" icon={<EyeOutlined />} onClick={onPreviewOpen}>
+                    <Button data-testid="btn-preview" type="primary" icon={<EyeOutlined />} onClick={onPreviewOpen}>
                         <span className="btn-text">{t('header.preview')}</span>
                     </Button>
                     <Divider type="vertical" className="header-divider" style={{ height: 24 }} />
@@ -563,7 +571,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                                 items: [
                                     {
                                         key: 'email',
-                                        label: <span style={{ color: '#666' }}>{user.email}</span>,
+                                        label: <span style={{ color: 'var(--text-color-secondary, #666)' }}>{user.email}</span>,
                                         disabled: true,
                                     },
                                     { type: 'divider' },
@@ -589,7 +597,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                                                 content: (
                                                     <div>
                                                         <p style={{ marginBottom: 8 }}>{t('auth.deleteAccountConfirm')}</p>
-                                                        <ul style={{ paddingLeft: 20, color: '#666' }}>
+                                                        <ul style={{ paddingLeft: 20, color: 'var(--text-color-secondary, #666)' }}>
                                                             <li>{t('auth.deleteAccountWarning1')}</li>
                                                             <li>{t('auth.deleteAccountWarning2')}</li>
                                                             <li>{t('auth.deleteAccountWarning3')}</li>

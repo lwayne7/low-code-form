@@ -126,6 +126,7 @@ const VirtualRow = ({
     <div style={style} {...ariaAttributes}>
       <SortableItem
         id={component.id}
+        componentType={component.type}
         isSelected={isSelected}
         onClick={handleClick}
         useHandle={shouldUseHandle}
@@ -149,7 +150,7 @@ const VirtualRow = ({
               title={
                 <span style={{ cursor: isLocked ? 'not-allowed' : 'grab', color: isDark ? '#e6e6e6' : undefined }}>
                   {isLocked ? '🔒' : '⠿'} {component.props.label || t('dnd.container')}
-                  <span style={{ marginLeft: 8, fontSize: 11, color: isDark ? '#737373' : '#999' }}>
+                  <span style={{ marginLeft: 8, fontSize: 11, color: 'var(--text-color-tertiary, #999)' }}>
                     ({t('dnd.level', { level: depth + 1 })})
                   </span>
                 </span>

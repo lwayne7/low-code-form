@@ -62,39 +62,47 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingRight: 32 }}>
                     <span>{t('preview.title')}</span>
                     <Space>
-                        <Tooltip title={t('preview.mobile')}>
-                            <Button
-                                type={previewDevice === 'mobile' ? 'primary' : 'text'}
-                                icon={<MobileOutlined />}
-                                size="small"
-                                onClick={() => setPreviewDevice('mobile')}
-                            />
-                        </Tooltip>
-                        <Tooltip title={t('preview.tablet')}>
-                            <Button
-                                type={previewDevice === 'tablet' ? 'primary' : 'text'}
-                                icon={<TabletOutlined />}
-                                size="small"
-                                onClick={() => setPreviewDevice('tablet')}
-                            />
-                        </Tooltip>
-                        <Tooltip title={t('preview.desktop')}>
-                            <Button
-                                type={previewDevice === 'desktop' ? 'primary' : 'text'}
-                                icon={<DesktopOutlined />}
-                                size="small"
-                                onClick={() => setPreviewDevice('desktop')}
-                            />
-                        </Tooltip>
+	                        <Tooltip title={t('preview.mobile')}>
+	                            <Button
+	                                data-testid="preview-device-mobile"
+	                                type={previewDevice === 'mobile' ? 'primary' : 'text'}
+	                                icon={<MobileOutlined />}
+	                                size="small"
+	                                onClick={() => setPreviewDevice('mobile')}
+	                                aria-label={t('preview.mobile')}
+	                            />
+	                        </Tooltip>
+	                        <Tooltip title={t('preview.tablet')}>
+	                            <Button
+	                                data-testid="preview-device-tablet"
+	                                type={previewDevice === 'tablet' ? 'primary' : 'text'}
+	                                icon={<TabletOutlined />}
+	                                size="small"
+	                                onClick={() => setPreviewDevice('tablet')}
+	                                aria-label={t('preview.tablet')}
+	                            />
+	                        </Tooltip>
+	                        <Tooltip title={t('preview.desktop')}>
+	                            <Button
+	                                data-testid="preview-device-desktop"
+	                                type={previewDevice === 'desktop' ? 'primary' : 'text'}
+	                                icon={<DesktopOutlined />}
+	                                size="small"
+	                                onClick={() => setPreviewDevice('desktop')}
+	                                aria-label={t('preview.desktop')}
+	                            />
+	                        </Tooltip>
                         <Divider type="vertical" style={{ height: 16 }} />
-                        <Tooltip title={isFullscreen ? t('preview.exitFullscreen') : t('preview.fullscreen')}>
-                            <Button
-                                type="text"
-                                icon={isFullscreen ? <FullscreenExitOutlined /> : <FullscreenOutlined />}
-                                size="small"
-                                onClick={() => setIsFullscreen(!isFullscreen)}
-                            />
-                        </Tooltip>
+	                        <Tooltip title={isFullscreen ? t('preview.exitFullscreen') : t('preview.fullscreen')}>
+	                            <Button
+	                                data-testid="preview-fullscreen"
+	                                type="text"
+	                                icon={isFullscreen ? <FullscreenExitOutlined /> : <FullscreenOutlined />}
+	                                size="small"
+	                                onClick={() => setIsFullscreen(!isFullscreen)}
+	                                aria-label={isFullscreen ? t('preview.exitFullscreen') : t('preview.fullscreen')}
+	                            />
+	                        </Tooltip>
                     </Space>
                 </div>
             }
