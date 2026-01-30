@@ -211,18 +211,18 @@ export const SortableList: React.FC<SortableListProps> = React.memo(({
         ))}
         
         {/* 🆕 空容器的放置提示 */}
-        {parentId && items.length === 0 && (
-          <div 
-            style={{ 
-              textAlign: 'center', 
-              color: isDropTarget 
-                ? (isDark ? '#4096ff' : '#1677ff') 
-                : (isDark ? '#737373' : '#999'), 
-              padding: '20px 16px', 
-              fontSize: 13,
-              border: isDropTarget 
-                ? `1px dashed ${isDark ? '#4096ff' : '#1677ff'}` 
-                : `1px dashed ${isDark ? '#404040' : '#d9d9d9'}`,
+	        {parentId && items.length === 0 && (
+	          <div 
+	            style={{ 
+	              textAlign: 'center', 
+	              color: isDropTarget 
+	                ? (isDark ? '#4096ff' : '#1677ff') 
+	                : 'var(--text-color-tertiary, #999)', 
+	              padding: '20px 16px', 
+	              fontSize: 13,
+	              border: isDropTarget 
+	                ? `1px dashed ${isDark ? '#4096ff' : '#1677ff'}` 
+	                : `1px dashed ${isDark ? '#404040' : '#d9d9d9'}`,
               borderRadius: 4,
               background: isDropTarget 
                 ? 'rgba(22, 119, 255, 0.08)' 

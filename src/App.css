@@ -1719,7 +1719,7 @@
 
   [data-theme="auto"] .ant-input::placeholder,
   [data-theme="auto"] .ant-input-number-input::placeholder {
-    color: #737373 !important;
+    color: #a3a3a3 !important;
   }
 
   [data-theme="auto"] .ant-input-number-input {
@@ -1738,7 +1738,7 @@
   }
 
   [data-theme="auto"] .ant-select-arrow {
-    color: #a3a3a3 !important;
+    color: var(--text-color-secondary, #c7c7c7) !important;
   }
   
   [data-theme="auto"] .ant-collapse {
@@ -1756,7 +1756,7 @@
 
   [data-theme="auto"] .ant-form-item-tooltip,
   [data-theme="auto"] .ant-form-item-tooltip .anticon {
-    color: #a3a3a3 !important;
+    color: var(--text-color-secondary, #c7c7c7) !important;
   }
 }
 
@@ -1774,7 +1774,7 @@
 }
 
 [data-theme="dark"] .ant-layout-sider .ant-typography.ant-typography-secondary {
-  color: #a3a3a3 !important;
+  color: var(--text-color-secondary, #c7c7c7) !important;
 }
 
 [data-theme="dark"] .ant-layout-sider .ant-tag {
@@ -1788,13 +1788,13 @@
 }
 
 [data-theme="dark"] .ant-layout-sider .ant-divider-inner-text {
-  color: #a3a3a3;
+  color: var(--text-color-secondary, #c7c7c7);
 }
 
 /* PropertyPanel 内的辅助文字 */
 [data-theme="dark"] .ant-layout-sider div[style*="color: #666"],
 [data-theme="dark"] .ant-layout-sider div[style*="color:#666"] {
-  color: #a3a3a3 !important;
+  color: var(--text-color-secondary, #c7c7c7) !important;
 }
 
 /* PropertyPanel 内的信息区块背景 */
@@ -1818,7 +1818,7 @@
   }
 
   [data-theme="auto"] .ant-layout-sider .ant-typography.ant-typography-secondary {
-    color: #a3a3a3 !important;
+    color: var(--text-color-secondary, #c7c7c7) !important;
   }
 
   [data-theme="auto"] .ant-layout-sider .ant-tag {
@@ -1832,6 +1832,6 @@
   }
 
   [data-theme="auto"] .ant-layout-sider .ant-divider-inner-text {
-    color: #a3a3a3;
+    color: var(--text-color-secondary, #c7c7c7);
   }
 }

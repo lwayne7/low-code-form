@@ -46,6 +46,14 @@ app.get('/api/health', (_req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+// 轻量级前端遥测（可选）
+app.post('/api/telemetry', (req, res) => {
+    if (process.env.NODE_ENV !== 'production') {
+        console.log('[telemetry]', req.body);
+    }
+    res.status(204).end();
+});
+
 // API 路由
 app.use('/api/auth', authRoutes);
 

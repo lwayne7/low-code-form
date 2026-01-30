@@ -88,6 +88,7 @@ export const MobileDrawers: React.FC<MobileDrawersProps> = ({
             >
                 <Input
                     placeholder={t('components.search')}
+                    aria-label={t('components.search')}
                     value={componentSearch}
                     onChange={(e) => onSearchChange(e.target.value)}
                     allowClear

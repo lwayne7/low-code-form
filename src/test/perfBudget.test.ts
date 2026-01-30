@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import type { ComponentSchema } from '../types';
 import { moveComponent } from '../utils/componentTreeOps';
-import { generateFullCode } from '../utils/codeGenerator';
+import { generateFullCode, generateJsonSchema } from '../utils/codeGenerator';
+import { countComponents } from '../utils/componentHelpers';
 import { evaluateConditionSafe, validateConditionExpression } from '../utils/expression';
 
 function now() {
@@ -74,5 +75,26 @@ describe('perf budget (CI guardrails)', () => {
     expect(code).toContain('GeneratedForm');
     expect(durationMs).toBeLessThan(1200);
   });
-});
 
+  it('json schema generation stays under budget', () => {
+    const components = buildFlat(300);
+
+    const start = now();
+    const schema = generateJsonSchema(components);
+    const durationMs = now() - start;
+
+    expect(schema).toBeTruthy();
+    expect(durationMs).toBeLessThan(600);
+  });
+
+  it('component counting stays under budget', () => {
+    const components = buildFlat(1000);
+
+    const start = now();
+    const count = countComponents(components);
+    const durationMs = now() - start;
+
+    expect(count).toBe(1000);
+    expect(durationMs).toBeLessThan(50);
+  });
+});

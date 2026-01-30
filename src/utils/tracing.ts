@@ -1,3 +1,5 @@
+import { trackEvent } from './telemetry';
+
 export type TraceEvent = {
   name: string;
   durationMs: number;
@@ -30,6 +32,7 @@ export function recordTrace(name: string, durationMs: number, meta?: Record<stri
       meta,
     },
   ].slice(-MAX_TRACE_EVENTS);
+  trackEvent('trace', { name, durationMs, ...meta });
   emit();
 }
 

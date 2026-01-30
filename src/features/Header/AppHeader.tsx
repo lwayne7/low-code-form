@@ -38,7 +38,7 @@ import { formTemplates } from '../../utils/formTemplates';
 import { useStore, type CustomTemplate } from '../../store';
 import { useAuthStore } from '../../services/authStore';
 import { useI18n, localeNames, type Locale } from '../../i18n';
-import { countComponents, generateFullCode, generateJsonSchema, startTrace } from '../../utils';
+import { countComponents, startTrace } from '../../utils';
 import type { ComponentSchema } from '../../types';
 import type { ThemeMode } from '../../hooks';
 import type { HistoryEntry } from '../../store';
@@ -139,8 +139,9 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
     };
 
     // 代码导出
-    const handleExportCode = () => {
+    const handleExportCode = async () => {
         const componentCount = countComponents(components);
+        const { generateFullCode, generateJsonSchema } = await import('../../utils/codeGenerator');
 
         const stopReact = startTrace('generator.react', { componentCount });
         const code = generateFullCode(components);
@@ -164,7 +165,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                         value={code}
                         autoSize={{ minRows: 15, maxRows: 25 }}
                         readOnly
-                        style={{ fontFamily: 'monospace', background: '#f5f5f5', fontSize: 12 }}
+                        style={{ fontFamily: 'monospace', background: isDark ? '#141414' : '#f5f5f5', fontSize: 12 }}
                     />
                     <div style={{ marginTop: 16, marginBottom: 8 }}>
                         <strong>{t('export.jsonSchema')}</strong>
@@ -173,7 +174,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                         value={jsonSchema}
                         autoSize={{ minRows: 5, maxRows: 10 }}
                         readOnly
-                        style={{ fontFamily: 'monospace', background: '#f5f5f5', fontSize: 12 }}
+                        style={{ fontFamily: 'monospace', background: isDark ? '#141414' : '#f5f5f5', fontSize: 12 }}
                     />
                 </div>
             ),
@@ -245,6 +246,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                     <Space size={4} wrap={false} style={{ flexShrink: 0 }}>
                         <Tooltip title={`${t('header.undo')} (Cmd/Ctrl + Z)`}>
                             <Button
+                                aria-label={t('header.undo')}
                                 icon={<UndoOutlined />}
                                 disabled={history.past.length === 0}
                                 onClick={undo}
@@ -253,6 +255,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                         </Tooltip>
                         <Tooltip title={`${t('header.redo')} (Cmd/Ctrl + Shift + Z)`}>
                             <Button
+                                aria-label={t('header.redo')}
                                 icon={<RedoOutlined />}
                                 disabled={history.future.length === 0}
                                 onClick={redo}
@@ -261,6 +264,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                         </Tooltip>
                         <Tooltip title={t('header.history')}>
                             <Button
+                                aria-label={t('header.history')}
                                 icon={<HistoryOutlined />}
                                 onClick={onHistoryOpen}
                                 type="text"
@@ -280,6 +284,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                 <Space size={4} wrap={false} style={{ flexShrink: 0 }}>
                     <Tooltip title={t('header.clear')}>
                         <Button
+                            aria-label={t('header.clear')}
                             icon={<ClearOutlined />}
                             disabled={components.length === 0}
                             onClick={() => {
@@ -301,6 +306,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                     </Tooltip>
                     <Tooltip title={t('header.shortcuts')}>
                         <Button
+                            aria-label={t('header.shortcuts')}
                             icon={<QuestionCircleOutlined />}
                             onClick={onShortcutsOpen}
                             type="text"
@@ -308,6 +314,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                     </Tooltip>
                     <Tooltip title={t('header.performance')}>
                         <Button
+                            aria-label={t('header.performance')}
                             icon={<DashboardOutlined />}
                             onClick={onPerfPanelOpen}
                             type="text"
@@ -342,6 +349,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                         trigger={['click']}
                     >
                         <Button
+                            aria-label={t('header.theme.auto')}
                             icon={isDark ? <MoonOutlined /> : <SunOutlined />}
                             type="text"
                             title={t('header.theme.light')}
@@ -363,6 +371,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                         trigger={['click']}
                     >
                         <Button
+                            aria-label={localeNames[locale]}
                             icon={<GlobalOutlined />}
                             type="text"
                             title={localeNames[locale]}

@@ -68,6 +68,7 @@ export const ComponentLibrary: React.FC<ComponentLibraryProps> = ({
             {/* 组件搜索 */}
             <Input
                 placeholder={t('components.search')}
+                aria-label={t('components.search')}
                 value={componentSearch}
                 onChange={(e) => onSearchChange(e.target.value)}
                 allowClear
@@ -86,7 +87,7 @@ export const ComponentLibrary: React.FC<ComponentLibraryProps> = ({
                     </DraggableSidebarItem>
                 ))}
                 {filteredMaterials.length === 0 && (
-                    <div style={{ gridColumn: '1 / -1', textAlign: 'center', color: isDark ? '#737373' : '#999', padding: 16 }}>
+                    <div style={{ gridColumn: '1 / -1', textAlign: 'center', color: 'var(--text-color-tertiary, #999)', padding: 16 }}>
                         {t('components.notFound')}
                     </div>
                 )}
@@ -96,4 +97,3 @@ export const ComponentLibrary: React.FC<ComponentLibraryProps> = ({
 };
 
 export default ComponentLibrary;
-

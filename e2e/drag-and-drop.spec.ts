@@ -77,4 +77,33 @@ test.describe('拖拽功能', () => {
     const containerCard = container.locator('.ant-card');
     await expect(containerCard).toBeVisible();
   });
+
+  test('应该支持容器嵌套后继续放入组件', async ({ page }) => {
+    // 添加两个容器
+    await page.locator('.component-card', { hasText: '容器' }).click();
+    await page.waitForTimeout(200);
+    await page.locator('.component-card', { hasText: '容器' }).click();
+    await page.waitForTimeout(200);
+
+    const containers = page.locator('.canvas-paper .sortable-item', { hasText: '容器' });
+    const outer = containers.first();
+    const inner = containers.nth(1);
+
+    // 将第二个容器拖入第一个容器
+    await inner.dragTo(outer);
+    await page.waitForTimeout(300);
+
+    // 添加输入框并拖入内层容器
+    await page.locator('.component-card', { hasText: '输入框' }).click();
+    await page.waitForTimeout(200);
+
+    const nestedInner = outer.locator('.sortable-item', { hasText: '容器' }).first();
+    const input = page.locator('.canvas-paper .sortable-item').filter({ hasText: '输入框' }).first();
+
+    await input.dragTo(nestedInner);
+    await page.waitForTimeout(300);
+
+    // 验证外层容器内部存在至少一个表单项（输入框）
+    await expect(outer.locator('.ant-form-item')).toHaveCount(1);
+  });
 });

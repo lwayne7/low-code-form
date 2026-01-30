@@ -25,7 +25,7 @@ import './App.css';
 import { SortableList, LazyKeyboardShortcutsPanel, LazyHistoryPanel, LazyPerformancePanel, LazyPropertyPanel } from './components';
 
 // Features
-import { AppHeader, PreviewModal, ComponentLibrary, MobileDrawers } from './features';
+    import { AppHeader, LazyPreviewModal, ComponentLibrary, MobileDrawers } from './features';
 
 // Hooks
 import { useKeyboardShortcuts, useTheme, useDragHandlers } from './hooks';
@@ -354,7 +354,7 @@ function App() {
       </DndContext>
 
       {/* 预览 Modal */}
-      <PreviewModal
+      <LazyPreviewModal
         open={isPreviewOpen}
         onClose={() => setIsPreviewOpen(false)}
         components={components}
