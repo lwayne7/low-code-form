@@ -1,7 +1,7 @@
 import React from 'react';
 import { Form, Input, Tag, Divider } from 'antd';
 import type { ComponentSchema } from '../../types';
-import { validateConditionExpression } from '../../utils/expression';
+import { validateConditionExpressionWithTypes } from '../../utils/visibleOnTypeValidation';
 import { useI18n } from '@/i18n';
 
 // 辅助函数：安全获取组件属性
@@ -22,9 +22,29 @@ export const LinkageConfig: React.FC<LinkageConfigProps> = ({
   updateProps,
 }) => {
   const { t } = useI18n();
+  const tt = t as unknown as (key: string, params?: Record<string, string | number>) => string;
   const visibleOn = getComponentProp(component, 'visibleOn', '');
-  const validation = validateConditionExpression(visibleOn);
+  const validation = validateConditionExpressionWithTypes(visibleOn, allComponents);
   const hasError = Boolean(visibleOn.trim()) && !validation.ok;
+  const warnings =
+    Boolean(visibleOn.trim()) && validation.ok ? validation.warnings : [];
+  const warningText =
+    warnings.length > 0
+      ? warnings
+          .slice(0, 2)
+          .map((w) => {
+            if (w.kind === 'unknownKey') {
+              return tt('propertyPanel.expressionWarning.unknownKey', { key: w.key });
+            }
+            return tt('propertyPanel.expressionWarning.typeMismatch', {
+              key: w.key,
+              expected: tt(`propertyPanel.valueType.${w.expected}`),
+              actual: tt(`propertyPanel.valueType.${w.actual}`),
+              operator: w.operator,
+            });
+          })
+          .join('；') + (warnings.length > 2 ? '…' : '')
+      : '';
 
   return (
     <>
@@ -33,8 +53,14 @@ export const LinkageConfig: React.FC<LinkageConfigProps> = ({
       <Form.Item
         label={t('propertyPanel.visibleCondition')}
         tooltip={t('propertyPanel.visibleTooltip')}
-        validateStatus={hasError ? 'error' : undefined}
-        help={hasError ? t('propertyPanel.expressionError', { error: validation.error || '' }) : undefined}
+        validateStatus={hasError ? 'error' : warnings.length > 0 ? 'warning' : undefined}
+        help={
+          hasError
+            ? t('propertyPanel.expressionError', { error: validation.error || '' })
+            : warnings.length > 0
+              ? tt('propertyPanel.expressionWarning', { warning: warningText })
+              : undefined
+        }
       >
         <Input.TextArea
           value={visibleOn}
