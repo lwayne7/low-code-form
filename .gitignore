@@ -34,3 +34,6 @@ test-results/
 # Lighthouse
 .lighthouseci/
 lighthouse-report/
+
+# Local-only personal files (do NOT commit)
+简历.html
