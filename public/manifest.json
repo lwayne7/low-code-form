@@ -1,0 +1,32 @@
+{
+  "name": "LowCode Form Builder",
+  "short_name": "LowCode Form",
+  "description": "企业级低代码表单构建器，支持拖拽配置、组件联动、响应式布局",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1677ff",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/vite.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["productivity", "utilities", "developer tools"],
+  "lang": "zh-CN",
+  "dir": "ltr",
+  "scope": "/",
+  "prefer_related_applications": false,
+  "shortcuts": [
+    {
+      "name": "新建表单",
+      "short_name": "新建",
+      "description": "创建新的表单",
+      "url": "/?action=new",
+      "icons": [{ "src": "/vite.svg", "sizes": "96x96" }]
+    }
+  ]
+}

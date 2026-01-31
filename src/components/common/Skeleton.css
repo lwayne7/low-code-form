@@ -1,0 +1,90 @@
+/**
+ * Skeleton 骨架屏样式
+ */
+
+/* 基础骨架块样式 */
+.skeleton-block {
+  background: linear-gradient(
+    90deg,
+    var(--skeleton-base, #f0f0f0) 25%,
+    var(--skeleton-highlight, #e8e8e8) 50%,
+    var(--skeleton-base, #f0f0f0) 75%
+  );
+  background-size: 200% 100%;
+}
+
+/* 动画效果 */
+.skeleton-animate {
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+}
+
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* 暗色模式适配 */
+:root[data-theme='dark'] .skeleton-block,
+.dark .skeleton-block {
+  --skeleton-base: #303030;
+  --skeleton-highlight: #3a3a3a;
+}
+
+/* 组件容器通用样式 */
+.skeleton-form-item,
+.skeleton-component-card,
+.skeleton-sidebar,
+.skeleton-property-panel,
+.skeleton-canvas,
+.skeleton-preview-modal,
+.skeleton-history-panel {
+  --skeleton-border: #f0f0f0;
+  --skeleton-bg: #fff;
+  --skeleton-canvas-bg: #fafafa;
+  --skeleton-header-bg: #fafafa;
+}
+
+:root[data-theme='dark'] .skeleton-form-item,
+:root[data-theme='dark'] .skeleton-component-card,
+:root[data-theme='dark'] .skeleton-sidebar,
+:root[data-theme='dark'] .skeleton-property-panel,
+:root[data-theme='dark'] .skeleton-canvas,
+:root[data-theme='dark'] .skeleton-preview-modal,
+:root[data-theme='dark'] .skeleton-history-panel,
+.dark .skeleton-form-item,
+.dark .skeleton-component-card,
+.dark .skeleton-sidebar,
+.dark .skeleton-property-panel,
+.dark .skeleton-canvas,
+.dark .skeleton-preview-modal,
+.dark .skeleton-history-panel {
+  --skeleton-border: #303030;
+  --skeleton-bg: #1f1f1f;
+  --skeleton-canvas-bg: #141414;
+  --skeleton-header-bg: #262626;
+}
+
+/* 减少动画 - 尊重用户偏好 */
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-animate {
+    animation: none;
+    background: var(--skeleton-base, #f0f0f0);
+  }
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+  .skeleton-app {
+    flex-direction: column;
+  }
+
+  .skeleton-app > div {
+    width: 100% !important;
+    border-right: none !important;
+    border-left: none !important;
+  }
+}

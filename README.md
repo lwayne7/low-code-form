@@ -61,11 +61,143 @@
 - ✅ **Security 安全工具**：XSS 防护、CSP 辅助、输入净化、表达式安全检查（`src/utils/security.ts`）
 - ✅ **工程化增强**：Husky + lint-staged + commitlint 规范提交，Bundle Analyzer 分析包体积（`commitlint.config.js`、`.husky/*`）
 
+## 🏛️ 系统架构图
+
+```mermaid
+graph TB
+    subgraph Frontend["🎨 前端 (React 19 + TypeScript 5.9)"]
+        subgraph UI["UI 层"]
+            App["App.tsx<br/>入口组件"]
+            Header["Header<br/>工具栏"]
+            Sidebar["Sidebar<br/>物料面板"]
+            Canvas["Canvas<br/>设计画布"]
+            PropertyPanel["PropertyPanel<br/>属性配置"]
+            Preview["Preview<br/>表单预览"]
+        end
+
+        subgraph State["状态管理"]
+            Store["Zustand Store<br/>全局状态"]
+            ThemeStore["Theme Store<br/>主题状态"]
+            AuthStore["Auth Store<br/>认证状态"]
+            CommandMgr["Command Manager<br/>命令模式"]
+        end
+
+        subgraph DnD["拖拽系统"]
+            DndKit["@dnd-kit<br/>拖拽引擎"]
+            Collision["Collision Detection<br/>碰撞检测算法"]
+            Virtual["VirtualizedList<br/>虚拟滚动"]
+        end
+
+        subgraph Plugins["扩展系统"]
+            PluginMgr["Plugin Manager<br/>插件系统"]
+            Registry["Component Registry<br/>组件注册表"]
+            EventBus["Event Bus<br/>事件总线"]
+        end
+
+        subgraph Observability["可观测性"]
+            Logger["Logger<br/>结构化日志"]
+            WebVitals["Web Vitals<br/>性能指标"]
+            Profiler["Profiler<br/>性能分析"]
+            MemoryDetector["Memory Detector<br/>泄漏检测"]
+        end
+
+        subgraph Utils["工具层"]
+            FeatureFlags["Feature Flags<br/>A/B 测试"]
+            OptimisticUpdate["Optimistic Update<br/>乐观更新"]
+            Security["Security<br/>XSS/CSP"]
+            Expression["Expression<br/>表达式解析"]
+            CodeGen["Code Generator<br/>代码生成"]
+        end
+
+        subgraph PWA["PWA"]
+            ServiceWorker["Service Worker<br/>离线支持"]
+            Manifest["Manifest<br/>应用配置"]
+        end
+    end
+
+    subgraph Backend["🖥️ 后端 (Express.js)"]
+        API["RESTful API<br/>路由"]
+        JWT["JWT<br/>认证中间件"]
+        DB["SQLite + Drizzle<br/>数据持久化"]
+    end
+
+    subgraph Testing["🧪 测试体系"]
+        Unit["Vitest<br/>110+ 单元测试"]
+        E2E["Playwright<br/>21+ E2E"]
+        Bench["Vitest Bench<br/>性能基准"]
+        LHCI["Lighthouse CI<br/>性能评分"]
+    end
+
+    %% 连接关系
+    App --> Store
+    App --> ThemeStore
+    Canvas --> DndKit
+    DndKit --> Collision
+    Canvas --> Virtual
+    Store --> CommandMgr
+    PluginMgr --> Registry
+    PluginMgr --> EventBus
+
+    Store --> API
+    API --> JWT
+    JWT --> DB
+
+    ServiceWorker --> API
+
+    Logger --> WebVitals
+    Profiler --> MemoryDetector
+
+    Unit --> Store
+    E2E --> App
+    Bench --> Store
+```
+
+## 📊 数据流架构
+
+```mermaid
+sequenceDiagram
+    participant User as 👤 用户
+    participant UI as 🎨 UI层
+    participant Store as 📦 Zustand Store
+    participant Command as ⌨️ Command Manager
+    participant API as 🌐 API
+    participant DB as 💾 Database
+
+    User->>UI: 拖拽组件
+    UI->>Store: dispatch action
+    Store->>Command: 记录命令(支持撤销)
+    Command->>Store: 更新状态
+    Store->>UI: 触发重渲染
+
+    User->>UI: 保存表单
+    UI->>Store: 获取当前状态
+    Store->>API: POST /api/forms
+    API->>DB: 持久化
+    DB-->>API: 确认
+    API-->>Store: 更新同步状态
+    Store-->>UI: 显示成功
+
+    Note over Store,Command: 乐观更新：先更新UI，失败时回滚
+```
+
+### 🔧 可观测性与工程化增强（2026-01 New）
+
+- ✅ **结构化日志系统**：敏感信息脱敏、批量上报、会话追踪（`src/utils/logger.ts`）
+- ✅ **Feature Flag 基础设施**：A/B 测试、渐进式发布、条件判断（`src/utils/featureFlags.ts`）
+- ✅ **内存泄漏检测器**：WeakRef/FinalizationRegistry 实现、订阅/定时器追踪（`src/utils/memoryLeakDetector.ts`）
+- ✅ **乐观更新工具**：回滚机制、重试逻辑、批量操作（`src/utils/optimisticUpdate.ts`）
+- ✅ **骨架屏组件**：Suspense fallback、加载状态优化（`src/components/common/Skeleton.tsx`）
+- ✅ **Service Worker PWA**：离线支持、缓存策略、后台同步（`public/sw.ts`）
+- ✅ **React 19 新特性**：useOptimistic/useFormStatus/useActionState（`src/hooks/useReact19.ts`）
+- ✅ **Core Web Vitals**：LCP/FID/CLS/FCP/TTFB/INP 监控（`src/utils/webVitals.ts`）
+- ✅ **边界用例测试**：大数据量、深度嵌套、并发操作（`src/test/edgeCases.test.ts`）
+
 ### 🧪 完整测试体系
 
-- ✅ **103+ 单元测试**：覆盖核心业务逻辑（Vitest）
+- ✅ **110+ 单元测试**：覆盖核心业务逻辑（Vitest）
 - ✅ **21+ E2E测试**：Playwright端到端测试
 - ✅ **10+性能基准测试**：量化性能指标
+- ✅ **边界用例测试**：大数据量/深度嵌套/并发等极端场景
 - ✅ **Lighthouse CI**：自动化性能评分
 - ✅ **覆盖率报告**：`npm run test:coverage`（HTML 输出到 `coverage/`）
 
@@ -152,6 +284,7 @@ low-code-form/
 │   ├── components/           # 组件
 │   │   ├── DragDrop/        # 拖拽组件（含虚拟滚动）
 │   │   ├── common/          # 通用组件
+│   │   │   └── Skeleton.tsx # 骨架屏组件（NEW）
 │   │   └── PropertyPanel/   # 属性配置面板
 │   ├── commands/            # 命令模式（撤销/重做）
 │   │   └── commandManager.ts # Command Pattern 实现
@@ -163,6 +296,7 @@ low-code-form/
 │   │   └── branded.ts        # 品牌类型
 │   ├── features/            # UI 功能模块（Header/Preview/Sidebar/移动端）
 │   ├── hooks/               # 自定义Hooks
+│   │   └── useReact19.ts     # React 19 新特性 Hooks（NEW）
 │   ├── services/            # API 服务层（后端交互）
 │   ├── utils/               # 工具函数
 │   │   ├── collisionDetection.ts  # 碰撞检测算法
@@ -171,14 +305,24 @@ low-code-form/
 │   │   ├── profiler.tsx           # React 性能分析
 │   │   ├── security.ts            # 安全工具（XSS/CSP）
 │   │   ├── performanceTester.ts   # 性能测试工具（dev: window.performanceTest）
+│   │   ├── logger.ts              # 结构化日志系统（NEW）
+│   │   ├── featureFlags.ts        # Feature Flag/A/B 测试（NEW）
+│   │   ├── memoryLeakDetector.ts  # 内存泄漏检测（NEW）
+│   │   ├── optimisticUpdate.ts    # 乐观更新工具（NEW）
+│   │   ├── webVitals.ts           # Core Web Vitals 监控（NEW）
+│   │   ├── serviceWorker.ts       # Service Worker 管理（NEW）
 │   │   └── validation.ts          # 表单校验
 │   ├── constants/           # 常量配置
 │   │   └── dnd.ts            # 拖拽常量（edge ratio/min height）
 │   ├── test/               # 单元测试/基准测试
-│   │   └── performance.bench.ts   # 性能基准（vitest bench）
+│   │   ├── performance.bench.ts   # 性能基准（vitest bench）
+│   │   └── edgeCases.test.ts      # 边界用例测试（NEW）
 │   ├── store.ts            # Zustand状态管理
 │   ├── themeStore.ts        # 主题状态（单一数据源）
 │   └── types.ts            # TypeScript类型
+├── public/
+│   ├── sw.ts                # Service Worker（NEW）
+│   └── manifest.json        # PWA 配置（NEW）
 ├── server/                 # 后端服务
 │   ├── src/
 │   │   ├── db/             # 数据库（SQLite + Drizzle ORM）
@@ -349,7 +493,8 @@ MIT License
 
 ---
 
-**最后更新**: 2026-01-31  
-**当前版本**: v2.9.0  
-**自动化测试**: 单元 103 + E2E 21  
-**性能基准**: 10+（Vitest Bench）
+**最后更新**: 2026-02-01  
+**当前版本**: v3.0.0  
+**自动化测试**: 单元 110+ / E2E 21+ / 边界用例 50+  
+**性能基准**: 10+（Vitest Bench）  
+**新增特性**: 可观测性增强 / PWA 离线支持 / React 19 新特性
