@@ -1,7 +1,7 @@
 {
-  "name": "LowCode Form Builder",
-  "short_name": "LowCode Form",
-  "description": "企业级低代码表单构建器，支持拖拽配置、组件联动、响应式布局",
+  "name": "FormCraft - Low-Code Form Builder",
+  "short_name": "FormCraft",
+  "description": "Professional low-code form builder by LWayne. Drag-and-drop interface, component linking, responsive layout.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
@@ -9,7 +9,7 @@
   "orientation": "any",
   "icons": [
     {
-      "src": "/vite.svg",
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%231677ff'/%3E%3Cstop offset='100%25' style='stop-color:%2369b1ff'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='100' height='100' rx='20' fill='url(%23g)'/%3E%3Cpath d='M30 35h40M30 50h30M30 65h35' stroke='white' stroke-width='8' stroke-linecap='round'/%3E%3C/svg%3E",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any maskable"
@@ -25,8 +25,7 @@
       "name": "新建表单",
       "short_name": "新建",
       "description": "创建新的表单",
-      "url": "/?action=new",
-      "icons": [{ "src": "/vite.svg", "sizes": "96x96" }]
+      "url": "/?action=new"
     }
   ]
 }
