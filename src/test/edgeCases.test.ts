@@ -28,7 +28,7 @@ function createDeepNestedStructure(depth: number): ComponentSchema {
     type: 'Container',
     props: { label: `Container ${level}`, direction: 'vertical' },
     children:
-      level < depth
+      level < depth - 1
         ? [createLevel(level + 1)]
         : [{ id: `leaf-${level}`, type: 'Input', props: { label: 'Leaf', placeholder: '' } }],
   });
@@ -382,8 +382,8 @@ describe('工具函数边界测试', () => {
       const { flattenComponents } = await import('../utils/componentHelpers');
       const nested = createDeepNestedStructure(3);
       const flat = flattenComponents([nested]);
-      // 3 层容器 + 1 个叶子节点
-      expect(flat.length).toBe(5);
+      // depth=3 表示 3 层深度：3 个容器 + 1 个叶子节点 = 4
+      expect(flat.length).toBe(4);
     });
   });
 });
