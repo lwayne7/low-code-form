@@ -14,5 +14,4 @@ export {
   LazyKeyboardShortcutsPanel,
   LazyPerformancePanel,
   LazyPropertyPanel,
-  LoadingSpinner,
 } from './LazyComponents';
