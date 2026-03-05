@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 import { Drawer, Timeline, Empty, Typography, Space, Tag } from 'antd';
 import { HistoryOutlined, RollbackOutlined } from '@ant-design/icons';
 import type { ComponentSchema } from '../../types';
@@ -71,10 +71,7 @@ export const HistoryPanel: React.FC<HistoryPanelProps> = ({
       width={320}
     >
       {past.length === 0 && future.length === 0 ? (
-        <Empty 
-          description="暂无操作历史" 
-          image={Empty.PRESENTED_IMAGE_SIMPLE}
-        />
+        <Empty description="暂无操作历史" image={Empty.PRESENTED_IMAGE_SIMPLE} />
       ) : (
         <Timeline
           items={[
@@ -82,8 +79,8 @@ export const HistoryPanel: React.FC<HistoryPanelProps> = ({
             {
               color: past.length === 0 ? 'blue' : 'gray',
               children: (
-                <div 
-                  style={{ 
+                <div
+                  style={{
                     cursor: past.length !== 0 ? 'pointer' : 'default',
                     opacity: past.length === 0 ? 1 : 0.7,
                     padding: '4px 0',
@@ -96,7 +93,9 @@ export const HistoryPanel: React.FC<HistoryPanelProps> = ({
                     {initialCount} 个组件
                   </Text>
                   {past.length === 0 && (
-                    <Tag color="blue" style={{ marginLeft: 8 }}>当前</Tag>
+                    <Tag color="blue" style={{ marginLeft: 8 }}>
+                      当前
+                    </Tag>
                   )}
                 </div>
               ),
@@ -105,28 +104,30 @@ export const HistoryPanel: React.FC<HistoryPanelProps> = ({
             ...past.map((entry, index) => {
               const isCurrentState = index === past.length - 1;
               const stepsBack = past.length - (index + 1);
-              const countAfter = initialCount + pastDeltas.slice(0, index + 1).reduce((sum, delta) => sum + delta, 0);
-              
+              const countAfter =
+                initialCount +
+                pastDeltas.slice(0, index + 1).reduce((sum, delta) => sum + delta, 0);
+
               return {
                 color: isCurrentState ? 'blue' : 'gray',
                 children: (
-                  <div 
-                    style={{ 
+                  <div
+                    style={{
                       cursor: !isCurrentState ? 'pointer' : 'default',
                       opacity: isCurrentState ? 1 : 0.7,
                       padding: '4px 0',
                     }}
                     onClick={() => !isCurrentState && onJumpTo(-stepsBack)}
                   >
-                    <Text strong={isCurrentState}>
-                      {entry.label}
-                    </Text>
+                    <Text strong={isCurrentState}>{entry.label}</Text>
                     <br />
                     <Text type="secondary" style={{ fontSize: 12 }}>
                       {countAfter} 个组件
                     </Text>
                     {isCurrentState && (
-                      <Tag color="blue" style={{ marginLeft: 8 }}>当前</Tag>
+                      <Tag color="blue" style={{ marginLeft: 8 }}>
+                        当前
+                      </Tag>
                     )}
                   </div>
                 ),
@@ -140,22 +141,20 @@ export const HistoryPanel: React.FC<HistoryPanelProps> = ({
                 future
                   .slice(0, index + 1)
                   .reduce((sum, futureEntry) => sum + entryDelta(futureEntry), 0);
-              
+
               return {
                 color: 'gray',
                 dot: <RollbackOutlined style={{ transform: 'scaleX(-1)' }} />,
                 children: (
-                  <div 
-                    style={{ 
+                  <div
+                    style={{
                       cursor: 'pointer',
                       opacity: 0.5,
                       padding: '4px 0',
                     }}
                     onClick={() => onJumpTo(stepsForward)}
                   >
-                    <Text type="secondary">
-                      {entry.label}
-                    </Text>
+                    <Text type="secondary">{entry.label}</Text>
                     <br />
                     <Text type="secondary" style={{ fontSize: 12 }}>
                       {countAfter} 个组件 · 可重做
@@ -167,7 +166,7 @@ export const HistoryPanel: React.FC<HistoryPanelProps> = ({
           ]}
         />
       )}
-      
+
       {(past.length > 0 || future.length > 0) && (
         <div style={{ marginTop: 16, padding: '12px 0', borderTop: '1px solid #f0f0f0' }}>
           <Space direction="vertical" style={{ width: '100%' }}>

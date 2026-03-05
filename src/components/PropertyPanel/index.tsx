@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 import { Form, Input, Button, Space, Tag, Typography } from 'antd';
 import { DeleteOutlined, SettingOutlined } from '@ant-design/icons';
 import type { ComponentSchema } from '../../types';
@@ -78,7 +78,8 @@ export const PropertyPanel: React.FC<PropertyPanelProps> = ({
         );
 
         if (block.control === 'number') {
-          const numberValue = typeof value === 'number' ? value : Number(block.defaultValue ?? 0) || 0;
+          const numberValue =
+            typeof value === 'number' ? value : Number(block.defaultValue ?? 0) || 0;
           return (
             <Form.Item key={`field-${block.prop}`} label={block.label}>
               <Input
@@ -86,7 +87,9 @@ export const PropertyPanel: React.FC<PropertyPanelProps> = ({
                 value={numberValue}
                 onChange={(e) => {
                   const parsed = Number(e.target.value);
-                  const next = Number.isFinite(parsed) ? parsed : (Number(block.defaultValue ?? 0) || 0);
+                  const next = Number.isFinite(parsed)
+                    ? parsed
+                    : Number(block.defaultValue ?? 0) || 0;
                   setPropValue(block.prop, next);
                 }}
                 aria-label={block.label}
@@ -127,13 +130,37 @@ export const PropertyPanel: React.FC<PropertyPanelProps> = ({
       case 'builtin': {
         switch (block.id) {
           case 'container':
-            return <ContainerConfig key="builtin-container" component={selectedComponent} updateProps={updateProps} />;
+            return (
+              <ContainerConfig
+                key="builtin-container"
+                component={selectedComponent}
+                updateProps={updateProps}
+              />
+            );
           case 'button':
-            return <ButtonConfig key="builtin-button" component={selectedComponent} updateProps={updateProps} />;
+            return (
+              <ButtonConfig
+                key="builtin-button"
+                component={selectedComponent}
+                updateProps={updateProps}
+              />
+            );
           case 'options':
-            return <OptionsEditor key="builtin-options" component={selectedComponent} updateProps={updateProps} />;
+            return (
+              <OptionsEditor
+                key="builtin-options"
+                component={selectedComponent}
+                updateProps={updateProps}
+              />
+            );
           case 'responsive':
-            return <ResponsiveConfig key="builtin-responsive" component={selectedComponent} updateProps={updateProps} />;
+            return (
+              <ResponsiveConfig
+                key="builtin-responsive"
+                component={selectedComponent}
+                updateProps={updateProps}
+              />
+            );
           case 'linkage':
             return (
               <LinkageConfig
@@ -144,7 +171,14 @@ export const PropertyPanel: React.FC<PropertyPanelProps> = ({
               />
             );
           case 'validation':
-            return <ValidationConfig key="builtin-validation" component={selectedComponent} updateProps={updateProps} isDark={isDark} />;
+            return (
+              <ValidationConfig
+                key="builtin-validation"
+                component={selectedComponent}
+                updateProps={updateProps}
+                isDark={isDark}
+              />
+            );
         }
       }
     }
@@ -161,7 +195,13 @@ export const PropertyPanel: React.FC<PropertyPanelProps> = ({
 
       {selectedIds.length > 1 ? (
         // 多选状态
-        <div style={{ textAlign: 'center', color: 'var(--text-color-secondary, #666)', padding: '40px 0' }}>
+        <div
+          style={{
+            textAlign: 'center',
+            color: 'var(--text-color-secondary, #666)',
+            padding: '40px 0',
+          }}
+        >
           <div style={{ fontSize: 48, marginBottom: 16 }}>📚</div>
           <p>{t('property.multiSelect', { count: selectedIds.length })}</p>
           <Button
@@ -178,7 +218,14 @@ export const PropertyPanel: React.FC<PropertyPanelProps> = ({
         // 单选状态
         <Form layout="vertical">
           {/* 组件信息 */}
-          <div style={{ background: isDark ? '#262626' : '#f9fafb', padding: 12, borderRadius: 6, marginBottom: 20 }}>
+          <div
+            style={{
+              background: isDark ? '#262626' : '#f9fafb',
+              padding: 12,
+              borderRadius: 6,
+              marginBottom: 20,
+            }}
+          >
             <Form.Item label={t('property.componentId')} style={{ marginBottom: 0 }}>
               <Space>
                 <Tag>{selectedComponent.type}</Tag>
@@ -205,7 +252,11 @@ export const PropertyPanel: React.FC<PropertyPanelProps> = ({
         </Form>
       ) : (
         // 未选中状态
-        <div style={{ textAlign: 'center', color: 'var(--text-color-tertiary, #999)', marginTop: 50 }}>{t('property.noSelection')}</div>
+        <div
+          style={{ textAlign: 'center', color: 'var(--text-color-tertiary, #999)', marginTop: 50 }}
+        >
+          {t('property.noSelection')}
+        </div>
       )}
     </div>
   );

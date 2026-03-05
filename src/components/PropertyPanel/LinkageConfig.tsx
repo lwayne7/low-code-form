@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 import { Form, Input, Tag, Divider } from 'antd';
 import type { ComponentSchema } from '../../types';
 import { validateConditionExpressionWithTypes } from '../../utils/visibleOnTypeValidation';
@@ -26,8 +26,7 @@ export const LinkageConfig: React.FC<LinkageConfigProps> = ({
   const visibleOn = getComponentProp(component, 'visibleOn', '');
   const validation = validateConditionExpressionWithTypes(visibleOn, allComponents);
   const hasError = Boolean(visibleOn.trim()) && !validation.ok;
-  const warnings =
-    Boolean(visibleOn.trim()) && validation.ok ? validation.warnings : [];
+  const warnings = Boolean(visibleOn.trim()) && validation.ok ? validation.warnings : [];
   const warningText =
     warnings.length > 0
       ? warnings

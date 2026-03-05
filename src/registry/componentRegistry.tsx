@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 import {
   FormOutlined,
   BuildOutlined,
@@ -85,8 +85,21 @@ const COMPONENT_DEFINITIONS: Record<ComponentType, ComponentDefinition> = {
     },
     propertyPanel: [
       { kind: 'field', label: '标题 (Label)', prop: 'label', control: 'text', defaultValue: '' },
-      { kind: 'field', label: '占位符', prop: 'placeholder', control: 'text', defaultValue: '', placeholder: '请输入...' },
-      { kind: 'booleanButton', label: '必填', prop: 'required', trueText: '✓ 必填', falseText: '非必填' },
+      {
+        kind: 'field',
+        label: '占位符',
+        prop: 'placeholder',
+        control: 'text',
+        defaultValue: '',
+        placeholder: '请输入...',
+      },
+      {
+        kind: 'booleanButton',
+        label: '必填',
+        prop: 'required',
+        trueText: '✓ 必填',
+        falseText: '非必填',
+      },
       { kind: 'builtin', id: 'responsive' },
       { kind: 'builtin', id: 'linkage' },
       { kind: 'builtin', id: 'validation' },
@@ -100,14 +113,31 @@ const COMPONENT_DEFINITIONS: Record<ComponentType, ComponentDefinition> = {
       const { t } = getI18nInstance();
       return {
         type: 'TextArea',
-        props: { label: t('component.textareaLabel'), placeholder: t('component.textareaPlaceholder'), rows: 4 },
+        props: {
+          label: t('component.textareaLabel'),
+          placeholder: t('component.textareaPlaceholder'),
+          rows: 4,
+        },
       } as Omit<ComponentSchema, 'id'>;
     },
     propertyPanel: [
       { kind: 'field', label: '标题 (Label)', prop: 'label', control: 'text', defaultValue: '' },
-      { kind: 'field', label: '占位符', prop: 'placeholder', control: 'text', defaultValue: '', placeholder: '请输入...' },
+      {
+        kind: 'field',
+        label: '占位符',
+        prop: 'placeholder',
+        control: 'text',
+        defaultValue: '',
+        placeholder: '请输入...',
+      },
       { kind: 'field', label: '行数', prop: 'rows', control: 'number', defaultValue: 4 },
-      { kind: 'booleanButton', label: '必填', prop: 'required', trueText: '✓ 必填', falseText: '非必填' },
+      {
+        kind: 'booleanButton',
+        label: '必填',
+        prop: 'required',
+        trueText: '✓ 必填',
+        falseText: '非必填',
+      },
       { kind: 'builtin', id: 'responsive' },
       { kind: 'builtin', id: 'linkage' },
       { kind: 'builtin', id: 'validation' },
@@ -121,13 +151,29 @@ const COMPONENT_DEFINITIONS: Record<ComponentType, ComponentDefinition> = {
       const { t } = getI18nInstance();
       return {
         type: 'InputNumber',
-        props: { label: t('component.inputNumberLabel'), placeholder: t('component.inputNumberPlaceholder') },
+        props: {
+          label: t('component.inputNumberLabel'),
+          placeholder: t('component.inputNumberPlaceholder'),
+        },
       } as Omit<ComponentSchema, 'id'>;
     },
     propertyPanel: [
       { kind: 'field', label: '标题 (Label)', prop: 'label', control: 'text', defaultValue: '' },
-      { kind: 'field', label: '占位符', prop: 'placeholder', control: 'text', defaultValue: '', placeholder: '请输入...' },
-      { kind: 'booleanButton', label: '必填', prop: 'required', trueText: '✓ 必填', falseText: '非必填' },
+      {
+        kind: 'field',
+        label: '占位符',
+        prop: 'placeholder',
+        control: 'text',
+        defaultValue: '',
+        placeholder: '请输入...',
+      },
+      {
+        kind: 'booleanButton',
+        label: '必填',
+        prop: 'required',
+        trueText: '✓ 必填',
+        falseText: '非必填',
+      },
       { kind: 'builtin', id: 'responsive' },
       { kind: 'builtin', id: 'linkage' },
       { kind: 'builtin', id: 'validation' },
@@ -141,13 +187,30 @@ const COMPONENT_DEFINITIONS: Record<ComponentType, ComponentDefinition> = {
       const { t } = getI18nInstance();
       return {
         type: 'Select',
-        props: { label: t('component.selectLabel'), placeholder: t('component.selectPlaceholder'), options: [{ label: 'A', value: 'A' }] },
+        props: {
+          label: t('component.selectLabel'),
+          placeholder: t('component.selectPlaceholder'),
+          options: [{ label: 'A', value: 'A' }],
+        },
       } as Omit<ComponentSchema, 'id'>;
     },
     propertyPanel: [
       { kind: 'field', label: '标题 (Label)', prop: 'label', control: 'text', defaultValue: '' },
-      { kind: 'field', label: '占位符', prop: 'placeholder', control: 'text', defaultValue: '', placeholder: '请输入...' },
-      { kind: 'booleanButton', label: '必填', prop: 'required', trueText: '✓ 必填', falseText: '非必填' },
+      {
+        kind: 'field',
+        label: '占位符',
+        prop: 'placeholder',
+        control: 'text',
+        defaultValue: '',
+        placeholder: '请输入...',
+      },
+      {
+        kind: 'booleanButton',
+        label: '必填',
+        prop: 'required',
+        trueText: '✓ 必填',
+        falseText: '非必填',
+      },
       { kind: 'builtin', id: 'options' },
       { kind: 'builtin', id: 'responsive' },
       { kind: 'builtin', id: 'linkage' },
@@ -167,7 +230,13 @@ const COMPONENT_DEFINITIONS: Record<ComponentType, ComponentDefinition> = {
     },
     propertyPanel: [
       { kind: 'field', label: '标题 (Label)', prop: 'label', control: 'text', defaultValue: '' },
-      { kind: 'booleanButton', label: '必填', prop: 'required', trueText: '✓ 必填', falseText: '非必填' },
+      {
+        kind: 'booleanButton',
+        label: '必填',
+        prop: 'required',
+        trueText: '✓ 必填',
+        falseText: '非必填',
+      },
       { kind: 'builtin', id: 'options' },
       { kind: 'builtin', id: 'responsive' },
       { kind: 'builtin', id: 'linkage' },
@@ -187,7 +256,13 @@ const COMPONENT_DEFINITIONS: Record<ComponentType, ComponentDefinition> = {
     },
     propertyPanel: [
       { kind: 'field', label: '标题 (Label)', prop: 'label', control: 'text', defaultValue: '' },
-      { kind: 'booleanButton', label: '必填', prop: 'required', trueText: '✓ 必填', falseText: '非必填' },
+      {
+        kind: 'booleanButton',
+        label: '必填',
+        prop: 'required',
+        trueText: '✓ 必填',
+        falseText: '非必填',
+      },
       { kind: 'builtin', id: 'options' },
       { kind: 'builtin', id: 'responsive' },
       { kind: 'builtin', id: 'linkage' },
@@ -207,9 +282,27 @@ const COMPONENT_DEFINITIONS: Record<ComponentType, ComponentDefinition> = {
     },
     propertyPanel: [
       { kind: 'field', label: '标题 (Label)', prop: 'label', control: 'text', defaultValue: '' },
-      { kind: 'field', label: '开启时文字', prop: 'checkedChildren', control: 'text', defaultValue: '' },
-      { kind: 'field', label: '关闭时文字', prop: 'unCheckedChildren', control: 'text', defaultValue: '' },
-      { kind: 'booleanButton', label: '必填', prop: 'required', trueText: '✓ 必填', falseText: '非必填' },
+      {
+        kind: 'field',
+        label: '开启时文字',
+        prop: 'checkedChildren',
+        control: 'text',
+        defaultValue: '',
+      },
+      {
+        kind: 'field',
+        label: '关闭时文字',
+        prop: 'unCheckedChildren',
+        control: 'text',
+        defaultValue: '',
+      },
+      {
+        kind: 'booleanButton',
+        label: '必填',
+        prop: 'required',
+        trueText: '✓ 必填',
+        falseText: '非必填',
+      },
       { kind: 'builtin', id: 'responsive' },
       { kind: 'builtin', id: 'linkage' },
       { kind: 'builtin', id: 'validation' },
@@ -223,13 +316,29 @@ const COMPONENT_DEFINITIONS: Record<ComponentType, ComponentDefinition> = {
       const { t } = getI18nInstance();
       return {
         type: 'DatePicker',
-        props: { label: t('component.datePickerLabel'), placeholder: t('component.datePickerPlaceholder') },
+        props: {
+          label: t('component.datePickerLabel'),
+          placeholder: t('component.datePickerPlaceholder'),
+        },
       } as Omit<ComponentSchema, 'id'>;
     },
     propertyPanel: [
       { kind: 'field', label: '标题 (Label)', prop: 'label', control: 'text', defaultValue: '' },
-      { kind: 'field', label: '占位符', prop: 'placeholder', control: 'text', defaultValue: '', placeholder: '请输入...' },
-      { kind: 'booleanButton', label: '必填', prop: 'required', trueText: '✓ 必填', falseText: '非必填' },
+      {
+        kind: 'field',
+        label: '占位符',
+        prop: 'placeholder',
+        control: 'text',
+        defaultValue: '',
+        placeholder: '请输入...',
+      },
+      {
+        kind: 'booleanButton',
+        label: '必填',
+        prop: 'required',
+        trueText: '✓ 必填',
+        falseText: '非必填',
+      },
       { kind: 'builtin', id: 'responsive' },
       { kind: 'builtin', id: 'linkage' },
       { kind: 'builtin', id: 'validation' },
@@ -243,13 +352,29 @@ const COMPONENT_DEFINITIONS: Record<ComponentType, ComponentDefinition> = {
       const { t } = getI18nInstance();
       return {
         type: 'TimePicker',
-        props: { label: t('component.timePickerLabel'), placeholder: t('component.timePickerPlaceholder') },
+        props: {
+          label: t('component.timePickerLabel'),
+          placeholder: t('component.timePickerPlaceholder'),
+        },
       } as Omit<ComponentSchema, 'id'>;
     },
     propertyPanel: [
       { kind: 'field', label: '标题 (Label)', prop: 'label', control: 'text', defaultValue: '' },
-      { kind: 'field', label: '占位符', prop: 'placeholder', control: 'text', defaultValue: '', placeholder: '请输入...' },
-      { kind: 'booleanButton', label: '必填', prop: 'required', trueText: '✓ 必填', falseText: '非必填' },
+      {
+        kind: 'field',
+        label: '占位符',
+        prop: 'placeholder',
+        control: 'text',
+        defaultValue: '',
+        placeholder: '请输入...',
+      },
+      {
+        kind: 'booleanButton',
+        label: '必填',
+        prop: 'required',
+        trueText: '✓ 必填',
+        falseText: '非必填',
+      },
       { kind: 'builtin', id: 'responsive' },
       { kind: 'builtin', id: 'linkage' },
       { kind: 'builtin', id: 'validation' },

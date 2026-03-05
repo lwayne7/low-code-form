@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 import { Dropdown, type MenuProps } from 'antd';
 import {
   CopyOutlined,

@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 import { Form, Select, InputNumber, Divider, Typography } from 'antd';
 import type { ComponentSchema } from '../../types';
 import { useI18n } from '@/i18n';
@@ -16,16 +16,13 @@ interface ResponsiveConfigProps {
   updateProps: (newProps: Partial<ComponentSchema['props']>) => void;
 }
 
-export const ResponsiveConfig: React.FC<ResponsiveConfigProps> = ({
-  component,
-  updateProps,
-}) => {
+export const ResponsiveConfig: React.FC<ResponsiveConfigProps> = ({ component, updateProps }) => {
   const { t } = useI18n();
   const responsive = getComponentProp<Record<string, number>>(component, 'responsive', {});
 
   const updateResponsive = (key: string, value: number | null) => {
     updateProps({
-      responsive: { ...responsive, [key]: value ?? undefined }
+      responsive: { ...responsive, [key]: value ?? undefined },
     });
   };
 
@@ -33,7 +30,10 @@ export const ResponsiveConfig: React.FC<ResponsiveConfigProps> = ({
     <>
       <Divider style={{ margin: '16px 0' }}>{t('propertyPanel.responsiveLayout')}</Divider>
 
-      <Form.Item label={t('propertyPanel.columnSpan')} tooltip={t('propertyPanel.columnSpanTooltip')}>
+      <Form.Item
+        label={t('propertyPanel.columnSpan')}
+        tooltip={t('propertyPanel.columnSpanTooltip')}
+      >
         <Select
           value={getComponentProp(component, 'colSpan', 24)}
           onChange={(val) => updateProps({ colSpan: val })}
@@ -48,10 +48,16 @@ export const ResponsiveConfig: React.FC<ResponsiveConfigProps> = ({
         />
       </Form.Item>
 
-      <Form.Item label={t('propertyPanel.responsiveConfig')} tooltip={t('propertyPanel.responsiveTooltip')}>
+      <Form.Item
+        label={t('propertyPanel.responsiveConfig')}
+        tooltip={t('propertyPanel.responsiveTooltip')}
+      >
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
           <div>
-            <Text type="secondary" style={{ fontSize: 11, color: 'var(--text-color-secondary, #666)' }}>
+            <Text
+              type="secondary"
+              style={{ fontSize: 11, color: 'var(--text-color-secondary, #666)' }}
+            >
               {t('propertyPanel.mobile')}
             </Text>
             <InputNumber
@@ -64,7 +70,10 @@ export const ResponsiveConfig: React.FC<ResponsiveConfigProps> = ({
             />
           </div>
           <div>
-            <Text type="secondary" style={{ fontSize: 11, color: 'var(--text-color-secondary, #666)' }}>
+            <Text
+              type="secondary"
+              style={{ fontSize: 11, color: 'var(--text-color-secondary, #666)' }}
+            >
               {t('propertyPanel.tablet')}
             </Text>
             <InputNumber
@@ -77,7 +86,10 @@ export const ResponsiveConfig: React.FC<ResponsiveConfigProps> = ({
             />
           </div>
           <div>
-            <Text type="secondary" style={{ fontSize: 11, color: 'var(--text-color-secondary, #666)' }}>
+            <Text
+              type="secondary"
+              style={{ fontSize: 11, color: 'var(--text-color-secondary, #666)' }}
+            >
               {t('propertyPanel.desktop')}
             </Text>
             <InputNumber
@@ -90,7 +102,10 @@ export const ResponsiveConfig: React.FC<ResponsiveConfigProps> = ({
             />
           </div>
           <div>
-            <Text type="secondary" style={{ fontSize: 11, color: 'var(--text-color-secondary, #666)' }}>
+            <Text
+              type="secondary"
+              style={{ fontSize: 11, color: 'var(--text-color-secondary, #666)' }}
+            >
               {t('propertyPanel.largeScreen')}
             </Text>
             <InputNumber

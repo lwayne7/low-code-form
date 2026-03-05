@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 import { Button, Tag, Input, InputNumber, Select, Divider, Typography } from 'antd';
 import { MinusCircleOutlined } from '@ant-design/icons';
 import type { ComponentSchema, ValidationRule } from '../../types';
@@ -21,9 +21,9 @@ export const ValidationConfig: React.FC<ValidationConfigProps> = ({
   const rules = component.props.rules || [];
 
   const toggleRule = (type: ValidationRule['type'], defaultMessage: string) => {
-    const hasRule = rules.some(r => r.type === type);
+    const hasRule = rules.some((r) => r.type === type);
     const newRules = hasRule
-      ? rules.filter(r => r.type !== type)
+      ? rules.filter((r) => r.type !== type)
       : [...rules, { type, message: defaultMessage }];
     updateProps({ rules: newRules });
   };
@@ -46,7 +46,7 @@ export const ValidationConfig: React.FC<ValidationConfigProps> = ({
     const newRule = {
       type,
       value: defaultValues[type],
-      message: defaultMessages[type]
+      message: defaultMessages[type],
     };
     updateProps({ rules: [...rules, newRule] });
   };
@@ -69,7 +69,7 @@ export const ValidationConfig: React.FC<ValidationConfigProps> = ({
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
         <Button
           size="small"
-          type={rules.some(r => r.type === 'required') ? 'primary' : 'default'}
+          type={rules.some((r) => r.type === 'required') ? 'primary' : 'default'}
           onClick={() => toggleRule('required', t('validation.required'))}
         >
           {t('propertyPanel.ruleRequired')}
@@ -79,14 +79,14 @@ export const ValidationConfig: React.FC<ValidationConfigProps> = ({
           <>
             <Button
               size="small"
-              type={rules.some(r => r.type === 'email') ? 'primary' : 'default'}
+              type={rules.some((r) => r.type === 'email') ? 'primary' : 'default'}
               onClick={() => toggleRule('email', t('validation.email'))}
             >
               {t('propertyPanel.ruleEmail')}
             </Button>
             <Button
               size="small"
-              type={rules.some(r => r.type === 'phone') ? 'primary' : 'default'}
+              type={rules.some((r) => r.type === 'phone') ? 'primary' : 'default'}
               onClick={() => toggleRule('phone', t('validation.phone'))}
             >
               {t('propertyPanel.rulePhone')}
@@ -115,7 +115,10 @@ export const ValidationConfig: React.FC<ValidationConfigProps> = ({
           {t('propertyPanel.addedRules')}
         </Text>
         {rules.length === 0 ? (
-          <Text type="secondary" style={{ fontSize: 12, color: 'var(--text-color-secondary, #666)' }}>
+          <Text
+            type="secondary"
+            style={{ fontSize: 12, color: 'var(--text-color-secondary, #666)' }}
+          >
             {t('propertyPanel.noRules')}
           </Text>
         ) : (
@@ -132,11 +135,14 @@ export const ValidationConfig: React.FC<ValidationConfigProps> = ({
                   borderRadius: 4,
                 }}
               >
-                <Tag color="blue" style={{ margin: 0 }}>{rule.type}</Tag>
-                {rule.value !== undefined && (
-                  <Tag color="orange">{String(rule.value)}</Tag>
-                )}
-                <Text style={{ flex: 1, fontSize: 12, color: 'var(--text-color, #1f1f1f)' }} ellipsis>
+                <Tag color="blue" style={{ margin: 0 }}>
+                  {rule.type}
+                </Tag>
+                {rule.value !== undefined && <Tag color="orange">{String(rule.value)}</Tag>}
+                <Text
+                  style={{ flex: 1, fontSize: 12, color: 'var(--text-color, #1f1f1f)' }}
+                  ellipsis
+                >
                   {rule.message}
                 </Text>
                 <MinusCircleOutlined
@@ -173,7 +179,10 @@ export const ValidationConfig: React.FC<ValidationConfigProps> = ({
         {rules.map((rule, index) => {
           if (['minLength', 'maxLength', 'min', 'max'].includes(rule.type)) {
             return (
-              <div key={`edit-${index}`} style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8 }}>
+              <div
+                key={`edit-${index}`}
+                style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8 }}
+              >
                 <Text style={{ fontSize: 12, minWidth: 60, color: 'var(--text-color, #1f1f1f)' }}>
                   {rule.type}:
                 </Text>
@@ -195,7 +204,10 @@ export const ValidationConfig: React.FC<ValidationConfigProps> = ({
           }
           if (rule.type === 'pattern') {
             return (
-              <div key={`edit-${index}`} style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8 }}>
+              <div
+                key={`edit-${index}`}
+                style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8 }}
+              >
                 <Text style={{ fontSize: 12, minWidth: 60, color: 'var(--text-color, #1f1f1f)' }}>
                   {t('propertyPanel.regexLabel')}:
                 </Text>

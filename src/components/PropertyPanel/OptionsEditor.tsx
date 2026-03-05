@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 import { Form, Input, Button } from 'antd';
 import { MinusCircleOutlined, PlusOutlined } from '@ant-design/icons';
 import type { ComponentSchema } from '../../types';
@@ -15,15 +15,22 @@ interface OptionsEditorProps {
   updateProps: (newProps: Partial<ComponentSchema['props']>) => void;
 }
 
-export const OptionsEditor: React.FC<OptionsEditorProps> = ({
-  component,
-  updateProps,
-}) => {
+export const OptionsEditor: React.FC<OptionsEditorProps> = ({ component, updateProps }) => {
   const { t } = useI18n();
-  const options = getComponentProp<Array<{ label: string; value: string }>>(component, 'options', []);
+  const options = getComponentProp<Array<{ label: string; value: string }>>(
+    component,
+    'options',
+    []
+  );
 
   const handleAddOption = () => {
-    const newOptions = [...options, { label: t('propertyPanel.defaultOption', { index: options.length + 1 }), value: `option${options.length + 1}` }];
+    const newOptions = [
+      ...options,
+      {
+        label: t('propertyPanel.defaultOption', { index: options.length + 1 }),
+        value: `option${options.length + 1}`,
+      },
+    ];
     updateProps({ options: newOptions });
   };
 

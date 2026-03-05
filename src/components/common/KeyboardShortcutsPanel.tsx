@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 import { Modal, Typography, Space, Tag, Divider } from 'antd';
 import {
   DeleteOutlined,
@@ -25,7 +25,11 @@ interface ShortcutItem {
 const shortcutConfigs: ShortcutItem[] = [
   { keys: ['⌘/Ctrl', 'C'], descriptionKey: 'shortcuts.copyComponent', icon: <CopyOutlined /> },
   { keys: ['⌘/Ctrl', 'V'], descriptionKey: 'shortcuts.pasteComponent', icon: <SnippetsOutlined /> },
-  { keys: ['⌘/Ctrl', 'D'], descriptionKey: 'shortcuts.duplicateComponent', icon: <BlockOutlined /> },
+  {
+    keys: ['⌘/Ctrl', 'D'],
+    descriptionKey: 'shortcuts.duplicateComponent',
+    icon: <BlockOutlined />,
+  },
   { keys: ['⌘/Ctrl', 'A'], descriptionKey: 'shortcuts.selectAll', icon: <SelectOutlined /> },
   { keys: ['⌘/Ctrl', 'Z'], descriptionKey: 'shortcuts.undo', icon: <UndoOutlined /> },
   { keys: ['⌘/Ctrl', 'Shift', 'Z'], descriptionKey: 'shortcuts.redo', icon: <RedoOutlined /> },
@@ -52,17 +56,20 @@ export const KeyboardShortcutsPanel: React.FC<KeyboardShortcutsPanelProps> = ({
   const { t, locale } = useI18n();
 
   // 鼠标操作翻译
-  const mouseOps = locale === 'zh-CN' ? [
-    { action: '单击组件', result: '选中组件' },
-    { action: '⌘/Ctrl + 单击', result: '多选组件' },
-    { action: '框选', result: '批量选中区域内组件' },
-    { action: '拖拽', result: '移动组件位置' },
-  ] : [
-    { action: 'Click component', result: 'Select component' },
-    { action: '⌘/Ctrl + Click', result: 'Multi-select' },
-    { action: 'Box select', result: 'Batch select components' },
-    { action: 'Drag', result: 'Move component' },
-  ];
+  const mouseOps =
+    locale === 'zh-CN'
+      ? [
+          { action: '单击组件', result: '选中组件' },
+          { action: '⌘/Ctrl + 单击', result: '多选组件' },
+          { action: '框选', result: '批量选中区域内组件' },
+          { action: '拖拽', result: '移动组件位置' },
+        ]
+      : [
+          { action: 'Click component', result: 'Select component' },
+          { action: '⌘/Ctrl + Click', result: 'Multi-select' },
+          { action: 'Box select', result: 'Batch select components' },
+          { action: 'Drag', result: 'Move component' },
+        ];
 
   return (
     <Modal
@@ -116,7 +123,9 @@ export const KeyboardShortcutsPanel: React.FC<KeyboardShortcutsPanelProps> = ({
                       {key}
                     </Tag>
                     {i < shortcut.keys.length - 1 && (
-                      <Text type="secondary" style={{ fontSize: 12 }}>+</Text>
+                      <Text type="secondary" style={{ fontSize: 12 }}>
+                        +
+                      </Text>
                     )}
                   </React.Fragment>
                 ))}

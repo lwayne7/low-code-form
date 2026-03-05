@@ -4,7 +4,7 @@
  * 显示品牌信息和作者署名
  */
 
-import React from 'react';
+import * as React from 'react';
 import { Typography, Space, Tooltip } from 'antd';
 import { GithubOutlined, HeartFilled } from '@ant-design/icons';
 import { useI18n } from '../../i18n';

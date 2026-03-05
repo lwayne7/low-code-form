@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 import { Form, Input, Select, InputNumber } from 'antd';
 import type { ComponentSchema } from '../../types';
 import { useI18n } from '@/i18n';
@@ -14,10 +14,7 @@ interface ContainerConfigProps {
   updateProps: (newProps: Partial<ComponentSchema['props']>) => void;
 }
 
-export const ContainerConfig: React.FC<ContainerConfigProps> = ({
-  component,
-  updateProps,
-}) => {
+export const ContainerConfig: React.FC<ContainerConfigProps> = ({ component, updateProps }) => {
   const { t } = useI18n();
 
   return (
@@ -38,7 +35,10 @@ export const ContainerConfig: React.FC<ContainerConfigProps> = ({
           ]}
         />
       </Form.Item>
-      <Form.Item label={t('propertyPanel.gridColumns')} tooltip={t('propertyPanel.gridColumnsTooltip')}>
+      <Form.Item
+        label={t('propertyPanel.gridColumns')}
+        tooltip={t('propertyPanel.gridColumnsTooltip')}
+      >
         <Select
           value={getComponentProp(component, 'columns', 1)}
           onChange={(val) => updateProps({ columns: val })}

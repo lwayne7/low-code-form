@@ -1,7 +1,7 @@
 /**
  * 代码生成 Web Worker
  * 面试考点：Web Worker 多线程、主线程与 Worker 通信、结构化克隆算法
- * 
+ *
  * 优点：
  * 1. 不阻塞 UI 主线程
  * 2. 大型表单的代码生成不会造成卡顿
@@ -32,7 +32,7 @@ export interface WorkerResponse {
 // 代码生成逻辑（与 codeGenerator.ts 同步）
 function generateFullCode(components: ComponentSchema[]): string {
   const imports = new Set<string>(['Form']);
-  
+
   // 递归收集所有需要导入的组件
   const collectImports = (items: ComponentSchema[]) => {
     items.forEach((comp) => {
@@ -76,84 +76,83 @@ function generateFullCode(components: ComponentSchema[]): string {
       }
     });
   };
-  
+
   collectImports(components);
 
   const renderComponent = (comp: ComponentSchema, indent: number = 2): string => {
     const pad = ' '.repeat(indent);
     const props = comp.props;
-    
+
     // 处理 visibleOn 条件渲染
-    const visibleOnStart = props.visibleOn 
-      ? `{/* 条件渲染: ${props.visibleOn} */}\n${pad}`
-      : '';
+    const visibleOnStart = props.visibleOn ? `{/* 条件渲染: ${props.visibleOn} */}\n${pad}` : '';
 
     switch (comp.type) {
       case 'Input':
         return `${visibleOnStart}${pad}<Form.Item label="${props.label || ''}"${props.required ? ' rules={[{ required: true }]}' : ''}>
 ${pad}  <Input placeholder="${props.placeholder || ''}" />
 ${pad}</Form.Item>`;
-      
+
       case 'TextArea':
         return `${visibleOnStart}${pad}<Form.Item label="${props.label || ''}"${props.required ? ' rules={[{ required: true }]}' : ''}>
 ${pad}  <Input.TextArea rows={${props.rows || 4}} placeholder="${props.placeholder || ''}" />
 ${pad}</Form.Item>`;
-      
+
       case 'InputNumber':
         return `${visibleOnStart}${pad}<Form.Item label="${props.label || ''}"${props.required ? ' rules={[{ required: true }]}' : ''}>
 ${pad}  <InputNumber style={{ width: '100%' }} placeholder="${props.placeholder || ''}" />
 ${pad}</Form.Item>`;
-      
+
       case 'Select':
         return `${visibleOnStart}${pad}<Form.Item label="${props.label || ''}"${props.required ? ' rules={[{ required: true }]}' : ''}>
 ${pad}  <Select options={${JSON.stringify(props.options || [])}} placeholder="${props.placeholder || ''}" />
 ${pad}</Form.Item>`;
-      
+
       case 'Radio':
         return `${visibleOnStart}${pad}<Form.Item label="${props.label || ''}"${props.required ? ' rules={[{ required: true }]}' : ''}>
 ${pad}  <Radio.Group options={${JSON.stringify(props.options || [])}} />
 ${pad}</Form.Item>`;
-      
+
       case 'Checkbox':
         return `${visibleOnStart}${pad}<Form.Item label="${props.label || ''}"${props.required ? ' rules={[{ required: true }]}' : ''}>
 ${pad}  <Checkbox.Group options={${JSON.stringify(props.options || [])}} />
 ${pad}</Form.Item>`;
-      
+
       case 'Switch':
         return `${visibleOnStart}${pad}<Form.Item label="${props.label || ''}" valuePropName="checked">
 ${pad}  <Switch />
 ${pad}</Form.Item>`;
-      
+
       case 'DatePicker':
         return `${visibleOnStart}${pad}<Form.Item label="${props.label || ''}"${props.required ? ' rules={[{ required: true }]}' : ''}>
 ${pad}  <DatePicker style={{ width: '100%' }} />
 ${pad}</Form.Item>`;
-      
+
       case 'TimePicker':
         return `${visibleOnStart}${pad}<Form.Item label="${props.label || ''}"${props.required ? ' rules={[{ required: true }]}' : ''}>
 ${pad}  <TimePicker style={{ width: '100%' }} />
 ${pad}</Form.Item>`;
-      
+
       case 'Button':
         return `${pad}<Form.Item>
 ${pad}  <Button type="${props.type || 'primary'}" htmlType="${props.htmlType || 'button'}">${props.content || '按钮'}</Button>
 ${pad}</Form.Item>`;
-      
+
       case 'Container': {
-        const childrenCode = comp.children?.map(child => renderComponent(child, indent + 2)).join('\n') || '';
+        const childrenCode =
+          comp.children?.map((child) => renderComponent(child, indent + 2)).join('\n') || '';
         return `${visibleOnStart}${pad}<Card title="${props.label || '容器'}" style={{ marginBottom: 16 }}>
 ${childrenCode}
 ${pad}</Card>`;
       }
-      
+
       default:
         return '';
     }
   };
 
-  const formItems = components.map(comp => renderComponent(comp)).join('\n\n');
+  const formItems = components.map((comp) => renderComponent(comp)).join('\n\n');
 
-  return `import React from 'react';
+  return `import * as React from 'react';
 import { ${Array.from(imports).join(', ')} } from 'antd';
 
 const GeneratedForm: React.FC = () => {
@@ -183,7 +182,7 @@ function generateJsonSchema(components: ComponentSchema[]): object {
       comp.children?.forEach(processComponent);
       return;
     }
-    
+
     if (comp.type === 'Button') return;
 
     const prop: Record<string, unknown> = {
@@ -205,16 +204,15 @@ function generateJsonSchema(components: ComponentSchema[]): object {
         prop.enum = selectOptions?.map((o) => o.value);
         break;
       }
-      case 'Checkbox':
-        {
-          prop.type = 'array';
-          const checkOptions = comp.props.options as Array<{ value: string }> | undefined;
-          prop.items = { 
-            type: 'string', 
-            enum: checkOptions?.map((o) => o.value) 
-          };
-          break;
-        }
+      case 'Checkbox': {
+        prop.type = 'array';
+        const checkOptions = comp.props.options as Array<{ value: string }> | undefined;
+        prop.items = {
+          type: 'string',
+          enum: checkOptions?.map((o) => o.value),
+        };
+        break;
+      }
       case 'Switch':
         prop.type = 'boolean';
         break;
@@ -265,10 +263,10 @@ self.onmessage = (event: MessageEvent<WorkerMessage>) => {
     const response: WorkerResponse = { type: 'result', payload: result, id };
     self.postMessage(response);
   } catch (error) {
-    const response: WorkerResponse = { 
-      type: 'error', 
-      payload: error instanceof Error ? error.message : 'Unknown error', 
-      id 
+    const response: WorkerResponse = {
+      type: 'error',
+      payload: error instanceof Error ? error.message : 'Unknown error',
+      id,
     };
     self.postMessage(response);
   }

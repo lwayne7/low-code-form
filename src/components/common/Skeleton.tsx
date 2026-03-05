@@ -19,7 +19,7 @@
  * ```
  */
 
-import React from 'react';
+import * as React from 'react';
 import './Skeleton.css';
 
 // ============ 基础骨架组件 ============

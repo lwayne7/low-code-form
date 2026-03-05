@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 import { useDraggable } from '@dnd-kit/core';
 
 interface DraggableSidebarItemProps {
