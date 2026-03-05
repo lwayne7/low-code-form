@@ -23,8 +23,8 @@ import {
   LazyKeyboardShortcutsPanel,
   LazyHistoryPanel,
   LazyPerformancePanel,
-  LazyPropertyPanel,
 } from './components';
+import { PropertyPanel } from './components/PropertyPanel';
 import { AppFooter } from './components/common/AppFooter';
 
 // Features
@@ -350,7 +350,7 @@ function App() {
                 background: isDark ? '#1f1f1f' : '#fff',
               }}
             >
-              <LazyPropertyPanel
+              <PropertyPanel
                 selectedIds={selectedIds}
                 selectedComponent={selectedComponent}
                 components={components}
