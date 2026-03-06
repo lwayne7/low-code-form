@@ -50,6 +50,15 @@
 - ✅ **启动稳定性（LHCI）**：i18n 默认语言推断增加 `localStorage/navigator` 兜底，并在启动阶段增加 ErrorBoundary，降低首屏崩溃导致的 NO_FCP 风险（`src/i18n/index.tsx`、`src/main.tsx`）
 - ✅ **E2E 稳定性与可访问性**：补齐关键交互的 `data-testid`/`aria-label`，让 E2E 不依赖中文文案且在不同主题/语言下更稳（`e2e/*`、`src/features/Header/AppHeader.tsx`、`src/features/Preview/PreviewModal.tsx`、`src/components/Sidebar/DraggableSidebarItem.tsx`）
 
+### 🔧 部署修复与代码质量（2026-03）
+
+- ✅ **Vercel 空白页修复**：`manualChunks` 配置导致 React 循环依赖（`useLayoutEffect` undefined），移除 `vendor-react` 与 catch-all chunk，由 Rollup 自动分包（`vite.config.ts`）
+- ✅ **Suspense 回退优化**：Drawer/Modal 组件的 `<Spin>` fallback 误渲染在主布局，改为 `fallback={null}`；PropertyPanel 改为直接导入避免骨架屏闪烁（`src/components/LazyComponents.tsx`、`src/App.tsx`）
+- ✅ **Service Worker 修复**：`public/sw.ts` 无法被浏览器执行（Vite 不编译 public/ 的 TS），替换为 `public/sw.js` 缓存清理 Worker
+- ✅ **生产日志守卫**：`commandManager.ts`、`pluginManager.ts` 的 `console.log` 添加 `import.meta.env.DEV` 守卫
+- ✅ **持久化版本控制**：Zustand persist 添加 `version: 1`，导出 `STORE_PERSIST_KEY` 常量并在 ErrorBoundary 中引用
+- ✅ **i18n 类型安全**：修复 `ComponentLibrary.tsx`、`MobileDrawers.tsx` 中 `key as keyof typeof t` 的无效类型断言，改用 `TranslationKey`
+
 ### 🏗️ 架构增强（2026-01）
 
 - ✅ **EventBus 事件总线**：类型安全的发布-订阅系统，支持组件生命周期、拖拽、表单、插件事件（`src/utils/eventBus.ts`）
@@ -122,8 +131,8 @@ graph TB
     end
 
     subgraph Testing["🧪 测试体系"]
-        Unit["Vitest<br/>110+ 单元测试"]
-        E2E["Playwright<br/>21+ E2E"]
+        Unit["Vitest<br/>131 单元测试"]
+        E2E["Playwright<br/>22 E2E"]
         Bench["Vitest Bench<br/>性能基准"]
         LHCI["Lighthouse CI<br/>性能评分"]
     end
@@ -180,23 +189,23 @@ sequenceDiagram
     Note over Store,Command: 乐观更新：先更新UI，失败时回滚
 ```
 
-### 🔧 可观测性与工程化增强（2026-01 New）
+### 🔧 可观测性与工程化增强（2026-01）
 
 - ✅ **结构化日志系统**：敏感信息脱敏、批量上报、会话追踪（`src/utils/logger.ts`）
 - ✅ **Feature Flag 基础设施**：A/B 测试、渐进式发布、条件判断（`src/utils/featureFlags.ts`）
 - ✅ **内存泄漏检测器**：WeakRef/FinalizationRegistry 实现、订阅/定时器追踪（`src/utils/memoryLeakDetector.ts`）
 - ✅ **乐观更新工具**：回滚机制、重试逻辑、批量操作（`src/utils/optimisticUpdate.ts`）
 - ✅ **骨架屏组件**：Suspense fallback、加载状态优化（`src/components/common/Skeleton.tsx`）
-- ✅ **Service Worker PWA**：离线支持、缓存策略、后台同步（`public/sw.ts`）
+- ✅ **Service Worker PWA**：离线支持、缓存清理（`public/sw.js`）
 - ✅ **React 19 新特性**：useOptimistic/useFormStatus/useActionState（`src/hooks/useReact19.ts`）
 - ✅ **Core Web Vitals**：LCP/FID/CLS/FCP/TTFB/INP 监控（`src/utils/webVitals.ts`）
 - ✅ **边界用例测试**：大数据量、深度嵌套、并发操作（`src/test/edgeCases.test.ts`）
 
 ### 🧪 完整测试体系
 
-- ✅ **110+ 单元测试**：覆盖核心业务逻辑（Vitest）
-- ✅ **21+ E2E测试**：Playwright端到端测试
-- ✅ **10+性能基准测试**：量化性能指标
+- ✅ **131 单元测试**：覆盖核心业务逻辑（Vitest）
+- ✅ **22 E2E测试**：Playwright端到端测试（x5 浏览器 = 110 runs）
+- ✅ **11 性能基准测试**：量化性能指标
 - ✅ **边界用例测试**：大数据量/深度嵌套/并发等极端场景
 - ✅ **Lighthouse CI**：自动化性能评分
 - ✅ **覆盖率报告**：`npm run test:coverage`（HTML 输出到 `coverage/`）
@@ -284,7 +293,7 @@ low-code-form/
 │   ├── components/           # 组件
 │   │   ├── DragDrop/        # 拖拽组件（含虚拟滚动）
 │   │   ├── common/          # 通用组件
-│   │   │   └── Skeleton.tsx # 骨架屏组件（NEW）
+│   │   │   └── Skeleton.tsx # 骨架屏组件
 │   │   └── PropertyPanel/   # 属性配置面板
 │   ├── commands/            # 命令模式（撤销/重做）
 │   │   └── commandManager.ts # Command Pattern 实现
@@ -296,7 +305,7 @@ low-code-form/
 │   │   └── branded.ts        # 品牌类型
 │   ├── features/            # UI 功能模块（Header/Preview/Sidebar/移动端）
 │   ├── hooks/               # 自定义Hooks
-│   │   └── useReact19.ts     # React 19 新特性 Hooks（NEW）
+│   │   └── useReact19.ts     # React 19 新特性 Hooks
 │   ├── services/            # API 服务层（后端交互）
 │   ├── utils/               # 工具函数
 │   │   ├── collisionDetection.ts  # 碰撞检测算法
@@ -305,24 +314,24 @@ low-code-form/
 │   │   ├── profiler.tsx           # React 性能分析
 │   │   ├── security.ts            # 安全工具（XSS/CSP）
 │   │   ├── performanceTester.ts   # 性能测试工具（dev: window.performanceTest）
-│   │   ├── logger.ts              # 结构化日志系统（NEW）
-│   │   ├── featureFlags.ts        # Feature Flag/A/B 测试（NEW）
-│   │   ├── memoryLeakDetector.ts  # 内存泄漏检测（NEW）
-│   │   ├── optimisticUpdate.ts    # 乐观更新工具（NEW）
-│   │   ├── webVitals.ts           # Core Web Vitals 监控（NEW）
-│   │   ├── serviceWorker.ts       # Service Worker 管理（NEW）
+│   │   ├── logger.ts              # 结构化日志系统
+│   │   ├── featureFlags.ts        # Feature Flag/A/B 测试
+│   │   ├── memoryLeakDetector.ts  # 内存泄漏检测
+│   │   ├── optimisticUpdate.ts    # 乐观更新工具
+│   │   ├── webVitals.ts           # Core Web Vitals 监控
+│   │   ├── serviceWorker.ts       # Service Worker 管理
 │   │   └── validation.ts          # 表单校验
 │   ├── constants/           # 常量配置
 │   │   └── dnd.ts            # 拖拽常量（edge ratio/min height）
 │   ├── test/               # 单元测试/基准测试
 │   │   ├── performance.bench.ts   # 性能基准（vitest bench）
-│   │   └── edgeCases.test.ts      # 边界用例测试（NEW）
+│   │   └── edgeCases.test.ts      # 边界用例测试
 │   ├── store.ts            # Zustand状态管理
 │   ├── themeStore.ts        # 主题状态（单一数据源）
 │   └── types.ts            # TypeScript类型
 ├── public/
-│   ├── sw.ts                # Service Worker（NEW）
-│   └── manifest.json        # PWA 配置（NEW）
+│   ├── sw.js                 # Service Worker
+│   └── manifest.json        # PWA 配置
 ├── server/                 # 后端服务
 │   ├── src/
 │   │   ├── db/             # 数据库（SQLite + Drizzle ORM）
@@ -404,14 +413,14 @@ const handleClick = useCallback(
 ### 4. 完整的测试金字塔 ⭐⭐⭐⭐⭐
 
 ```
-        E2E (21)      ← Playwright
+        E2E (22)      ← Playwright
        ┌────────┐
       ┌──────────┐
      ┌────────────┐
 		    └──────────────┘
-		     单元测试 (99)    ← Vitest
+		     单元测试 (131)   ← Vitest
 
-性能基准 (10+)       ← Vitest Bench
+性能基准 (11)        ← Vitest Bench
 Lighthouse CI        ← 自动化
 ```
 
@@ -493,8 +502,8 @@ MIT License
 
 ---
 
-**最后更新**: 2026-02-01  
-**当前版本**: v3.0.0  
-**自动化测试**: 单元 110+ / E2E 21+ / 边界用例 50+  
-**性能基准**: 10+（Vitest Bench）  
+**最后更新**: 2026-03-06
+**当前版本**: v3.0.1
+**自动化测试**: 单元 131 / E2E 22 / 边界用例 50+
+**性能基准**: 11（Vitest Bench）
 **新增特性**: 可观测性增强 / PWA 离线支持 / React 19 新特性

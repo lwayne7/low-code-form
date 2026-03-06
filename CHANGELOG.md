@@ -1,5 +1,21 @@
 # 更新日志
 
+## [3.0.1] - 2026-03-06
+
+### 部署修复 🚀
+
+- **Vercel 空白页修复**：`manualChunks` 配置创建了 React 循环依赖（`useLayoutEffect` undefined），移除 `vendor-react` 与 catch-all chunk，交由 Rollup 自动分包（`vite.config.ts`）
+- **Suspense 回退优化**：Drawer/Modal 的 `<Spin>` fallback 误渲染在主布局区域，改为 `fallback={null}`；PropertyPanel 改为直接导入避免骨架屏闪烁（`src/components/LazyComponents.tsx`、`src/App.tsx`）
+- **Service Worker 修复**：`public/sw.ts`（Vite 不编译 public/ 的 TS）替换为 `public/sw.js` 缓存清理 Worker
+
+### 代码质量 🔧
+
+- **生产日志守卫**：`commandManager.ts`、`pluginManager.ts` 的 console.log 添加 `import.meta.env.DEV` 守卫
+- **持久化版本控制**：Zustand persist 添加 `version: 1`，导出 `STORE_PERSIST_KEY` 常量并在 ErrorBoundary 中统一引用
+- **i18n 类型安全**：修复 `ComponentLibrary.tsx`、`MobileDrawers.tsx` 中 `key as keyof typeof t` 无效类型断言，改用 `TranslationKey` 类型
+
+---
+
 ## [3.0.0] - 2026-02-01
 
 ### 🎯 面向面试的可观测性与工程化增强
@@ -46,7 +62,7 @@
 
 #### PWA 离线支持
 
-- **Service Worker** (`public/sw.ts`)
+- **Service Worker** (`public/sw.js`)
   - Cache First / Network First / Stale While Revalidate 策略
   - 静态资源预缓存
   - 推送通知、后台同步支持

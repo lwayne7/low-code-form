@@ -4,7 +4,7 @@
 
 A React + TypeScript low-code form builder featuring drag-and-drop, nested containers, responsive preview, validation rules, and code export.
 
-## Recent fixes & optimizations (2026-01)
+## Recent fixes & optimizations (2026-01 ~ 2026-03)
 
 - **Collision detection hot path**: build per-call `id -> depth/rect` caches and use squared-distance sorting to reduce `find/sqrt` work and stabilize nested drop decisions (`src/utils/collisionDetection.ts`)
 - **Shared DnD constants**: unify edge ratio and min edge height between collision detection and drag handlers (`src/constants/dnd.ts`, `src/hooks/useDragHandlers.ts`)
@@ -24,12 +24,21 @@ A React + TypeScript low-code form builder featuring drag-and-drop, nested conta
 - **Boot robustness (LHCI)**: add guards around locale detection and wrap the bootstrap with a non-i18n `ErrorBoundary` to reduce NO_FCP risk from startup crashes (`src/i18n/index.tsx`, `src/main.tsx`)
 - **More stable E2E + a11y hooks**: add `data-testid`/`aria-label` on key controls so tests don't depend on UI copy and remain stable across locales/themes (`e2e/*`, `src/features/Header/AppHeader.tsx`, `src/features/Preview/PreviewModal.tsx`, `src/components/Sidebar/DraggableSidebarItem.tsx`)
 
+### Deployment & code quality (2026-03)
+
+- **Vercel blank page fix**: `manualChunks` config created circular dependency for React (`useLayoutEffect` undefined); removed `vendor-react` + catch-all chunk, let Rollup auto-split (`vite.config.ts`)
+- **Suspense fallback fix**: Drawer/Modal `<Spin>` fallbacks rendered in main layout instead of inside closed drawers; changed to `fallback={null}`; PropertyPanel imported directly to avoid skeleton flash (`src/components/LazyComponents.tsx`, `src/App.tsx`)
+- **Service Worker fix**: replaced `public/sw.ts` (browsers can't execute TS from public/) with `public/sw.js` cache-cleanup worker
+- **Production log guards**: added `import.meta.env.DEV` guards to `commandManager.ts` and `pluginManager.ts` console.logs
+- **Persist versioning**: added `version: 1` to Zustand persist config; extracted `STORE_PERSIST_KEY` constant shared with ErrorBoundary
+- **i18n type safety**: fixed invalid `key as keyof typeof t` casts in `ComponentLibrary.tsx` and `MobileDrawers.tsx` with proper `TranslationKey` type
+
 ## Highlights
 
 - Smart nested drag-and-drop based on pointer position + depth
 - Virtualized rendering for large component counts
 - Patch-based undo/redo (50 steps), templates, keyboard shortcuts
-- 100+ unit tests (Vitest) + 20+ E2E tests (Playwright) + Lighthouse CI
+- 131 unit tests (Vitest) + 22 E2E tests (Playwright, x5 browsers) + Lighthouse CI
 
 ## Getting started
 
