@@ -10,12 +10,13 @@ import { AppstoreAddOutlined } from '@ant-design/icons';
 import { DraggableSidebarItem } from '../../components';
 import { COMPONENT_MATERIALS } from '../../constants';
 import { useI18n } from '../../i18n';
+import type { TranslationKey } from '../../i18n';
 import type { ComponentType } from '../../types';
 
 const { Title } = Typography;
 
 // 组件类型到翻译 key 的映射
-const COMPONENT_TYPE_I18N_KEYS: Record<ComponentType, string> = {
+const COMPONENT_TYPE_I18N_KEYS: Record<ComponentType, TranslationKey> = {
   Container: 'components.container',
   Input: 'components.input',
   TextArea: 'components.textarea',
@@ -47,7 +48,7 @@ export const ComponentLibrary: React.FC<ComponentLibraryProps> = ({
   // 获取组件的翻译名称
   const getComponentLabel = (type: ComponentType) => {
     const key = COMPONENT_TYPE_I18N_KEYS[type];
-    return key ? t(key as keyof typeof t) : type;
+    return key ? t(key) : type;
   };
 
   const filteredMaterials = COMPONENT_MATERIALS.filter((item) => {

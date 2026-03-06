@@ -1,23 +1,23 @@
 /**
  * Command Pattern - 命令模式实现
- * 
+ *
  * 面试考点：
  * 1. 命令模式的核心思想（将操作封装为对象）
  * 2. 支持撤销/重做
  * 3. 命令队列和批量执行
  * 4. 宏命令（组合命令）
- * 
+ *
  * @example
  * ```tsx
  * // 创建命令
  * const addCmd = new AddComponentCommand('Input');
- * 
+ *
  * // 执行命令
  * commandManager.execute(addCmd);
- * 
+ *
  * // 撤销
  * commandManager.undo();
- * 
+ *
  * // 重做
  * commandManager.redo();
  * ```
@@ -66,12 +66,7 @@ export class AddComponentCommand implements Command {
   private index?: number;
   private store?: StoreOperations;
 
-  constructor(
-    type: ComponentType,
-    parentId?: string,
-    index?: number,
-    store?: StoreOperations
-  ) {
+  constructor(type: ComponentType, parentId?: string, index?: number, store?: StoreOperations) {
     this.type = type;
     this.parentId = parentId;
     this.index = index;
@@ -84,11 +79,11 @@ export class AddComponentCommand implements Command {
 
   execute(): void {
     if (!this.store) throw new Error('Store not provided');
-    
+
     const beforeIds = new Set(this.getAllIds(this.store.getComponents()));
     this.store.addComponent(this.type, this.parentId, this.index);
     const afterIds = this.getAllIds(this.store.getComponents());
-    
+
     // 找出新添加的组件 ID
     for (const id of afterIds) {
       if (!beforeIds.has(id)) {
@@ -97,9 +92,9 @@ export class AddComponentCommand implements Command {
       }
     }
 
-    eventBus.emit('component:add', { 
+    eventBus.emit('component:add', {
       component: this.findComponent(this.store.getComponents(), this.addedId!)!,
-      parentId: this.parentId 
+      parentId: this.parentId,
     });
   }
 
@@ -142,10 +137,7 @@ export class DeleteComponentCommand implements Command {
   private ids: string[];
   private store?: StoreOperations;
 
-  constructor(
-    ids: string[],
-    store?: StoreOperations
-  ) {
+  constructor(ids: string[], store?: StoreOperations) {
     this.ids = ids;
     this.store = store;
   }
@@ -156,7 +148,7 @@ export class DeleteComponentCommand implements Command {
 
   execute(): void {
     if (!this.store) throw new Error('Store not provided');
-    
+
     // 保存删除前的组件信息（用于撤销）
     const components = this.store.getComponents();
     for (const id of this.ids) {
@@ -222,7 +214,7 @@ export class UpdatePropsCommand implements Command {
 
   execute(): void {
     if (!this.store) throw new Error('Store not provided');
-    
+
     // 保存旧属性
     const component = this.findComponent(this.store.getComponents(), this.componentId);
     if (component) {
@@ -293,16 +285,16 @@ export class MoveComponentCommand implements Command {
 
   execute(): void {
     if (!this.store) throw new Error('Store not provided');
-    
+
     // 保存原位置
     const components = this.store.getComponents();
     this.previousPosition = this.findPosition(components, this.componentId);
 
     this.store.moveComponent(this.componentId, this.targetParentId, this.targetIndex);
-    eventBus.emit('component:move', { 
-      id: this.componentId, 
-      from: this.previousPosition?.parentId ?? null, 
-      to: this.targetParentId 
+    eventBus.emit('component:move', {
+      id: this.componentId,
+      from: this.previousPosition?.parentId ?? null,
+      to: this.targetParentId,
     });
   }
 
@@ -342,10 +334,7 @@ export class MacroCommand implements Command {
   private commands: Command[];
   private macroDescription?: string;
 
-  constructor(
-    commands: Command[],
-    macroDescription?: string
-  ) {
+  constructor(commands: Command[], macroDescription?: string) {
     this.commands = commands;
     this.macroDescription = macroDescription;
   }
@@ -401,7 +390,7 @@ class CommandManagerImpl {
       this.history = this.history.slice(-this.maxHistory);
     }
 
-    console.log(`[CommandManager] Executed: ${command.description}`);
+    if (import.meta.env.DEV) console.log(`[CommandManager] Executed: ${command.description}`);
   }
 
   /**
@@ -414,7 +403,7 @@ class CommandManagerImpl {
     await command.undo();
     this.redoStack.push(command);
 
-    console.log(`[CommandManager] Undone: ${command.description}`);
+    if (import.meta.env.DEV) console.log(`[CommandManager] Undone: ${command.description}`);
     return true;
   }
 
@@ -428,7 +417,7 @@ class CommandManagerImpl {
     await command.execute();
     this.history.push(command);
 
-    console.log(`[CommandManager] Redone: ${command.description}`);
+    if (import.meta.env.DEV) console.log(`[CommandManager] Redone: ${command.description}`);
     return true;
   }
 

@@ -3,6 +3,7 @@ import type { ErrorInfo, ReactNode } from 'react';
 import { Button, Result, Typography, Space, message } from 'antd';
 import { ReloadOutlined, CopyOutlined, BugOutlined } from '@ant-design/icons';
 import { useI18n } from '@/i18n';
+import { STORE_PERSIST_KEY } from '@/store';
 
 const { Paragraph, Text } = Typography;
 
@@ -64,10 +65,10 @@ export class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     this.setState({ error, errorInfo });
-    
+
     // 调用外部错误处理回调
     this.props.onError?.(error, errorInfo);
-    
+
     // 上报错误
     reportError({
       message: error.message,
@@ -82,7 +83,7 @@ export class ErrorBoundary extends Component<Props, State> {
   handleReset = () => {
     this.setState({ hasError: false, error: undefined, errorInfo: undefined, errorId: undefined });
     // 清除 localStorage 中的持久化数据
-    localStorage.removeItem('lowcode-storage');
+    localStorage.removeItem(STORE_PERSIST_KEY);
     window.location.reload();
   };
 
@@ -102,11 +103,14 @@ URL: ${window.location.href}
 Time: ${new Date().toISOString()}
     `.trim();
 
-    navigator.clipboard.writeText(errorText).then(() => {
-      message.success(t('error.copied'));
-    }).catch(() => {
-      message.error(t('error.copyFailed'));
-    });
+    navigator.clipboard
+      .writeText(errorText)
+      .then(() => {
+        message.success(t('error.copied'));
+      })
+      .catch(() => {
+        message.error(t('error.copyFailed'));
+      });
   };
 
   render() {
@@ -119,13 +123,15 @@ Time: ${new Date().toISOString()}
       const t = this.props.t || ((key: string) => key);
 
       return (
-        <div style={{
-          height: '100vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: '#f5f5f5'
-        }}>
+        <div
+          style={{
+            height: '100vh',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: '#f5f5f5',
+          }}
+        >
           <Result
             status="error"
             title={t('errorBoundary.title')}
@@ -148,46 +154,44 @@ Time: ${new Date().toISOString()}
               >
                 {t('errorBoundary.refresh')}
               </Button>,
-              <Button
-                key="copy"
-                icon={<CopyOutlined />}
-                onClick={this.handleCopyError}
-              >
+              <Button key="copy" icon={<CopyOutlined />} onClick={this.handleCopyError}>
                 {t('errorBoundary.copyError')}
               </Button>,
-              <Button
-                key="reset"
-                danger
-                onClick={this.handleReset}
-              >
+              <Button key="reset" danger onClick={this.handleReset}>
                 {t('errorBoundary.reset')}
               </Button>,
             ]}
           >
             {import.meta.env.DEV && error && (
-              <div style={{
-                marginTop: 24,
-                padding: 16,
-                background: '#fff1f0',
-                borderRadius: 8,
-                textAlign: 'left',
-                maxWidth: 600,
-                overflow: 'auto'
-              }}>
+              <div
+                style={{
+                  marginTop: 24,
+                  padding: 16,
+                  background: '#fff1f0',
+                  borderRadius: 8,
+                  textAlign: 'left',
+                  maxWidth: 600,
+                  overflow: 'auto',
+                }}
+              >
                 <Paragraph>
                   <BugOutlined style={{ marginRight: 8, color: '#cf1322' }} />
-                  <Text strong style={{ color: '#cf1322' }}>{t('errorBoundary.details')}：</Text>
+                  <Text strong style={{ color: '#cf1322' }}>
+                    {t('errorBoundary.details')}：
+                  </Text>
                 </Paragraph>
-                <pre style={{
-                  fontSize: 12,
-                  color: '#666',
-                  whiteSpace: 'pre-wrap',
-                  wordBreak: 'break-all',
-                  margin: 0,
-                  padding: 12,
-                  background: '#fafafa',
-                  borderRadius: 4,
-                }}>
+                <pre
+                  style={{
+                    fontSize: 12,
+                    color: '#666',
+                    whiteSpace: 'pre-wrap',
+                    wordBreak: 'break-all',
+                    margin: 0,
+                    padding: 12,
+                    background: '#fafafa',
+                    borderRadius: 4,
+                  }}
+                >
                   {error.toString()}
                   {errorInfo?.componentStack}
                 </pre>

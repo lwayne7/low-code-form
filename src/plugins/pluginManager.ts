@@ -1,12 +1,12 @@
 /**
  * Plugin System - 插件系统
- * 
+ *
  * 面试考点：
  * 1. 插件架构设计
  * 2. 生命周期钩子
  * 3. 中间件模式
  * 4. 开闭原则（对扩展开放，对修改关闭）
- * 
+ *
  * @example
  * ```tsx
  * // 定义插件
@@ -18,10 +18,10 @@
  *     return component; // 可以修改组件
  *   },
  * };
- * 
+ *
  * // 注册插件
  * pluginManager.register(myPlugin);
- * 
+ *
  * // 触发钩子
  * const modifiedComponent = pluginManager.runHook('onComponentAdd', component);
  * ```
@@ -49,50 +49,50 @@ export interface Plugin {
   name: string;
   version?: string;
   description?: string;
-  
+
   // 插件依赖
   dependencies?: string[];
-  
+
   // 生命周期钩子
-  
+
   /** 插件初始化 */
   onInit?: (context: PluginContext) => void | Promise<void>;
-  
+
   /** 插件销毁 */
   onDestroy?: () => void | Promise<void>;
-  
+
   // 组件生命周期钩子（可以拦截和修改）
-  
+
   /** 组件添加前，可以修改组件 */
   onComponentAdd?: (component: ComponentSchema) => ComponentSchema;
-  
+
   /** 组件删除前 */
   onComponentDelete?: (ids: string[]) => string[] | false;
-  
+
   /** 组件更新前，可以修改 props */
   onComponentUpdate?: (
     id: string,
     props: Partial<ComponentSchema['props']>
   ) => Partial<ComponentSchema['props']>;
-  
+
   /** 组件移动前 */
   onComponentMove?: (
     id: string,
     targetParentId: string | null,
     index: number
   ) => { targetParentId: string | null; index: number } | false;
-  
+
   // 渲染钩子
-  
+
   /** 渲染前处理组件树 */
   onBeforeRender?: (components: ComponentSchema[]) => ComponentSchema[];
-  
+
   /** 代码生成后处理 */
   onCodeGenerate?: (code: string) => string;
-  
+
   // 扩展组件
   components?: ComponentDefinition[];
-  
+
   // 扩展属性面板
   propertyPanelExtensions?: {
     componentType: ComponentType;
@@ -163,7 +163,7 @@ class PluginManagerImpl {
     }
 
     eventBus.emit('plugin:register', { name: plugin.name });
-    console.log(`[PluginManager] Plugin "${plugin.name}" registered`);
+    if (import.meta.env.DEV) console.log(`[PluginManager] Plugin "${plugin.name}" registered`);
     return true;
   }
 

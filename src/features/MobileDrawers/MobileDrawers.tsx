@@ -10,10 +10,11 @@ import { AppstoreAddOutlined, SettingOutlined } from '@ant-design/icons';
 import { LazyPropertyPanel } from '../../components';
 import { COMPONENT_MATERIALS } from '../../constants';
 import { useI18n } from '../../i18n';
+import type { TranslationKey } from '../../i18n';
 import type { ComponentSchema, ComponentType } from '../../types';
 
 // 组件类型到翻译 key 的映射（与桌面端组件库保持一致）
-const COMPONENT_TYPE_I18N_KEYS: Record<ComponentType, string> = {
+const COMPONENT_TYPE_I18N_KEYS: Record<ComponentType, TranslationKey> = {
   Container: 'components.container',
   Input: 'components.input',
   TextArea: 'components.textarea',
@@ -62,7 +63,7 @@ export const MobileDrawers: React.FC<MobileDrawersProps> = ({
 
   const getComponentLabel = (type: ComponentType) => {
     const key = COMPONENT_TYPE_I18N_KEYS[type];
-    return key ? t(key as keyof typeof t) : type;
+    return key ? t(key) : type;
   };
 
   const filteredMaterials = COMPONENT_MATERIALS.filter((item) => {
