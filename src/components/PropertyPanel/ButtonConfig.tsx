@@ -2,6 +2,7 @@ import * as React from 'react';
 import { Form, Input, Select, Divider, Typography } from 'antd';
 import type { ComponentSchema } from '../../types';
 import { useI18n } from '@/i18n';
+import { isSafeUrl } from '../../utils/security';
 
 const { Text } = Typography;
 
@@ -61,7 +62,25 @@ export const ButtonConfig: React.FC<ButtonConfigProps> = ({ component, updatePro
           <Text strong style={{ display: 'block', marginBottom: 12 }}>
             {t('propertyPanel.submitConfig')}
           </Text>
-          <Form.Item label={t('propertyPanel.submitUrl')}>
+          <Form.Item
+            label={t('propertyPanel.submitUrl')}
+            validateStatus={
+              getComponentProp<{ action?: string }>(component, 'submitConfig', {}).action &&
+              !isSafeUrl(
+                getComponentProp<{ action?: string }>(component, 'submitConfig', {}).action!
+              )
+                ? 'error'
+                : undefined
+            }
+            help={
+              getComponentProp<{ action?: string }>(component, 'submitConfig', {}).action &&
+              !isSafeUrl(
+                getComponentProp<{ action?: string }>(component, 'submitConfig', {}).action!
+              )
+                ? 'URL 包含不安全的协议（仅允许 http/https）'
+                : undefined
+            }
+          >
             <Input
               value={
                 getComponentProp<{ action?: string }>(component, 'submitConfig', {}).action || ''

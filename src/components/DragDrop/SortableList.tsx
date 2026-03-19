@@ -4,6 +4,7 @@ import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { SortableItem } from './SortableItem';
 import { CanvasFormItem } from '../CanvasFormItem';
+import { ComponentErrorBoundary } from '../common/ComponentErrorBoundary';
 import { useTheme } from '../../hooks/useTheme';
 import { useI18n } from '@/i18n';
 import type { ComponentSchema } from '../../types';
@@ -117,7 +118,10 @@ const DropIndicator: React.FC<{ position: 'before' | 'after' }> = ({ position })
 );
 
 // 🆕 容器嵌套指示器组件
-const ContainerDropOverlay: React.FC<{ label?: string; dropText?: string }> = ({ label, dropText }) => (
+const ContainerDropOverlay: React.FC<{ label?: string; dropText?: string }> = ({
+  label,
+  dropText,
+}) => (
   <div
     className="container-drop-overlay"
     style={{
@@ -155,113 +159,115 @@ const ContainerDropOverlay: React.FC<{ label?: string; dropText?: string }> = ({
 );
 
 // 🆕 使用 React.memo 包裹整个组件
-export const SortableList: React.FC<SortableListProps> = React.memo(({
-  items,
-  selectedIds,
-  onSelect,
-  activeDragId,
-  parentId,
-  depth = 0,
-  dropTarget,
-}) => {
-  const { isDark } = useTheme(); // 🆕 获取当前主题
-  const { t } = useI18n();
-  const droppableId = parentId ? `container-${parentId}` : 'canvas-droppable';
-  
-  const { setNodeRef, isOver, active } = useDroppable({
-    id: droppableId,
-    data: { parentId, depth },
-  });
+export const SortableList: React.FC<SortableListProps> = React.memo(
+  ({ items, selectedIds, onSelect, activeDragId, parentId, depth = 0, dropTarget }) => {
+    const { isDark } = useTheme(); // 🆕 获取当前主题
+    const { t } = useI18n();
+    const droppableId = parentId ? `container-${parentId}` : 'canvas-droppable';
 
-  // 🆕 使用 useMemo 缓存 items 的 id 数组
-  const itemIds = useMemo(() => items.map((c) => c.id), [items]);
+    const { setNodeRef, isOver, active } = useDroppable({
+      id: droppableId,
+      data: { parentId, depth },
+    });
 
-  // 🆕 判断当前是否有拖拽操作且可接受放置
-  const isDropTarget = isOver && active && String(active.id) !== parentId;
+    // 🆕 使用 useMemo 缓存 items 的 id 数组
+    const itemIds = useMemo(() => items.map((c) => c.id), [items]);
 
-  // 🆕 使用 useMemo 缓存容器样式 - 增强视觉反馈
-  const containerStyle = useMemo(() => ({
-    minHeight: parentId ? 60 : 10,
-    padding: parentId ? 8 : 4,
-    background: isDropTarget ? 'rgba(22, 119, 255, 0.08)' : undefined,
-    border: isDropTarget 
-      ? `2px dashed ${isDark ? '#4096ff' : '#1677ff'}` 
-      : '2px dashed transparent',
-    borderRadius: 6,
-    transition: 'all 0.2s ease',
-    boxShadow: isDropTarget ? 'inset 0 0 8px rgba(22, 119, 255, 0.1)' : undefined,
-  }), [isDropTarget, parentId, isDark]);
+    // 🆕 判断当前是否有拖拽操作且可接受放置
+    const isDropTarget = isOver && active && String(active.id) !== parentId;
 
-  return (
-    <SortableContext items={itemIds} strategy={verticalListSortingStrategy}>
-      <div ref={setNodeRef} style={containerStyle}>
-        {items.map((component, index) => (
-          <SortableListItem
-            key={component.id}
-            component={component}
-            parentId={parentId ?? null}
-            selectedIds={selectedIds}
-            onSelect={onSelect}
-            activeDragId={activeDragId}
-            depth={depth}
-            dropTarget={dropTarget}
-            isFirst={index === 0}
-            isLast={index === items.length - 1}
-          />
-        ))}
-        
-        {/* 🆕 空容器的放置提示 */}
-	        {parentId && items.length === 0 && (
-	          <div 
-	            style={{ 
-	              textAlign: 'center', 
-	              color: isDropTarget 
-	                ? (isDark ? '#4096ff' : '#1677ff') 
-	                : 'var(--text-color-tertiary, #999)', 
-	              padding: '20px 16px', 
-	              fontSize: 13,
-	              border: isDropTarget 
-	                ? `1px dashed ${isDark ? '#4096ff' : '#1677ff'}` 
-	                : `1px dashed ${isDark ? '#404040' : '#d9d9d9'}`,
-              borderRadius: 4,
-              background: isDropTarget 
-                ? 'rgba(22, 119, 255, 0.08)' 
-                : (isDark ? '#262626' : '#fafafa'),
-              transition: 'all 0.2s ease',
-            }}
-          >
-            {isDropTarget ? t('dnd.releaseHere') : t('dnd.dragHere')}
-          </div>
-        )}
-      </div>
-    </SortableContext>
-  );
-}, (prevProps, nextProps) => {
-  // 自定义比较函数，优化渲染性能
-  // 基础比较
-  if (
-    prevProps.items !== nextProps.items ||
-    prevProps.selectedIds !== nextProps.selectedIds ||
-    prevProps.activeDragId !== nextProps.activeDragId ||
-    prevProps.overIndex !== nextProps.overIndex ||
-    prevProps.parentId !== nextProps.parentId ||
-    prevProps.depth !== nextProps.depth
-  ) {
-    return false;
+    // 🆕 使用 useMemo 缓存容器样式 - 增强视觉反馈
+    const containerStyle = useMemo(
+      () => ({
+        minHeight: parentId ? 60 : 10,
+        padding: parentId ? 8 : 4,
+        background: isDropTarget ? 'rgba(22, 119, 255, 0.08)' : undefined,
+        border: isDropTarget
+          ? `2px dashed ${isDark ? '#4096ff' : '#1677ff'}`
+          : '2px dashed transparent',
+        borderRadius: 6,
+        transition: 'all 0.2s ease',
+        boxShadow: isDropTarget ? 'inset 0 0 8px rgba(22, 119, 255, 0.1)' : undefined,
+      }),
+      [isDropTarget, parentId, isDark]
+    );
+
+    return (
+      <SortableContext items={itemIds} strategy={verticalListSortingStrategy}>
+        <div ref={setNodeRef} style={containerStyle}>
+          {items.map((component, index) => (
+            <SortableListItem
+              key={component.id}
+              component={component}
+              parentId={parentId ?? null}
+              selectedIds={selectedIds}
+              onSelect={onSelect}
+              activeDragId={activeDragId}
+              depth={depth}
+              dropTarget={dropTarget}
+              isFirst={index === 0}
+              isLast={index === items.length - 1}
+            />
+          ))}
+
+          {/* 🆕 空容器的放置提示 */}
+          {parentId && items.length === 0 && (
+            <div
+              style={{
+                textAlign: 'center',
+                color: isDropTarget
+                  ? isDark
+                    ? '#4096ff'
+                    : '#1677ff'
+                  : 'var(--text-color-tertiary, #999)',
+                padding: '20px 16px',
+                fontSize: 13,
+                border: isDropTarget
+                  ? `1px dashed ${isDark ? '#4096ff' : '#1677ff'}`
+                  : `1px dashed ${isDark ? '#404040' : '#d9d9d9'}`,
+                borderRadius: 4,
+                background: isDropTarget
+                  ? 'rgba(22, 119, 255, 0.08)'
+                  : isDark
+                    ? '#262626'
+                    : '#fafafa',
+                transition: 'all 0.2s ease',
+              }}
+            >
+              {isDropTarget ? t('dnd.releaseHere') : t('dnd.dragHere')}
+            </div>
+          )}
+        </div>
+      </SortableContext>
+    );
+  },
+  (prevProps, nextProps) => {
+    // 自定义比较函数，优化渲染性能
+    // 基础比较
+    if (
+      prevProps.items !== nextProps.items ||
+      prevProps.selectedIds !== nextProps.selectedIds ||
+      prevProps.activeDragId !== nextProps.activeDragId ||
+      prevProps.overIndex !== nextProps.overIndex ||
+      prevProps.parentId !== nextProps.parentId ||
+      prevProps.depth !== nextProps.depth
+    ) {
+      return false;
+    }
+
+    // dropTarget 深比较（避免不必要的引用变化触发重渲染）
+    const prevDrop = prevProps.dropTarget;
+    const nextDrop = nextProps.dropTarget;
+    if (prevDrop === nextDrop) return true;
+    if (!prevDrop || !nextDrop) return false;
+
+    return (
+      prevDrop.targetId === nextDrop.targetId &&
+      prevDrop.position === nextDrop.position &&
+      prevDrop.parentId === nextDrop.parentId
+    );
   }
-  
-  // dropTarget 深比较（避免不必要的引用变化触发重渲染）
-  const prevDrop = prevProps.dropTarget;
-  const nextDrop = nextProps.dropTarget;
-  if (prevDrop === nextDrop) return true;
-  if (!prevDrop || !nextDrop) return false;
-  
-  return (
-    prevDrop.targetId === nextDrop.targetId &&
-    prevDrop.position === nextDrop.position &&
-    prevDrop.parentId === nextDrop.parentId
-  );
-});
+);
 
 // 🆕 提取单个列表项为独立组件，便于 memo 优化
 interface SortableListItemProps {
@@ -272,163 +278,194 @@ interface SortableListItemProps {
   activeDragId?: string | null;
   depth: number;
   dropTarget?: DropTarget | null;
-  isFirst: boolean;  // 🆕 是否是列表第一项
-  isLast: boolean;   // 🆕 是否是列表最后一项
+  isFirst: boolean; // 🆕 是否是列表第一项
+  isLast: boolean; // 🆕 是否是列表最后一项
 }
 
-const SortableListItem: React.FC<SortableListItemProps> = React.memo(({
-  component,
-  parentId,
-  selectedIds,
-  onSelect,
-  activeDragId,
-  depth,
-  dropTarget,
-  isFirst,
-  isLast,
-}) => {
-  const { isDark } = useTheme(); // 🆕 获取当前主题
-  const { t } = useI18n(); // 🆕 获取国际化翻译函数
-  const isSelected = selectedIds.includes(component.id);
-  const isContainer = component.type === 'Container';
-  const isDragging = activeDragId === component.id;
-  const isLocked = component.props.locked === true; // 🆕 是否锁定
+const SortableListItem: React.FC<SortableListItemProps> = React.memo(
+  ({
+    component,
+    parentId,
+    selectedIds,
+    onSelect,
+    activeDragId,
+    depth,
+    dropTarget,
+    isFirst,
+    isLast,
+  }) => {
+    const { isDark } = useTheme(); // 🆕 获取当前主题
+    const { t } = useI18n(); // 🆕 获取国际化翻译函数
+    const isSelected = selectedIds.includes(component.id);
+    const isContainer = component.type === 'Container';
+    const isDragging = activeDragId === component.id;
+    const isLocked = component.props.locked === true; // 🆕 是否锁定
 
-  // 🆕 计算是否显示放置指示器
-  const showDropIndicator = useMemo(() => {
-    if (!dropTarget || !activeDragId) return null;
-    
-    // 如果目标是当前组件
-    if (dropTarget.targetId === component.id) {
-      if (dropTarget.position === 'before') return 'before';
-      if (dropTarget.position === 'after') return 'after';
-    }
-    
-    return null;
-  }, [dropTarget, activeDragId, component.id]);
+    // 🆕 计算是否显示放置指示器
+    const showDropIndicator = useMemo(() => {
+      if (!dropTarget || !activeDragId) return null;
 
-  // 🆕 使用 useCallback 缓存点击处理函数
-  const handleClick = useCallback((e: React.MouseEvent) => {
-    onSelect(component.id, e.metaKey || e.ctrlKey);
-  }, [component.id, onSelect]);
+      // 如果目标是当前组件
+      if (dropTarget.targetId === component.id) {
+        if (dropTarget.position === 'before') return 'before';
+        if (dropTarget.position === 'after') return 'after';
+      }
 
-  // 🆕 判断当前容器是否是放置目标（通过 dropTarget 状态判断）
-  const isContainerDropTarget = isContainer && dropTarget?.targetId === component.id && dropTarget?.position === 'inside';
+      return null;
+    }, [dropTarget, activeDragId, component.id]);
 
-  // 🆕 判断是否是嵌套目标 - 用于禁用目标容器的位移动画
-  const isNestTarget = !!(isContainerDropTarget && activeDragId && activeDragId !== component.id);
-
-  // 🆕 使用 useMemo 缓存容器样式 - 增强视觉反馈
-  const cardStyle = useMemo(() => ({
-    background: getContainerBgColor(depth, isContainerDropTarget && !isDragging, isDark),
-    border: isContainerDropTarget && !isDragging 
-      ? `2px dashed ${isDark ? '#4096ff' : '#1677ff'}` 
-      : `1px dashed ${isDark ? '#404040' : '#d9d9d9'}`,
-    borderLeft: `3px solid ${getContainerBorderColor(depth, isDark)}`,
-    transition: 'all 0.2s ease',
-    opacity: isDragging ? 0.5 : 1,
-  }), [depth, isContainerDropTarget, isDragging, isDark]);
-
-  return (
-	    <SortableItem
-	      id={component.id}
-	      componentType={component.type}
-	      isSelected={isSelected}
-	      onClick={handleClick}
-	      useHandle={isContainer && (component.children?.length ?? 0) > 0}
-      isFirst={isFirst}
-      isLast={isLast}
-      isLocked={isLocked}
-      depth={depth}
-      isNestTarget={isNestTarget}
-      parentId={parentId}
-    >
-      {/* 🆕 放置位置指示器 */}
-      {showDropIndicator === 'before' && <DropIndicator position="before" />}
-      {showDropIndicator === 'after' && <DropIndicator position="after" />}
-      
-      {isContainer ? (
-        <div style={{ pointerEvents: 'none', position: 'relative' }}>
-          {/* 🆕 容器嵌套放置指示器 - 更明显 */}
-          {isContainerDropTarget && !isDragging && (
-            <ContainerDropOverlay label={component.props.label} dropText={t('dnd.dropInto', { label: component.props.label || t('dnd.container') })} />
-          )}
-          <Card
-            size="small"
-	            title={
-	              <span style={{ cursor: isLocked ? 'not-allowed' : 'grab', color: isDark ? '#e6e6e6' : undefined }}>
-	                {isLocked ? '🔒' : '⠿'} {component.props.label || t('dnd.container')}
-	                <span style={{ marginLeft: 8, fontSize: 11, color: 'var(--text-color-tertiary, #999)' }}>
-	                  ({t('dnd.level', { level: depth + 1 })})
-	                </span>
-	              </span>
-	            }
-            style={cardStyle}
-            styles={{ 
-              body: { padding: 8, minHeight: 60 },
-              header: { background: 'transparent', borderBottom: `1px solid ${isDark ? '#303030' : '#f0f0f0'}` }
-            }}
-          >
-            {/* 🔧 容器内部需要启用 pointerEvents 以支持嵌套拖拽 */}
-            <div style={{ pointerEvents: 'auto' }}>
-              <SortableList
-                items={component.children || []}
-                selectedIds={selectedIds}
-                onSelect={onSelect}
-                activeDragId={activeDragId}
-                parentId={component.id}
-                depth={depth + 1}
-                dropTarget={dropTarget}
-              />
-            </div>
-          </Card>
-        </div>
-      ) : (
-        <div style={{ pointerEvents: 'none' }}>
-          <div style={{ pointerEvents: 'auto' }}>
-            <CanvasFormItem component={component} />
-          </div>
-        </div>
-      )}
-    </SortableItem>
-  );
-}, (prevProps, nextProps) => {
-  // 精确比较，避免不必要的重渲染
-  const isContainer = prevProps.component.type === 'Container';
-  
-  // 基础比较
-  if (
-    prevProps.component !== nextProps.component ||
-    prevProps.selectedIds.includes(prevProps.component.id) !== nextProps.selectedIds.includes(nextProps.component.id) ||
-    prevProps.activeDragId !== nextProps.activeDragId ||
-    prevProps.depth !== nextProps.depth ||
-    prevProps.isFirst !== nextProps.isFirst ||
-    prevProps.isLast !== nextProps.isLast
-  ) {
-    return false;
-  }
-  
-  // dropTarget 深比较
-  const prevDrop = prevProps.dropTarget;
-  const nextDrop = nextProps.dropTarget;
-  
-  // 如果是容器，需要在 dropTarget 变化时重渲染（子组件可能需要更新）
-  if (isContainer) {
-    if (prevDrop === nextDrop) return true;
-    if (!prevDrop || !nextDrop) return false;
-    return (
-      prevDrop.targetId === nextDrop.targetId &&
-      prevDrop.position === nextDrop.position &&
-      prevDrop.parentId === nextDrop.parentId
+    // 🆕 使用 useCallback 缓存点击处理函数
+    const handleClick = useCallback(
+      (e: React.MouseEvent) => {
+        onSelect(component.id, e.metaKey || e.ctrlKey);
+      },
+      [component.id, onSelect]
     );
+
+    // 🆕 判断当前容器是否是放置目标（通过 dropTarget 状态判断）
+    const isContainerDropTarget =
+      isContainer && dropTarget?.targetId === component.id && dropTarget?.position === 'inside';
+
+    // 🆕 判断是否是嵌套目标 - 用于禁用目标容器的位移动画
+    const isNestTarget = !!(isContainerDropTarget && activeDragId && activeDragId !== component.id);
+
+    // 🆕 使用 useMemo 缓存容器样式 - 增强视觉反馈
+    const cardStyle = useMemo(
+      () => ({
+        background: getContainerBgColor(depth, isContainerDropTarget && !isDragging, isDark),
+        border:
+          isContainerDropTarget && !isDragging
+            ? `2px dashed ${isDark ? '#4096ff' : '#1677ff'}`
+            : `1px dashed ${isDark ? '#404040' : '#d9d9d9'}`,
+        borderLeft: `3px solid ${getContainerBorderColor(depth, isDark)}`,
+        transition: 'all 0.2s ease',
+        opacity: isDragging ? 0.5 : 1,
+      }),
+      [depth, isContainerDropTarget, isDragging, isDark]
+    );
+
+    return (
+      <SortableItem
+        id={component.id}
+        componentType={component.type}
+        isSelected={isSelected}
+        onClick={handleClick}
+        useHandle={isContainer && (component.children?.length ?? 0) > 0}
+        isFirst={isFirst}
+        isLast={isLast}
+        isLocked={isLocked}
+        depth={depth}
+        isNestTarget={isNestTarget}
+        parentId={parentId}
+      >
+        {/* 🆕 放置位置指示器 */}
+        {showDropIndicator === 'before' && <DropIndicator position="before" />}
+        {showDropIndicator === 'after' && <DropIndicator position="after" />}
+
+        {isContainer ? (
+          <div style={{ pointerEvents: 'none', position: 'relative' }}>
+            {/* 🆕 容器嵌套放置指示器 - 更明显 */}
+            {isContainerDropTarget && !isDragging && (
+              <ContainerDropOverlay
+                label={component.props.label}
+                dropText={t('dnd.dropInto', { label: component.props.label || t('dnd.container') })}
+              />
+            )}
+            <Card
+              size="small"
+              title={
+                <span
+                  style={{
+                    cursor: isLocked ? 'not-allowed' : 'grab',
+                    color: isDark ? '#e6e6e6' : undefined,
+                  }}
+                >
+                  {isLocked ? '🔒' : '⠿'} {component.props.label || t('dnd.container')}
+                  <span
+                    style={{
+                      marginLeft: 8,
+                      fontSize: 11,
+                      color: 'var(--text-color-tertiary, #999)',
+                    }}
+                  >
+                    ({t('dnd.level', { level: depth + 1 })})
+                  </span>
+                </span>
+              }
+              style={cardStyle}
+              styles={{
+                body: { padding: 8, minHeight: 60 },
+                header: {
+                  background: 'transparent',
+                  borderBottom: `1px solid ${isDark ? '#303030' : '#f0f0f0'}`,
+                },
+              }}
+            >
+              {/* 🔧 容器内部需要启用 pointerEvents 以支持嵌套拖拽 */}
+              <div style={{ pointerEvents: 'auto' }}>
+                <SortableList
+                  items={component.children || []}
+                  selectedIds={selectedIds}
+                  onSelect={onSelect}
+                  activeDragId={activeDragId}
+                  parentId={component.id}
+                  depth={depth + 1}
+                  dropTarget={dropTarget}
+                />
+              </div>
+            </Card>
+          </div>
+        ) : (
+          <div style={{ pointerEvents: 'none' }}>
+            <div style={{ pointerEvents: 'auto' }}>
+              <ComponentErrorBoundary componentId={component.id}>
+                <CanvasFormItem component={component} />
+              </ComponentErrorBoundary>
+            </div>
+          </div>
+        )}
+      </SortableItem>
+    );
+  },
+  (prevProps, nextProps) => {
+    // 精确比较，避免不必要的重渲染
+    const isContainer = prevProps.component.type === 'Container';
+
+    // 基础比较
+    if (
+      prevProps.component !== nextProps.component ||
+      prevProps.selectedIds.includes(prevProps.component.id) !==
+        nextProps.selectedIds.includes(nextProps.component.id) ||
+      prevProps.activeDragId !== nextProps.activeDragId ||
+      prevProps.depth !== nextProps.depth ||
+      prevProps.isFirst !== nextProps.isFirst ||
+      prevProps.isLast !== nextProps.isLast
+    ) {
+      return false;
+    }
+
+    // dropTarget 深比较
+    const prevDrop = prevProps.dropTarget;
+    const nextDrop = nextProps.dropTarget;
+
+    // 如果是容器，需要在 dropTarget 变化时重渲染（子组件可能需要更新）
+    if (isContainer) {
+      if (prevDrop === nextDrop) return true;
+      if (!prevDrop || !nextDrop) return false;
+      return (
+        prevDrop.targetId === nextDrop.targetId &&
+        prevDrop.position === nextDrop.position &&
+        prevDrop.parentId === nextDrop.parentId
+      );
+    }
+
+    // 非容器组件，只检查自己是否是目标
+    const prevIsTarget = prevDrop?.targetId === prevProps.component.id;
+    const nextIsTarget = nextDrop?.targetId === nextProps.component.id;
+
+    if (prevIsTarget !== nextIsTarget) return false;
+    if (prevIsTarget && prevDrop?.position !== nextDrop?.position) return false;
+
+    return true;
   }
-  
-  // 非容器组件，只检查自己是否是目标
-  const prevIsTarget = prevDrop?.targetId === prevProps.component.id;
-  const nextIsTarget = nextDrop?.targetId === nextProps.component.id;
-  
-  if (prevIsTarget !== nextIsTarget) return false;
-  if (prevIsTarget && prevDrop?.position !== nextDrop?.position) return false;
-  
-  return true;
-});
+);

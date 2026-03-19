@@ -3,19 +3,22 @@
  */
 
 import type { ValidationRule } from '../types';
+import { evaluateConditionSafe } from './expression';
 
 /**
  * 校验单个值
+ * @param formValues - 所有字段的值（用于跨字段验证）
  */
 export function validateValue(
-  value: unknown, 
-  rules: ValidationRule[] | undefined, 
-  label: string
+  value: unknown,
+  rules: ValidationRule[] | undefined,
+  label: string,
+  formValues?: Record<string, unknown>
 ): string | null {
   if (!rules || rules.length === 0) return null;
 
   for (const rule of rules) {
-    const error = validateByRule(value, rule, label);
+    const error = validateByRule(value, rule, label, formValues);
     if (error) return error;
   }
   return null;
@@ -25,9 +28,10 @@ export function validateValue(
  * 根据单条规则校验
  */
 function validateByRule(
-  value: unknown, 
-  rule: ValidationRule, 
-  label: string
+  value: unknown,
+  rule: ValidationRule,
+  label: string,
+  formValues?: Record<string, unknown>
 ): string | null {
   switch (rule.type) {
     case 'required':
@@ -35,31 +39,31 @@ function validateByRule(
         return rule.message || `${label}不能为空`;
       }
       break;
-      
+
     case 'minLength':
       if (typeof value === 'string' && value.length < (rule.value as number)) {
         return rule.message || `${label}至少需要${rule.value}个字符`;
       }
       break;
-      
+
     case 'maxLength':
       if (typeof value === 'string' && value.length > (rule.value as number)) {
         return rule.message || `${label}最多${rule.value}个字符`;
       }
       break;
-      
+
     case 'min':
       if (typeof value === 'number' && value < (rule.value as number)) {
         return rule.message || `${label}不能小于${rule.value}`;
       }
       break;
-      
+
     case 'max':
       if (typeof value === 'number' && value > (rule.value as number)) {
         return rule.message || `${label}不能大于${rule.value}`;
       }
       break;
-      
+
     case 'pattern':
       if (typeof value === 'string' && rule.value) {
         const regex = new RegExp(rule.value as string);
@@ -68,20 +72,30 @@ function validateByRule(
         }
       }
       break;
-      
+
     case 'email':
       if (typeof value === 'string' && value && !isValidEmail(value)) {
         return rule.message || '请输入有效的邮箱地址';
       }
       break;
-      
+
     case 'phone':
       if (typeof value === 'string' && value && !isValidPhone(value)) {
         return rule.message || '请输入有效的手机号码';
       }
       break;
+
+    case 'crossField':
+      // 跨字段验证：复用表达式引擎求值
+      if (formValues && typeof rule.value === 'string') {
+        const result = evaluateConditionSafe(rule.value, formValues);
+        if (!result) {
+          return rule.message || `${label}跨字段校验失败`;
+        }
+      }
+      break;
   }
-  
+
   return null;
 }
 
@@ -90,9 +104,9 @@ function validateByRule(
  */
 function isEmpty(value: unknown): boolean {
   return (
-    value === undefined || 
-    value === null || 
-    value === '' || 
+    value === undefined ||
+    value === null ||
+    value === '' ||
     (Array.isArray(value) && value.length === 0)
   );
 }

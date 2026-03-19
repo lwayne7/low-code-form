@@ -5,6 +5,7 @@ import type { ComponentSchema } from '../../types';
 import type { PropertyPanelBlock } from '../../registry/componentRegistry';
 import { getComponentDefinition } from '../../registry/componentRegistry';
 import { useI18n } from '../../i18n';
+import { sanitizeInput } from '../../utils/security';
 
 // 子组件
 import { ContainerConfig } from './ContainerConfig';
@@ -63,7 +64,9 @@ export const PropertyPanel: React.FC<PropertyPanelProps> = ({
   };
 
   const setPropValue = (prop: string, value: unknown) => {
-    updateProps({ [prop]: value } as Partial<ComponentSchema['props']>);
+    // 对字符串类型的属性进行安全净化（防 XSS / 零宽字符 / HTML 注入）
+    const sanitized = typeof value === 'string' ? sanitizeInput(value, { stripHtml: true }) : value;
+    updateProps({ [prop]: sanitized } as Partial<ComponentSchema['props']>);
   };
 
   const renderSchemaBlock = (block: PropertyPanelBlock) => {

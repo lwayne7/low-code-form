@@ -1,36 +1,43 @@
 import type { ComponentSchema, ValidationRule } from '../types';
+import { escapeJsString } from './security';
+import { pluginManager } from '../plugins/pluginManager';
 
 /**
  * 代码生成器 - 将 ComponentSchema 转换为真实的 React 代码
  */
 
+// 安全转义：用户输入的字符串在生成代码时需要转义，防止 XSS 和语法错误
+const safe = (str: string | undefined | null): string => escapeJsString(str ?? '');
+
 // 🆕 将 ValidationRule 转换为 Ant Design Form rules
 const generateAntdRules = (rules?: ValidationRule[], label?: string): string => {
   if (!rules || rules.length === 0) return '[]';
-  
-  const antdRules = rules.map(rule => {
-    switch (rule.type) {
-      case 'required':
-        return `{ required: true, message: '${rule.message || `请输入${label}`}' }`;
-      case 'minLength':
-        return `{ min: ${rule.value}, message: '${rule.message || `至少${rule.value}个字符`}' }`;
-      case 'maxLength':
-        return `{ max: ${rule.value}, message: '${rule.message || `最多${rule.value}个字符`}' }`;
-      case 'min':
-        return `{ type: 'number', min: ${rule.value}, message: '${rule.message || `不能小于${rule.value}`}' }`;
-      case 'max':
-        return `{ type: 'number', max: ${rule.value}, message: '${rule.message || `不能大于${rule.value}`}' }`;
-      case 'email':
-        return `{ type: 'email', message: '${rule.message || '请输入有效的邮箱地址'}' }`;
-      case 'pattern':
-        return `{ pattern: /${rule.value}/, message: '${rule.message || '格式不正确'}' }`;
-      case 'phone':
-        return `{ pattern: /^1[3-9]\\d{9}$/, message: '${rule.message || '请输入有效的手机号码'}' }`;
-      default:
-        return '';
-    }
-  }).filter(Boolean);
-  
+
+  const antdRules = rules
+    .map((rule) => {
+      switch (rule.type) {
+        case 'required':
+          return `{ required: true, message: '${safe(rule.message) || `请输入${safe(label)}`}' }`;
+        case 'minLength':
+          return `{ min: ${rule.value}, message: '${safe(rule.message) || `至少${rule.value}个字符`}' }`;
+        case 'maxLength':
+          return `{ max: ${rule.value}, message: '${safe(rule.message) || `最多${rule.value}个字符`}' }`;
+        case 'min':
+          return `{ type: 'number', min: ${rule.value}, message: '${safe(rule.message) || `不能小于${rule.value}`}' }`;
+        case 'max':
+          return `{ type: 'number', max: ${rule.value}, message: '${safe(rule.message) || `不能大于${rule.value}`}' }`;
+        case 'email':
+          return `{ type: 'email', message: '${safe(rule.message) || '请输入有效的邮箱地址'}' }`;
+        case 'pattern':
+          return `{ pattern: /${rule.value}/, message: '${safe(rule.message) || '格式不正确'}' }`;
+        case 'phone':
+          return `{ pattern: /^1[3-9]\\d{9}$/, message: '${safe(rule.message) || '请输入有效的手机号码'}' }`;
+        default:
+          return '';
+      }
+    })
+    .filter(Boolean);
+
   return `[${antdRules.join(', ')}]`;
 };
 
@@ -45,50 +52,50 @@ const generateComponentCode = (component: ComponentSchema, indent: number = 2): 
     case 'Input':
       return `${spaces}<Form.Item
 ${spaces}  name="${component.id}"
-${spaces}  label="${component.props.label}"
+${spaces}  label="${safe(component.props.label)}"
 ${spaces}  rules={${rules}}
 ${spaces}>
-${spaces}  <Input placeholder="${component.props.placeholder || ''}" />
+${spaces}  <Input placeholder="${safe(component.props.placeholder)}" />
 ${spaces}</Form.Item>`;
 
     case 'TextArea':
       return `${spaces}<Form.Item
 ${spaces}  name="${component.id}"
-${spaces}  label="${component.props.label}"
+${spaces}  label="${safe(component.props.label)}"
 ${spaces}  rules={${rules}}
 ${spaces}>
-${spaces}  <Input.TextArea placeholder="${component.props.placeholder || ''}" rows={${component.props.rows || 4}} />
+${spaces}  <Input.TextArea placeholder="${safe(component.props.placeholder)}" rows={${component.props.rows || 4}} />
 ${spaces}</Form.Item>`;
 
     case 'InputNumber':
       return `${spaces}<Form.Item
 ${spaces}  name="${component.id}"
-${spaces}  label="${component.props.label}"
+${spaces}  label="${safe(component.props.label)}"
 ${spaces}  rules={${rules}}
 ${spaces}>
-${spaces}  <InputNumber placeholder="${component.props.placeholder || ''}" style={{ width: '100%' }} />
+${spaces}  <InputNumber placeholder="${safe(component.props.placeholder)}" style={{ width: '100%' }} />
 ${spaces}</Form.Item>`;
 
     case 'Select': {
       const options = component.props.options
-        .map((o) => `{ label: '${o.label}', value: '${o.value}' }`)
+        .map((o) => `{ label: '${safe(o.label)}', value: '${safe(o.value)}' }`)
         .join(', ');
       return `${spaces}<Form.Item
 ${spaces}  name="${component.id}"
-${spaces}  label="${component.props.label}"
+${spaces}  label="${safe(component.props.label)}"
 ${spaces}  rules={${rules}}
 ${spaces}>
-${spaces}  <Select placeholder="${component.props.placeholder || ''}" options={[${options}]} />
+${spaces}  <Select placeholder="${safe(component.props.placeholder)}" options={[${options}]} />
 ${spaces}</Form.Item>`;
     }
 
     case 'Radio': {
       const options = component.props.options
-        .map((o) => `{ label: '${o.label}', value: '${o.value}' }`)
+        .map((o) => `{ label: '${safe(o.label)}', value: '${safe(o.value)}' }`)
         .join(', ');
       return `${spaces}<Form.Item
 ${spaces}  name="${component.id}"
-${spaces}  label="${component.props.label}"
+${spaces}  label="${safe(component.props.label)}"
 ${spaces}  rules={${rules}}
 ${spaces}>
 ${spaces}  <Radio.Group options={[${options}]} />
@@ -97,11 +104,11 @@ ${spaces}</Form.Item>`;
 
     case 'Checkbox': {
       const options = component.props.options
-        .map((o) => `{ label: '${o.label}', value: '${o.value}' }`)
+        .map((o) => `{ label: '${safe(o.label)}', value: '${safe(o.value)}' }`)
         .join(', ');
       return `${spaces}<Form.Item
 ${spaces}  name="${component.id}"
-${spaces}  label="${component.props.label}"
+${spaces}  label="${safe(component.props.label)}"
 ${spaces}  rules={${rules}}
 ${spaces}>
 ${spaces}  <Checkbox.Group options={[${options}]} />
@@ -111,34 +118,34 @@ ${spaces}</Form.Item>`;
     case 'Switch':
       return `${spaces}<Form.Item
 ${spaces}  name="${component.id}"
-${spaces}  label="${component.props.label}"
+${spaces}  label="${safe(component.props.label)}"
 ${spaces}  valuePropName="checked"
 ${spaces}>
-${spaces}  <Switch${component.props.checkedChildren ? ` checkedChildren="${component.props.checkedChildren}"` : ''}${component.props.unCheckedChildren ? ` unCheckedChildren="${component.props.unCheckedChildren}"` : ''} />
+${spaces}  <Switch${component.props.checkedChildren ? ` checkedChildren="${safe(component.props.checkedChildren)}"` : ''}${component.props.unCheckedChildren ? ` unCheckedChildren="${safe(component.props.unCheckedChildren)}"` : ''} />
 ${spaces}</Form.Item>`;
 
     case 'DatePicker':
       return `${spaces}<Form.Item
 ${spaces}  name="${component.id}"
-${spaces}  label="${component.props.label}"
+${spaces}  label="${safe(component.props.label)}"
 ${spaces}  rules={${rules}}
 ${spaces}>
-${spaces}  <DatePicker placeholder="${component.props.placeholder || ''}" style={{ width: '100%' }} />
+${spaces}  <DatePicker placeholder="${safe(component.props.placeholder)}" style={{ width: '100%' }} />
 ${spaces}</Form.Item>`;
 
     case 'TimePicker':
       return `${spaces}<Form.Item
 ${spaces}  name="${component.id}"
-${spaces}  label="${component.props.label}"
+${spaces}  label="${safe(component.props.label)}"
 ${spaces}  rules={${rules}}
 ${spaces}>
-${spaces}  <TimePicker placeholder="${component.props.placeholder || ''}" style={{ width: '100%' }} />
+${spaces}  <TimePicker placeholder="${safe(component.props.placeholder)}" style={{ width: '100%' }} />
 ${spaces}</Form.Item>`;
 
     case 'Button':
       return `${spaces}<Form.Item>
 ${spaces}  <Button type="${component.props.type || 'primary'}" htmlType="submit" block>
-${spaces}    ${component.props.content}
+${spaces}    ${safe(component.props.content)}
 ${spaces}  </Button>
 ${spaces}</Form.Item>`;
 
@@ -146,7 +153,7 @@ ${spaces}</Form.Item>`;
       const childrenCode = (component.children || [])
         .map((child) => generateComponentCode(child, childIndent))
         .join('\n\n');
-      return `${spaces}<Card title="${component.props.label || '容器'}" style={{ marginBottom: 16 }}>
+      return `${spaces}<Card title="${safe(component.props.label) || '容器'}" style={{ marginBottom: 16 }}>
 ${childrenCode || `${' '.repeat(childIndent)}{/* 容器内容 */}`}
 ${spaces}</Card>`;
     }
@@ -159,9 +166,12 @@ ${spaces}</Card>`;
 };
 
 // 生成带有联动逻辑的组件代码
-const generateComponentWithVisibility = (component: ComponentSchema, indent: number = 2): string => {
+const generateComponentWithVisibility = (
+  component: ComponentSchema,
+  indent: number = 2
+): string => {
   const baseCode = generateComponentCode(component, indent + 2);
-  
+
   if (component.props.visibleOn) {
     const spaces = ' '.repeat(indent);
     // 将 visibleOn 表达式中的 values['xxx'] 转换为 formValues['xxx']
@@ -171,7 +181,7 @@ ${spaces}{(${condition}) && (
 ${baseCode}
 ${spaces})}`;
   }
-  
+
   return baseCode;
 };
 
@@ -216,11 +226,9 @@ export const generateFullCode = (components: ComponentSchema[]): string => {
   if (hasCheckbox) antdImports.push('Checkbox');
   if (hasInputNumber) antdImports.push('InputNumber');
 
-  const componentsCode = components
-    .map((c) => generateComponentWithVisibility(c, 6))
-    .join('\n\n');
+  const componentsCode = components.map((c) => generateComponentWithVisibility(c, 6)).join('\n\n');
 
-  const stateHook = hasVisibleOn 
+  const stateHook = hasVisibleOn
     ? `\n  const [formValues, setFormValues] = useState<Record<string, any>>({});
 
   const handleValuesChange = (_: any, allValues: any) => {
@@ -240,7 +248,7 @@ export const generateFullCode = (components: ComponentSchema[]): string => {
       layout="vertical"
       onFinish={handleSubmit}`;
 
-  return `import React${hasVisibleOn ? ', { useState }' : ''} from 'react';
+  const rawCode = `import React${hasVisibleOn ? ', { useState }' : ''} from 'react';
 import { ${antdImports.join(', ')} } from 'antd';
 
 /**
@@ -263,6 +271,9 @@ ${componentsCode}
   );
 }
 `;
+
+  // 运行插件的代码生成钩子（如代码注释插件）
+  return pluginManager.runCodeGenerateHook(rawCode);
 };
 
 // 生成 JSON Schema（用于后端对接）
@@ -311,7 +322,7 @@ export const generateJsonSchema = (components: ComponentSchema[]): object => {
 
     // 🆕 添加校验规则到 JSON Schema
     if (component.props.rules) {
-      component.props.rules.forEach(rule => {
+      component.props.rules.forEach((rule) => {
         switch (rule.type) {
           case 'required':
             required.push(component.id);
@@ -339,7 +350,11 @@ export const generateJsonSchema = (components: ComponentSchema[]): object => {
     }
 
     // 兼容旧的 required 属性
-    if ('required' in component.props && component.props.required && !required.includes(component.id)) {
+    if (
+      'required' in component.props &&
+      component.props.required &&
+      !required.includes(component.id)
+    ) {
       required.push(component.id);
     }
 

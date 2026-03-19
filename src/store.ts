@@ -5,7 +5,13 @@ import type { ComponentSchema, ComponentType } from './types';
 import { getI18nInstance } from './i18n';
 
 // 导入辅助函数
-import { findComponentById, flattenComponents, findParentInfo } from './utils/componentHelpers';
+import {
+  findComponentById,
+  flattenComponents,
+  findParentInfo,
+  buildComponentIndex,
+} from './utils/componentHelpers';
+import type { ComponentIndex } from './utils/componentHelpers';
 import { validateValue } from './utils/validation';
 import { createComponent, cloneComponentWithNewId } from './utils/componentFactory';
 import type { ComponentInsert, ComponentLocation } from './utils/componentTreeOps';
@@ -16,6 +22,7 @@ import {
   replaceComponentProps,
   updateComponentProps as updateComponentPropsInTree,
 } from './utils/componentTreeOps';
+import { pluginManager } from './plugins/pluginManager';
 
 interface HistoryState {
   past: HistoryEntry[];
@@ -82,6 +89,7 @@ export interface CustomTemplate {
 
 interface State {
   components: ComponentSchema[];
+  componentIndex: ComponentIndex; // 扁平索引：O(1) 节点定位
   selectedIds: string[];
   formValues: Record<string, unknown>; // 表单值状态
   validationErrors: Record<string, string>; // 校验错误 { [componentId]: errorMessage }
@@ -200,6 +208,7 @@ export const useStore = create<State>()(
   persist(
     (set, get) => ({
       components: [] as ComponentSchema[],
+      componentIndex: buildComponentIndex([]),
       selectedIds: [] as string[],
       formValues: {} as Record<string, unknown>,
       validationErrors: {} as Record<string, string>,
@@ -213,8 +222,11 @@ export const useStore = create<State>()(
       // ⚠️ 修改签名：增加 index 参数
       addComponent: (type, parentId, index) =>
         set((state) => {
-          const newComponent = createComponent(type);
-          if (!newComponent) return state;
+          const rawComponent = createComponent(type);
+          if (!rawComponent) return state;
+
+          // 运行插件钩子，允许插件修改新组件
+          const newComponent = pluginManager.runComponentAddHook(rawComponent);
 
           const targetParentId = parentId ?? null;
           const defaultIndex =
@@ -286,7 +298,10 @@ export const useStore = create<State>()(
           const current = findComponentById(state.components, id);
           if (!current) return {};
 
-          const patchEntries = Object.entries(newProps as Record<string, unknown>);
+          // 运行插件钩子，允许插件转换 props
+          const transformedProps = pluginManager.runComponentUpdateHook(id, newProps);
+
+          const patchEntries = Object.entries(transformedProps as Record<string, unknown>);
           if (patchEntries.length === 0) return {};
 
           const hasActualChange = patchEntries.some(([key, value]) => {
@@ -295,7 +310,7 @@ export const useStore = create<State>()(
           });
           if (!hasActualChange) return {};
 
-          const result = updateComponentPropsInTree(state.components, id, newProps);
+          const result = updateComponentPropsInTree(state.components, id, transformedProps);
           if (!result.prevProps || !result.nextProps) return {};
 
           const entry: HistoryEntry = {
@@ -321,14 +336,18 @@ export const useStore = create<State>()(
           const idsToDelete = Array.isArray(ids) ? ids : [ids];
           if (idsToDelete.length === 0) return {};
 
-          const removeResult = removeComponentsByIds(state.components, new Set(idsToDelete));
+          // 运行插件钩子，允许插件拦截删除
+          const filteredIds = pluginManager.runComponentDeleteHook(idsToDelete);
+          if (filteredIds === false || filteredIds.length === 0) return {};
+
+          const removeResult = removeComponentsByIds(state.components, new Set(filteredIds));
           if (removeResult.removed.length === 0) return {};
 
           const entry: HistoryEntry = {
             kind: 'delete',
             label:
-              idsToDelete.length > 1
-                ? getI18nInstance().t('history.deleteMultiple', { count: idsToDelete.length })
+              filteredIds.length > 1
+                ? getI18nInstance().t('history.deleteMultiple', { count: filteredIds.length })
                 : getI18nInstance().t('history.delete'),
             timestamp: Date.now(),
             removes: removeResult.removed,
@@ -336,7 +355,7 @@ export const useStore = create<State>()(
 
           return {
             components: removeResult.components,
-            selectedIds: state.selectedIds.filter((sid) => !idsToDelete.includes(sid)),
+            selectedIds: state.selectedIds.filter((sid) => !filteredIds.includes(sid)),
             history: {
               past: pushHistory(state.history.past, entry),
               future: [],
@@ -598,7 +617,7 @@ export const useStore = create<State>()(
             ? component.props.label || getI18nInstance().t('validation.defaultLabel')
             : getI18nInstance().t('validation.defaultLabel');
 
-        const error = validateValue(value, rules, label);
+        const error = validateValue(value, rules, label, state.formValues);
 
         set((s) => ({
           validationErrors: error
@@ -627,7 +646,7 @@ export const useStore = create<State>()(
               ? component.props.label || getI18nInstance().t('validation.defaultLabel')
               : getI18nInstance().t('validation.defaultLabel');
 
-          const error = validateValue(value, rules, label);
+          const error = validateValue(value, rules, label, state.formValues);
           if (error) {
             errors.push({ componentId: component.id, message: error });
             newValidationErrors[component.id] = error;
@@ -802,3 +821,12 @@ export const useStore = create<State>()(
     }
   )
 );
+
+// 自动重建扁平索引：当 components 变化时同步更新 componentIndex
+let _prevComponents: ComponentSchema[] = [];
+useStore.subscribe((state) => {
+  if (state.components !== _prevComponents) {
+    _prevComponents = state.components;
+    useStore.setState({ componentIndex: buildComponentIndex(state.components) });
+  }
+});

@@ -1,14 +1,14 @@
 // 1. 基础类型定义
-export type ComponentType = 
-  | 'Input' 
-  | 'TextArea' 
-  | 'InputNumber' 
-  | 'Select' 
-  | 'Radio' 
-  | 'Checkbox' 
-  | 'Switch' 
-  | 'DatePicker' 
-  | 'TimePicker' 
+export type ComponentType =
+  | 'Input'
+  | 'TextArea'
+  | 'InputNumber'
+  | 'Select'
+  | 'Radio'
+  | 'Checkbox'
+  | 'Switch'
+  | 'DatePicker'
+  | 'TimePicker'
   | 'Button'
   | 'Container'; // ⚠️ 新增 Container 类型
 
@@ -19,29 +19,39 @@ export interface ComponentOption {
 
 // 🆕 校验规则定义
 export interface ValidationRule {
-  type: 'required' | 'minLength' | 'maxLength' | 'pattern' | 'min' | 'max' | 'email' | 'phone' | 'custom';
-  value?: string | number | boolean; // 规则的参数值
+  type:
+    | 'required'
+    | 'minLength'
+    | 'maxLength'
+    | 'pattern'
+    | 'min'
+    | 'max'
+    | 'email'
+    | 'phone'
+    | 'custom'
+    | 'crossField';
+  value?: string | number | boolean; // 规则的参数值（crossField 时为表达式字符串，如 "values['password'] === values['confirmPassword']"）
   message: string; // 错误提示信息
 }
 
 // 🆕 响应式布局配置
 export interface ResponsiveConfig {
-  xs?: number;  // <576px 手机
-  sm?: number;  // ≥576px 平板
-  md?: number;  // ≥768px 小桌面
-  lg?: number;  // ≥992px 桌面
-  xl?: number;  // ≥1200px 大桌面
+  xs?: number; // <576px 手机
+  sm?: number; // ≥576px 平板
+  md?: number; // ≥768px 小桌面
+  lg?: number; // ≥992px 桌面
+  xl?: number; // ≥1200px 大桌面
   xxl?: number; // ≥1600px 超大屏
 }
 
 // 🆕 表单提交配置
 export interface FormSubmitConfig {
-  action?: string;           // 提交地址
-  method?: 'GET' | 'POST' | 'PUT' | 'DELETE';  // 请求方法
-  headers?: Record<string, string>;  // 请求头
-  successMessage?: string;   // 成功提示
-  errorMessage?: string;     // 失败提示
-  redirectUrl?: string;      // 成功后跳转
+  action?: string; // 提交地址
+  method?: 'GET' | 'POST' | 'PUT' | 'DELETE'; // 请求方法
+  headers?: Record<string, string>; // 请求头
+  successMessage?: string; // 成功提示
+  errorMessage?: string; // 失败提示
+  redirectUrl?: string; // 成功后跳转
   resetAfterSubmit?: boolean; // 提交后重置表单
 }
 
@@ -129,7 +139,7 @@ export interface ButtonProps extends BaseComponentProps {
 
 // 3. 使用辨识联合类型 (Discriminated Union)
 // 这样 TS 可以根据 type 自动推断 props 的类型
-export type ComponentSchema = 
+export type ComponentSchema =
   | { id: string; type: 'Input'; props: InputProps; children?: ComponentSchema[] }
   | { id: string; type: 'TextArea'; props: TextAreaProps; children?: ComponentSchema[] }
   | { id: string; type: 'InputNumber'; props: InputNumberProps; children?: ComponentSchema[] }

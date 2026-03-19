@@ -1,6 +1,6 @@
 /**
  * 示例插件集合
- * 
+ *
  * 面试考点：
  * 1. 插件设计的实际应用
  * 2. 如何扩展系统功能
@@ -21,29 +21,39 @@ export const loggerPlugin: Plugin = {
   description: '记录所有组件操作到控制台',
 
   onInit: (context) => {
-    console.log('[LoggerPlugin] Initialized with context:', {
-      componentsCount: context.getComponents().length,
-      selectedIds: context.getSelectedIds(),
-    });
+    if (import.meta.env.DEV) {
+      console.log('[LoggerPlugin] Initialized with context:', {
+        componentsCount: context.getComponents().length,
+        selectedIds: context.getSelectedIds(),
+      });
+    }
   },
 
   onComponentAdd: (component) => {
-    console.log('[LoggerPlugin] Component added:', component.type, component.id);
+    if (import.meta.env.DEV) {
+      console.log('[LoggerPlugin] Component added:', component.type, component.id);
+    }
     return component;
   },
 
   onComponentDelete: (ids) => {
-    console.log('[LoggerPlugin] Components deleted:', ids);
+    if (import.meta.env.DEV) {
+      console.log('[LoggerPlugin] Components deleted:', ids);
+    }
     return ids;
   },
 
   onComponentUpdate: (id, props) => {
-    console.log('[LoggerPlugin] Component updated:', id, props);
+    if (import.meta.env.DEV) {
+      console.log('[LoggerPlugin] Component updated:', id, props);
+    }
     return props;
   },
 
   onDestroy: () => {
-    console.log('[LoggerPlugin] Destroyed');
+    if (import.meta.env.DEV) {
+      console.log('[LoggerPlugin] Destroyed');
+    }
   },
 };
 
@@ -64,7 +74,9 @@ export function createAutoSavePlugin(intervalMs: number = 30000): Plugin {
       saveTimer = setInterval(() => {
         const components = context.getComponents();
         localStorage.setItem('auto-save-components', JSON.stringify(components));
-        console.log('[AutoSavePlugin] Saved', components.length, 'components');
+        if (import.meta.env.DEV) {
+          console.log('[AutoSavePlugin] Saved', components.length, 'components');
+        }
       }, intervalMs);
     },
 
@@ -89,11 +101,15 @@ export const componentStatsPlugin: Plugin = {
 
   onInit: (context) => {
     context.on('component:add', () => {
-      console.log('[StatsPlugin] Total components:', context.getComponents().length);
+      if (import.meta.env.DEV) {
+        console.log('[StatsPlugin] Total components:', context.getComponents().length);
+      }
     });
 
     context.on('component:delete', () => {
-      console.log('[StatsPlugin] Total components:', context.getComponents().length);
+      if (import.meta.env.DEV) {
+        console.log('[StatsPlugin] Total components:', context.getComponents().length);
+      }
     });
   },
 };
@@ -119,7 +135,7 @@ export const defaultEnhancerPlugin: Plugin = {
         createdAt: Date.now(),
       },
     };
-    
+
     return {
       ...component,
       props: enhancedProps,

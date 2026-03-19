@@ -122,9 +122,16 @@ const isDescendantByParentMap = (
   return false;
 };
 
+// DEV-only 碰撞检测命中率统计
+const collisionStats = { total: 0, hits: 0, fallbacks: 0 };
+
+if (import.meta.env.DEV && typeof window !== 'undefined') {
+  (window as unknown as Record<string, unknown>).__collisionStats = collisionStats;
+}
+
 /**
  * 🔧 改进的自定义碰撞检测
- * 
+ *
  * 核心策略：
  * 1. 过滤被拖动元素自身及其子元素
  * 2. 优先使用 pointerWithin 进行精确检测
@@ -139,28 +146,33 @@ export const customCollisionDetection: CollisionDetection = (args) => {
   const activeId = String(active.id);
   const activeDepth = getActiveDepth(active);
 
+  if (import.meta.env.DEV) collisionStats.total++;
+
   const lookupsAll = buildLookups(droppableContainers);
 
   // 🔧 过滤掉被拖拽的组件自身、其容器 droppable，以及其后代（避免拖入自身内部）
   const filteredContainers = droppableContainers.filter((container) => {
     const containerId = String(container.id);
-    
+
     // 排除被拖拽的组件自身（作为 sortable）
     if (containerId === activeId) return false;
-    
+
     // 排除被拖拽组件对应的容器 droppable（如果它是容器的话）
     if (containerId === `container-${activeId}`) return false;
-    
+
     // 🆕 排除被拖动元素的后代（基于 parentId 链，而不是 DOM rect 关系，避免拖拽过程中排序导致误判）
     const baseId = getBaseItemId(containerId);
     if (baseId !== containerId && baseId === activeId) return false;
     if (baseId !== 'canvas-droppable') {
       const containerDepth = getDepthFromContainer(container);
-      if (containerDepth > activeDepth && isDescendantByParentMap(baseId, activeId, lookupsAll.parentById)) {
+      if (
+        containerDepth > activeDepth &&
+        isDescendantByParentMap(baseId, activeId, lookupsAll.parentById)
+      ) {
         return false;
       }
     }
-    
+
     return true;
   });
 
@@ -170,7 +182,7 @@ export const customCollisionDetection: CollisionDetection = (args) => {
 
   // 使用 pointerWithin 进行精确检测
   let collisions: Collision[] = pointerWithin(filteredArgs);
-  
+
   // 如果没有 pointer 碰撞，尝试 rectIntersection
   if (collisions.length === 0) {
     collisions = rectIntersection(filteredArgs);
@@ -178,22 +190,21 @@ export const customCollisionDetection: CollisionDetection = (args) => {
 
   // 如果仍然没有结果，使用 closestCenter
   if (collisions.length === 0) {
+    if (import.meta.env.DEV) collisionStats.fallbacks++;
     return closestCenter(filteredArgs);
   }
 
+  if (import.meta.env.DEV) collisionStats.hits++;
+
   // 分类碰撞结果
-  const containerDroppables = collisions.filter((c) =>
-    String(c.id).startsWith('container-')
-  );
+  const containerDroppables = collisions.filter((c) => String(c.id).startsWith('container-'));
 
   const itemCollisions = collisions.filter((c) => {
     const id = String(c.id);
     return !id.startsWith('container-') && id !== 'canvas-droppable';
   });
 
-  const canvasCollision = collisions.find(
-    (c) => String(c.id) === 'canvas-droppable'
-  );
+  const canvasCollision = collisions.find((c) => String(c.id) === 'canvas-droppable');
 
   // 判断一个 item 是否是容器组件
   const isContainerItem = (itemId: string): boolean => {
@@ -201,8 +212,8 @@ export const customCollisionDetection: CollisionDetection = (args) => {
   };
 
   // 分离容器和非容器 items
-  const nonContainerItems = itemCollisions.filter(c => !isContainerItem(String(c.id)));
-  const containerItems = itemCollisions.filter(c => isContainerItem(String(c.id)));
+  const nonContainerItems = itemCollisions.filter((c) => !isContainerItem(String(c.id)));
+  const containerItems = itemCollisions.filter((c) => isContainerItem(String(c.id)));
 
   // 构建 container-xxx 对应关系（基于当前 collisions，优先使用已有 collision descriptor）
   const containerDroppableMap = new Map<string, Collision>();
@@ -236,7 +247,11 @@ export const customCollisionDetection: CollisionDetection = (args) => {
 
   // === 3. 容器中心优先命中 container-xxx（提升“放入容器”稳定性）===
   if (containerItems.length > 0) {
-    const sortedContainerItems = sortCollisions(containerItems, lookups, pointerCoordinates ?? undefined);
+    const sortedContainerItems = sortCollisions(
+      containerItems,
+      lookups,
+      pointerCoordinates ?? undefined
+    );
     if (!pointerCoordinates) return [sortedContainerItems[0]];
 
     for (const targetContainerItem of sortedContainerItems) {
@@ -285,5 +300,6 @@ export const customCollisionDetection: CollisionDetection = (args) => {
     return [canvasCollision];
   }
 
+  if (import.meta.env.DEV) collisionStats.fallbacks++;
   return closestCenter(filteredArgs);
 };
