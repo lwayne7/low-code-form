@@ -18,6 +18,7 @@
 - 兼容拖拽排序与嵌套容器
 
 相关实现：
+
 - `src/components/DragDrop/VirtualizedSortableList.tsx`
 
 ### 1.2 碰撞检测：深度优先 + 边缘/中心判定 + 热路径缓存
@@ -25,12 +26,14 @@
 嵌套容器拖拽的核心难点是：指针位置同时命中多个容器时，如何稳定地决定“插入到容器前后”还是“放入容器内部”。
 
 当前策略：
+
 - 指针命中优先：`pointerWithin` → `rectIntersection` → `closestCenter` 兜底
 - 容器边缘/中心区：边缘区域倾向“排序插入”，中心区域倾向“放入容器”
 - 深度优先：更深层容器优先（更符合用户直觉）
 - 热路径优化：为每次计算构建 `id -> depth/rect` 缓存，距离排序使用“距离平方”减少 `sqrt`/多次查找
 
 相关实现：
+
 - `src/utils/collisionDetection.ts`
 - `src/hooks/useDragHandlers.ts`
 
@@ -42,6 +45,7 @@
 - `MIN_EDGE_HEIGHT`
 
 相关实现：
+
 - `src/constants/dnd.ts`
 
 ---
@@ -54,9 +58,11 @@
 - 细粒度记录变更，更利于调试与扩展
 
 量化示例（100 次添加操作）：
-- 历史数据序列化大小 `~373KB → ~18KB`（约 **-95%**）
+
+- 历史数据序列化大小 `~482KB → ~23KB`（约 **-95%**）
 
 相关实现：
+
 - `src/store.ts`
 - `src/utils/componentTreeOps.ts`
 - `src/components/common/HistoryPanel.tsx`
@@ -72,6 +78,7 @@
 - 属性面板可按 schema 渲染，具备更好的可组合性与可扩展性
 
 相关实现：
+
 - `src/registry/componentRegistry.tsx`
 - `src/components/PropertyPanel/index.tsx`
 - `src/constants/materials.tsx`
@@ -88,6 +95,7 @@
 - 在属性面板内联提示错误，提高可用性
 
 相关实现：
+
 - `src/utils/expression.ts`
 - `src/components/FormRenderer.tsx`
 - `src/components/CanvasFormItem.tsx`
@@ -102,16 +110,19 @@
 对关键交互（例如拖拽、代码导出）做埋点，结合性能面板展示关键指标（FPS、渲染次数、内存等），用于定位性能问题与回归。
 
 相关实现：
+
 - `src/utils/tracing.ts`
 - `src/components/common/PerformancePanel.tsx`
 
 ### 5.2 CI：lint/test/build + Lighthouse CI
 
 仓库包含两类工作流：
+
 - `ci.yml`：lint + 单测 + build（包含性能预算用例，防止关键指标回退）
 - `lighthouse-ci.yml`：运行 Lighthouse CI 并上传报告 artifacts
 
 相关实现：
+
 - `.github/workflows/ci.yml`
 - `.github/workflows/lighthouse-ci.yml`
 - `src/test/perfBudget.test.ts`

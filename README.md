@@ -39,7 +39,7 @@
 - ✅ **虚拟滚动类型修复**：适配 `react-window@2` 的 `List` API，去掉 `@ts-nocheck` 并重新启用导出（`src/components/DragDrop/VirtualizedSortableList.tsx`）
 - ✅ **工程化与类型安全**：分离 `trackRender` 以兼容 Fast Refresh；`formValues` 从 `any` 收紧到 `unknown`；worker 中 `switch/case` 声明块修复 lint（`src/components/common/performanceTracking.ts`、`src/store.ts`、`src/workers/codeGenerator.worker.ts`）
 - ✅ **性能基准与控制台工具**：新增 `vitest bench` 基准（`src/test/performance.bench.ts`）与开发环境控制台 `window.performanceTest`（`src/utils/performanceTester.ts`、`src/main.tsx`、`src/global.d.ts`）
-- ✅ **Undo/Redo Patch 历史**：用“补丁记录 + 结构共享”替代整树快照，显著降低内存与 GC；示例（100 次添加）历史数据序列化大小 `~373KB → ~18KB`（约 **-95%**）（`src/store.ts`、`src/utils/componentTreeOps.ts`、`src/components/common/HistoryPanel.tsx`）
+- ✅ **Undo/Redo Patch 历史**：用“补丁记录 + 结构共享”替代整树快照，显著降低内存与 GC；示例（100 次添加）历史数据序列化大小 `~482KB → ~23KB`（约 **-95%**）（`src/store.ts`、`src/utils/componentTreeOps.ts`、`src/components/common/HistoryPanel.tsx`）
 - ✅ **组件注册表 + schema 属性面板**：新增 `src/registry/componentRegistry.tsx` 统一维护组件默认配置/物料/属性面板 schema，新增组件基本只改声明（`src/utils/componentFactory.ts`、`src/constants/materials.tsx`、`src/components/PropertyPanel/index.tsx`）
 - ✅ **表达式安全**：`visibleOn` 从 `new Function` 改为 AST 白名单解析 + 安全执行，并在属性面板实时校验，避免注入与运行时崩溃（`src/utils/expression.ts`、`src/components/CanvasFormItem.tsx`、`src/components/FormRenderer.tsx`、`src/components/PropertyPanel/LinkageConfig.tsx`）
 - ✅ **表达式类型提示（zod）**：在安全 AST 基础上增加“字段存在性 + 类型可能不匹配”提示，降低联动配置出错成本（`src/utils/visibleOnTypeValidation.ts`、`src/components/PropertyPanel/LinkageConfig.tsx`）
